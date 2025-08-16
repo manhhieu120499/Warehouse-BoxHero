@@ -1,0 +1,30 @@
+.wrapper-link {
+    width: 90%;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    column-gap: 15px;
+    color: black;
+    border-radius: 8px;
+    text-decoration: none;
+
+    &:hover {
+        background-color: var(--primary--hover-background);
+    }
+
+    &.active {
+        color: white;
+        background-image: linear-gradient(
+            198deg,
+            var(--primary-button-gradient-one),
+            var(--primary-button-gradient-two)
+        );
+    }
+}
+
+.title {
+    font-size: 1.4rem;
+    text-align: left;
+    width: 60%;
+}

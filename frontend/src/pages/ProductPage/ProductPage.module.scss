@@ -1,0 +1,37 @@
+.wrapper-product {
+    width: 100%;
+}
+
+.my-table {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.action-table {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    column-gap: 15px;
+    width: 100%;
+}
+
+.action-table-icon {
+    width: 30px;
+    height: 30px;
+    background-color: transparent;
+    border: 1px solid #e7e7e7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.min-stock-product {
+    width: 100%;
+    text-align: right;
+    margin: 0;
+}
+
+.modal-product-detail {
+    width: 1000px;
+}
