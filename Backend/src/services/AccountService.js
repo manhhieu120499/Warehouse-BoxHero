@@ -102,7 +102,7 @@ class AccountService {
                     roles.forEach(async (role) => {
                         await AccountRoles.create({
                             accountID: account.accountID,
-                            roleId: role.roleID,
+                            roleID: role.roleID,
                         });
                     });
 
@@ -166,7 +166,7 @@ class AccountService {
                         console.log(roles);
 
                         const roleNames = await Promise.all(
-                            roles.map((role) => Role.findOne({ where: { roleID: role.roleId } })),
+                            roles.map((role) => Role.findOne({ where: { roleID: role.roleID } })),
                         );
 
                         if (!roleNames) {

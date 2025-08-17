@@ -6,7 +6,7 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.INTEGER,
                 allowNull: false,
             },
-            roleId: {
+            roleID: {
                 type: Sequelize.STRING,
                 allowNull: false,
             },

@@ -2,11 +2,11 @@ const db = require('../../models/index');
 const Supplier = db.Supplier;
 
 class SupplierService {
-    async searchSuppliers({ supplierId, phoneNumber, email, address, supplierName }, page = 1, limit = 10) {
+    async searchSuppliers({ supplierID, phoneNumber, email, address, supplierName }, page = 1, limit = 10) {
         try {
             const { Op } = require('sequelize');
             const where = {};
-            if (supplierId) where.supplierId = { [Op.like]: `%${supplierId}%` };
+            if (supplierID) where.supplierID = { [Op.like]: `%${supplierID}%` };
             if (phoneNumber) where.phoneNumber = { [Op.like]: `%${phoneNumber}%` };
             if (email) where.email = { [Op.like]: `%${email}%` };
             if (address) where.address = { [Op.like]: `%${address}%` };
@@ -16,7 +16,7 @@ class SupplierService {
                 where,
                 offset,
                 limit,
-                order: [['supplierId', 'ASC']],
+                order: [['supplierID', 'ASC']],
             });
             return {
                 suppliers: rows,
@@ -37,9 +37,9 @@ class SupplierService {
             throw e;
         }
     }
-    async getSupplierById(supplierId) {
+    async getSupplierByID(supplierID) {
         try {
-            return await Supplier.findOne({ where: { supplierId } });
+            return await Supplier.findOne({ where: { supplierID } });
         } catch (e) {
             console.log(e);
             throw e;
@@ -52,7 +52,7 @@ class SupplierService {
             const { count, rows } = await Supplier.findAndCountAll({
                 offset,
                 limit,
-                order: [['supplierId', 'ASC']],
+                order: [['supplierID', 'ASC']],
             });
             return {
                 suppliers: rows,
@@ -68,15 +68,15 @@ class SupplierService {
     createSupplier(newSupplier) {
         return new Promise(async (resolve, reject) => {
             try {
-                const { supplierId, supplierName, address, phoneNumber, email } = newSupplier;
-                const supplierFind = await Supplier.findOne({ where: { supplierId } });
+                const { supplierID, supplierName, address, phoneNumber, email } = newSupplier;
+                const supplierFind = await Supplier.findOne({ where: { supplierID } });
                 if (supplierFind) {
                     resolve({
                         status: 'ERR',
                         message: 'Mã nhà cung cấp đã tồn tại',
                     });
                 } else {
-                    const supplier = await Supplier.create({ supplierId, supplierName, address, phoneNumber, email });
+                    const supplier = await Supplier.create({ supplierID, supplierName, address, phoneNumber, email });
                     resolve({
                         status: 'OK',
                         message: 'Tạo nhà cung cấp thành công',
@@ -90,10 +90,10 @@ class SupplierService {
         });
     }
 
-    updateSupplier(supplierId, updateData) {
+    updateSupplier(supplierID, updateData) {
         return new Promise(async (resolve, reject) => {
             try {
-                const supplier = await Supplier.findOne({ where: { supplierId } });
+                const supplier = await Supplier.findOne({ where: { supplierID } });
                 if (!supplier) {
                     resolve({
                         status: 'ERR',
@@ -114,10 +114,10 @@ class SupplierService {
         });
     }
 
-    deleteSupplier(supplierId) {
+    deleteSupplier(supplierID) {
         return new Promise(async (resolve, reject) => {
             try {
-                const supplier = await Supplier.findOne({ where: { supplierId } });
+                const supplier = await Supplier.findOne({ where: { supplierID } });
                 if (!supplier) {
                     resolve({
                         status: 'ERR',

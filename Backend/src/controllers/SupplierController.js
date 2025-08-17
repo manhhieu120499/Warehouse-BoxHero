@@ -33,18 +33,18 @@ class SupplierController {
     // Cập nhật nhà cung cấp (check email trùng)
     async updateSupplier(req, res) {
         try {
-            const { supplierId } = req.params;
+            const { supplierID } = req.params;
             const { email } = req.body;
             if (email) {
                 // Kiểm tra email có trùng với nhà cung cấp khác không
                 const supplierWithEmail = await SupplierService.getSupplierByEmail(email);
-                if (supplierWithEmail && supplierWithEmail.supplierId !== supplierId) {
+                if (supplierWithEmail && supplierWithEmail.supplierID !== supplierID) {
                     return res
                         .status(HTTP_OK)
                         .json({ status: 'ERR', message: 'Email đã tồn tại với nhà cung cấp khác' });
                 }
             }
-            const { status, message, supplier } = await SupplierService.updateSupplier(supplierId, req.body);
+            const { status, message, supplier } = await SupplierService.updateSupplier(supplierIDl, req.body);
             if (status === 'OK') {
                 return res.status(HTTP_OK).json({ status, message, supplier });
             } else {
@@ -58,8 +58,8 @@ class SupplierController {
     // Xóa nhà cung cấp
     async deleteSupplier(req, res) {
         try {
-            const { supplierId } = req.params;
-            const { status, message } = await SupplierService.deleteSupplier(supplierId);
+            const { supplierID } = req.params;
+            const { status, message } = await SupplierService.deleteSupplier(supplierID);
             return res.status(HTTP_OK).json({ status, message });
         } catch (e) {
             console.log(e);
@@ -67,10 +67,10 @@ class SupplierController {
         }
     }
     // Lấy thông tin một nhà cung cấp
-    async getSupplierById(req, res) {
+    async getSupplierByID(req, res) {
         try {
-            const { supplierId } = req.params;
-            const supplier = await SupplierService.getSupplierById(supplierId);
+            const { supplierID } = req.params;
+            const supplier = await SupplierService.getSupplierByID(supplierID);
             if (supplier) {
                 return res.status(HTTP_OK).json({ status: 'OK', supplier });
             } else {
@@ -88,7 +88,7 @@ class SupplierController {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const searchFields = {
-                supplierId: req.query.supplierId,
+                supplierID: req.query.supplierID,
                 phoneNumber: req.query.phoneNumber,
                 email: req.query.email,
                 address: req.query.address,

@@ -7,19 +7,19 @@ const router = express.Router();
 // router.get("/", (req, res) => {
 //     return res.send("SupplierRouter Router is working!");
 // });
-router.get('/check-email-exists', checkEmailExists, validate, SupplierController.getSupplierById);
+router.get('/check-email-exists', checkEmailExists, validate, SupplierController.getSupplierByID);
 
 // Tạo nhà cung cấp
 router.post('/', authUserIsManager, checkSupplierValidate, validate, SupplierController.createSupplier);
 
 // Sửa nhà cung cấp
-router.put('/:supplierId', authUserIsManager, checkSupplierValidate, validate, SupplierController.updateSupplier);
+router.put('/:supplierID', authUserIsManager, checkSupplierValidate, validate, SupplierController.updateSupplier);
 
 // Xóa nhà cung cấp
-router.delete('/:supplierId', authUserIsManager, SupplierController.deleteSupplier);
+router.delete('/:supplierID', authUserIsManager, SupplierController.deleteSupplier);
 
 // Lấy thông tin một nhà cung cấp
-router.get('/:supplierId', SupplierController.getSupplierById);
+router.get('/:supplierID', SupplierController.getSupplierByID);
 
 // Lấy danh sách tất cả nhà cung cấp
 router.get('/', SupplierController.getAllSuppliers);

@@ -3,12 +3,7 @@ const checkEmailExists = [
     query('email').notEmpty().withMessage('Email là bắt buộc').bail().isEmail().withMessage('Email không hợp lệ'),
 ];
 const checkSupplierValidate = [
-    body('supplierId')
-        .notEmpty()
-        .withMessage('Mã nhà cung cấp là bắt buộc')
-        .bail()
-        .matches(/^NCC.{5}$/)
-        .withMessage('Mã nhà cung cấp phải bắt đầu bằng NCC và gồm 5 ký tự bất kỳ phía sau'),
+    body('supplierID').notEmpty().withMessage('Mã nhà cung cấp là bắt buộc').bail(),
     body('email').notEmpty().withMessage('Email là bắt buộc').bail().isEmail().withMessage('Email không hợp lệ'),
     body('supplierName')
         .notEmpty()

@@ -2,10 +2,9 @@ module.exports = (sequelize, Sequelize) => {
     const Supplier = sequelize.define(
         'Supplier',
         {
-            supplierId: {
+            supplierID: {
                 type: Sequelize.STRING,
                 primaryKey: true,
-                allowNull: false,
             },
             supplierName: {
                 type: Sequelize.STRING,
@@ -22,13 +21,26 @@ module.exports = (sequelize, Sequelize) => {
             email: {
                 type: Sequelize.STRING,
                 allowNull: false,
+                validate: {
+                    isEmail: true,
+                },
                 unique: true,
             },
         },
-        { tableName: 'suppliers', timestamps: false },
+        {
+            tableName: 'suppliers',
+            timestamps: false,
+        },
     );
 
-    Supplier.associate = (models) => {};
+    Supplier.associate = (models) => {
+        Supplier.belongsToMany(models.Product, {
+            through: 'ProductSuppliers', // bảng trung gian
+            foreignKey: 'supplierID',
+            otherKey: 'productID',
+            as: 'products',
+        });
+    };
 
     return Supplier;
 };
