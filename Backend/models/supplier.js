@@ -18,6 +18,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 allowNull: false,
             },
+            status: {
+                type: Sequelize.ENUM('ACTIVE', 'INACTIVE'),
+                allowNull: false,
+            },
             email: {
                 type: Sequelize.STRING,
                 allowNull: false,
@@ -34,12 +38,7 @@ module.exports = (sequelize, Sequelize) => {
     );
 
     Supplier.associate = (models) => {
-        Supplier.belongsToMany(models.Product, {
-            through: 'ProductSuppliers', // bảng trung gian
-            foreignKey: 'supplierID',
-            otherKey: 'productID',
-            as: 'products',
-        });
+        Supplier.hasMany(models.Batch, { foreignKey: 'supplierID', as: 'batches' });
     };
 
     return Supplier;
