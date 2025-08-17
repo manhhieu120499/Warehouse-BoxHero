@@ -30,7 +30,9 @@ module.exports = (sequelize, Sequelize) => {
         },
     );
 
-    Warehouse.associate = (models) => {};
+    Warehouse.associate = (models) => {
+        Warehouse.hasMany(models.Zone, { foreignKey: 'warehouseID' });
+    };
 
     return Warehouse;
 };

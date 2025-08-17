@@ -7,7 +7,13 @@ module.exports = (sequelize, Sequelize) => {
                 primaryKey: true,
             },
             roleName: {
-                type: Sequelize.STRING,
+                type: Sequelize.ENUM(
+                    'SYSTEM_ADMIN',
+                    'WARE_MANAGER',
+                    'STOCK_RECEIVER',
+                    'STOCK_DISPATCHER',
+                    'ACCOUNTANT',
+                ),
                 allowNull: false,
             },
         },

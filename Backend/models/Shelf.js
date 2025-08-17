@@ -1,0 +1,24 @@
+// Shelf.js
+module.exports = (sequelize, DataTypes) => {
+    const Shelf = sequelize.define('Shelf', {
+        shelfID: {
+            type: DataTypes.STRING,
+            primaryKey: true,
+        },
+        shelfName: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        zoneID: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+    });
+
+    Shelf.associate = (models) => {
+        Shelf.belongsTo(models.Zone, { foreignKey: 'zoneID' });
+        Shelf.hasMany(models.Floor, { foreignKey: 'shelfID' });
+    };
+
+    return Shelf;
+};
