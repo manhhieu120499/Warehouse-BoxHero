@@ -27,12 +27,12 @@ const checkSignUpValidate = [
             }
             return true;
         }),
-    body('statusWork')
+    body('status')
         .optional({ nullable: true, checkFalsy: true })
-        .isIn(['active', 'inactive'])
-        .withMessage('Trạng thái công việc phải là "active" hoặc "inactive"')
+        .isIn(['ACTIVE', 'INACTIVE'])
+        .withMessage('Trạng thái công việc phải là "ACTIVE" hoặc "INACTIVE"')
         .bail()
-        .default('active'),
+        .default('ACTIVE'),
     body('employeeName')
         .notEmpty()
         .withMessage('Tên nhân viên là bắt buộc')
@@ -119,18 +119,6 @@ const checkSignUpValidate = [
             }
             return true;
         }),
-    // body('endDate')
-    //     .isDate()
-    //     .withMessage('Ngày kết thúc không hợp lệ')
-    //     .bail()
-    //     .custom((value, { req }) => {
-    //         const startDate = new Date(req.body.startDate);
-    //         const endDate = new Date(value);
-    //         if (endDate <= startDate) {
-    //             throw new Error('Ngày kết thúc phải sau ngày bắt đầu');
-    //         }
-    //         return true;
-    //     }),
     body('roles')
         .isArray({ min: 1 })
         .withMessage('Danh sách vai trò là bắt buộc và phải là mảng')
@@ -145,8 +133,6 @@ const checkSignUpValidate = [
             return true;
         }),
     body('warehouseID').notEmpty().withMessage('Warehouse ID là bắt buộc').bail(),
-    // .isMongoId()
-    // .withMessage('Warehouse ID không hợp lệ'),
 ];
 
 const checkSignInValidate = [

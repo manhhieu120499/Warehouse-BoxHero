@@ -17,5 +17,10 @@ module.exports = (sequelize, Sequelize) => {
         },
     );
 
+    AccountRoles.associate = (models) => {
+        AccountRoles.belongsTo(models.Account, { foreignKey: 'accountID' });
+        AccountRoles.belongsTo(models.Role, { foreignKey: 'roleID' });
+    };
+
     return AccountRoles;
 };

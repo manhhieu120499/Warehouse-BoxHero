@@ -51,7 +51,7 @@ class AccountService {
                     employeeID,
                     email,
                     password,
-                    statusWork,
+                    status,
                     employeeName,
                     cccd,
                     dob,
@@ -65,68 +65,69 @@ class AccountService {
                     warehouseID,
                 } = newAccount;
 
-                const accountFind = await Account.findAll({
-                    where: {
-                        email,
-                    },
-                });
-                if (accountFind.length !== 0) {
+                // Check email tồn tại
+                const accountFind = await Account.findOne({ where: { email } });
+                if (accountFind) {
                     resolve({
                         statusHttp: HTTP_BAD_REQUEST,
                         status: 'ERR',
                         message: 'Email đã tồn tại',
                     });
-                } else {
-                    const hash = bcrypt.hashSync(password, 10);
-                    const employee = await Employee.create({
-                        employeeID,
-                        employeeName,
-                        image,
-                        cccd,
-                        dob,
-                        phoneNumber,
-                        gender,
-                        address,
-                        startDate,
-                        endDate,
-                        warehouseID,
-                    });
+                }
 
-                    const account = await Account.create({
-                        email,
-                        password: hash,
-                        statusWork,
-                        employeeID: employee.employeeID,
-                    });
-
-                    roles.forEach(async (role) => {
-                        await AccountRoles.create({
-                            accountID: account.accountID,
-                            roleID: role.roleID,
-                        });
-                    });
-
-                    const accessToken = await generateAccessToken({
-                        employeeID: employee.employeeID,
-                        email: account.email,
-                        roles,
-                        warehouseID,
-                    });
-
-                    const refreshToken = await generateRefreshToken({
-                        employeeID: employee.employeeID,
-                        email: account.email,
-                        roles,
-                        warehouseID,
-                    });
+                // check employee tồn tại
+                const employeeFind = await Employee.findOne({ where: { employeeID } });
+                if (employeeFind) {
                     resolve({
-                        statusHttp: HTTP_OK,
-                        status: 'OK',
-                        message: 'Tạo tài khoản thành công',
-                        accessToken,
-                        refreshToken,
+                        statusHttp: HTTP_BAD_REQUEST,
+                        status: 'ERR',
+                        message: 'Nhân viên đã tồn tại',
                     });
                 }
+
+                // Hash password
+                const hash = bcrypt.hashSync(password, 10);
+
+                // Tạo employee
+                const employee = await Employee.create({
+                    employeeID,
+                    employeeName,
+                    image,
+                    cccd,
+                    dob,
+                    phoneNumber,
+                    gender,
+                    address,
+                    startDate,
+                    endDate,
+                    warehouseID,
+                    status,
+                });
+
+                // Tạo account + gán roles nhanh
+                const account = await Account.create({
+                    email,
+                    password: hash,
+                    statusWork: status,
+                    employeeID: employee.employeeID,
+                });
+
+                if (roles?.length) {
+                    await account.setRoles(roles.map((r) => r.roleID));
+                }
+
+                // Generate token
+                const payload = { employeeID, email, roles, warehouseID };
+                const accessToken = await generateAccessToken(payload);
+                const refreshToken = await generateRefreshToken(payload);
+
+                resolve({
+                    statusHttp: HTTP_OK,
+                    status: 'OK',
+                    message: 'Tạo tài khoản thành công',
+                    accessToken,
+                    refreshToken,
+                });
             } catch (e) {
                 console.log(e);
                 reject(e);
@@ -163,8 +164,6 @@ class AccountService {
                                 accountID: accountFind[0].accountID,
                             },
                         });
-                        console.log(roles);
-
                         const roleNames = await Promise.all(
                             roles.map((role) => Role.findOne({ where: { roleID: role.roleID } })),
                         );
