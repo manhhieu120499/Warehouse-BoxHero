@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ModalCreateAccount.module.scss';
 import { Modal, Button } from '@/components';
@@ -9,42 +9,42 @@ import { styleMessage } from '../../constants';
 
 const cx = classNames.bind(styles);
 
-
 const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccount }) => {
     const {
         register,
         formState: { errors },
         handleSubmit,
         watch,
-        trigger
-    } = useForm({mode: 'onTouched'});
+        trigger,
+    } = useForm({ mode: 'onTouched' });
     const formRef = useRef();
     const phaseContent = useRef();
     const [showPassword, setShowPassword] = useState(false);
     const [showRetypedPassword, setShowRetypedPassword] = useState(false);
+    const [stepAccount, setStepAccount] = useState(1);
 
     const onSubmitForm = (data) => {
         const { email, password } = data;
-        console.log('Vào')
+        console.log('Vào');
 
         if (email && password) {
             // call api
-            setAccount(prev => ({...prev, email: email, password: password}))
-            setStatusCreateAccount(true)
-            toast.success("Tạo tài khoản thành công", styleMessage)
-            onClose()
+            setAccount((prev) => ({ ...prev, email: email, password: password }));
+            setStatusCreateAccount(true);
+            toast.success('Tạo tài khoản thành công', styleMessage);
+            onClose();
         }
     };
 
-    const handleScrollX = async (phase, stepIndex, fieldName) => {   
-        const stepWidth = 420
-        if('back' === fieldName) {
+    const handleScrollX = async (phase, stepIndex, fieldName) => {
+        const stepWidth = 420;
+        if ('back' === fieldName) {
             phase.current.style.transform = `translateX(${stepWidth * stepIndex}px)`;
         } else {
-            const valid = await trigger(fieldName)
-            if(!valid) return;
+            const valid = await trigger(fieldName);
+            if (!valid) return;
             phase.current.style.transform = `translateX(${stepWidth * stepIndex}px)`;
-        }    
+        }
     };
 
     const handleShowPassword = () => {
@@ -57,29 +57,74 @@ const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccoun
 
     const email = watch('email');
     const code = watch('code');
-    const password = watch('password')
+    const password = watch('password');
 
     return (
-        <Modal isOpenInfo={isOpen} onClose={onClose}>
+        <Modal
+            isOpenInfo={isOpen}
+            onClose={onClose}
+            arrButton={
+                stepAccount == 1
+                    ? [
+                          (index) => (
+                              <Button
+                                  key={index}
+                                  type="button"
+                                  primary
+                                  medium
+                                  borderRadiusSmall
+                                  onClick={() => {
+                                      handleScrollX(phaseContent, -1, 'email');
+                                      setStepAccount((prev) => prev + 1);
+                                  }}
+                                  disabled={!email || errors.email}
+                              >
+                                  <span>Tiếp tục</span>
+                              </Button>
+                          ),
+                      ]
+                    : [
+                          (index) => (
+                              <Button
+                                  key={index}
+                                  type="button"
+                                  primary
+                                  medium
+                                  borderRadiusSmall
+                                  onClick={() => {
+                                      handleScrollX(phaseContent, 0, 'back');
+                                      setStepAccount((prev) => prev - 1);
+                                  }}
+                              >
+                                  <span>Quay lại</span>
+                              </Button>
+                          ),
+                          (index) => (
+                              <Button key={index} type="submit" primary medium borderRadiusSmall>
+                                  <span>Tạo</span>
+                              </Button>
+                          ),
+                      ]
+            }
+        >
             <form ref={formRef} onSubmit={handleSubmit(onSubmitForm)} className={cx('wrapper-modal-account')}>
                 <div ref={phaseContent} className={cx('content')}>
                     <div className={cx('wrapper-email')}>
                         <h2>Nhập email đăng ký</h2>
-                        <input
-                            type="email"
-                            placeholder="Nhập email của bạn"
-                            {...register('email', {
-                                required: 'Vui lòng nhập email',
-                                pattern: {
-                                    value: /^\w+@(gmail|yahoo)(.com|.com.vn)$/,
-                                    message: 'Email không hợp lệ! Mẫu hợp lệ: abc@gmail.com',
-                                },
-                            })}
-                        />
+                        <div className={cx('form-control')}>
+                            <input
+                                type="email"
+                                placeholder="Nhập email của bạn"
+                                {...register('email', {
+                                    required: 'Vui lòng nhập email',
+                                    pattern: {
+                                        value: /^\w+@(gmail|yahoo)(.com|.com.vn)$/,
+                                        message: 'Email không hợp lệ! Mẫu hợp lệ: abc@gmail.com',
+                                    },
+                                })}
+                            />
+                        </div>
                         {errors.email && <p className={cx('message-error')}>{errors.email.message}</p>}
-                        <Button type="button" primary onClick={() => handleScrollX(phaseContent, -1, 'email')} disabled={!email || errors.email}>
-                            <span>Tiếp tục</span>
-                        </Button>
                     </div>
                     {/* <div className={cx('wrapper-verify-email')}>
                         <h2>Xác thực email</h2>
@@ -142,8 +187,8 @@ const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccoun
                                     {...register('retypedPassword', {
                                         required: 'Vui lòng nhập mật khẩu',
                                         validate: (value) => {
-                                            return password === value || 'Xác nhận mật khẩu không khớp'
-                                        }
+                                            return password === value || 'Xác nhận mật khẩu không khớp';
+                                        },
                                     })}
                                 />
                                 {showRetypedPassword && (
@@ -153,16 +198,18 @@ const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccoun
                                     <EyeClosed size={20} className={cx('icon')} onClick={handleShowRetypedPassword} />
                                 )}
                             </div>
-                            {errors.retypedPassword && <p className={cx('message-error')}>{errors.retypedPassword.message}</p>}
+                            {errors.retypedPassword && (
+                                <p className={cx('message-error')}>{errors.retypedPassword.message}</p>
+                            )}
                         </div>
-                        <div className={cx('footer-action')}>
+                        {/* <div className={cx('footer-action')}>
                             <Button type="button" primary onClick={() => handleScrollX(phaseContent, 0, 'back')}>
                                 <span>Quay lại</span>
                             </Button>
                             <Button type="submit" primary>
                                 <span>Tạo</span>
                             </Button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </form>

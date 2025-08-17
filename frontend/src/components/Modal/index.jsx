@@ -6,7 +6,7 @@ import Button from '../Button';
 
 const cx = classNames.bind(styles);
 
-const Modal = ({ isOpenInfo, onClose, children, showButtonClose = true }) => {
+const Modal = ({ isOpenInfo, onClose, children, showButtonClose = true, arrButton = [] }) => {
     return (
         <Transition appear show={isOpenInfo} as={Fragment}>
             <Dialog as="div" onClose={onClose} className={cx('modal-wrapper')}>
@@ -31,19 +31,25 @@ const Modal = ({ isOpenInfo, onClose, children, showButtonClose = true }) => {
                         leaveTo={cx('modal-leave-active')}
                     >
                         <DialogPanel>
+                            
                             {children}
-                            {showButtonClose && (
+                            <div className={cx('modal-button')}>
+                                {arrButton.map((item, index) => {
+                                    return item(index);
+                                })}
+                                {showButtonClose && (
                                 <Button
                                     className={cx('modal-close-button')}
                                     medium
                                     borderRadiusSmall
                                     primary
                                     onClick={onClose}
-                                    style={{ marginTop: '1.5rem' }}
                                 >
                                     Đóng
                                 </Button>
-                            )}
+                                )}
+                            </div>
+                            
                         </DialogPanel>
                     </Transition.Child>
                 </div>

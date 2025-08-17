@@ -20,7 +20,7 @@ const Header = ({ children }) => {
         '/check-inventory': 'Kiểm kê',
         '/report': 'Báo cáo',
         '/return-order': 'Đổi trả',
-        '/auth': 'Phân quyền',
+        '/auth': 'Nhân sự',
         '/product-error': 'Quản lý hàng lỗi',
         '/supplier': 'Nhà cung cấp',
         '/ware-transfer': 'Chuyển kho',
@@ -51,7 +51,7 @@ const Header = ({ children }) => {
         <div className={cx('wrapper-header')}>
             <div className={cx('left-header')}>
                 <p className={cx('current-page')}>
-                    Pages / <strong>{viewPage[location.pathname]}</strong>
+                    Trang / <strong>{viewPage[location.pathname]}</strong>
                 </p>
             </div>
             {children}

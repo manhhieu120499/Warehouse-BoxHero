@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './AuthPage.module.scss';
-import { Image, Button, ModalCreateAccount, ModalEmployee, ModelFilter } from '@/components';
+import { Image, Button, ModalCreateAccount, ModalEmployee, ModelFilter, Modal } from '@/components';
 import { MyTable } from '@/components';
 import globalStyle from '../../components/GlobalStyle/GlobalStyle.module.scss';
 import Tippy from '@tippyjs/react';
@@ -66,6 +66,7 @@ const tableColumns = [
         title: 'Chức vụ',
         dataIndex: 'empRole',
         key: 'empRole',
+        render: (_, record) => <p>{record.empRole.map(item => item.roleName).join(',')}</p>
     },
     {
         title: 'Trạng thái',
@@ -102,75 +103,78 @@ const dataSource = [
         empAddress: 'Hà Nội',
         empStartDate: '2020-05-01',
         warehouseId: 'K01',
-        empRole: 'Quản trị viên',
+        empRole: [{
+            roleID: 1,
+            roleName: 'SYSTEM_ADMIN'
+        }],
         empStatus: 'Đang làm',
         empImage:
             'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482784zzu/anh-mo-ta.png',
     },
-    {
-        key: '2',
-        empId: 'NV002',
-        empName: 'Trần Thị B',
-        empCCCD: '012345678902',
-        empDob: '1992-03-15',
-        gender: 'Nữ',
-        empPhone: '0902345678',
-        empAddress: 'TP.HCM',
-        empStartDate: '2021-06-15',
-        warehouseId: 'K02',
-        empRole: 'Nhân viên xuất hàng',
-        empStatus: 'Đang làm',
-        empImage:
-            'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482784zzu/anh-mo-ta.png',
-    },
-    {
-        key: '3',
-        empId: 'NV003',
-        empName: 'Lê Văn C',
-        empCCCD: '012345678903',
-        empDob: '1995-07-20',
-        gender: 'Nam',
-        empPhone: '0903456789',
-        empAddress: 'Đà Nẵng',
-        empStartDate: '2022-01-10',
-        warehouseId: 'K01',
-        empRole: 'Nhân viên nhận hàng',
-        empStatus: 'Nghỉ việc',
-        empImage:
-            'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482784zzu/anh-mo-ta.png',
-    },
-    {
-        key: '4',
-        empId: 'NV004',
-        empName: 'Phạm Thị D',
-        empCCCD: '012345678904',
-        empDob: '1998-12-05',
-        gender: 'Nữ',
-        empPhone: '0904567890',
-        empAddress: 'Cần Thơ',
-        empStartDate: '2023-03-01',
-        warehouseId: 'K03',
-        empRole: 'Quản lý kho',
-        empStatus: 'Đang làm',
-        empImage:
-            'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482784zzu/anh-mo-ta.png',
-    },
-    {
-        key: '5',
-        empId: 'NV005',
-        empName: 'Đỗ Văn E',
-        empCCCD: '012345678905',
-        empDob: '2000-10-12',
-        gender: 'Nam',
-        empPhone: '0905678901',
-        empAddress: 'Hải Phòng',
-        empStartDate: '2024-01-20',
-        warehouseId: 'K02',
-        empRole: 'Kế toán',
-        empStatus: 'Đang làm',
-        empImage:
-            'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482784zzu/anh-mo-ta.png',
-    },
+    // {
+    //     key: '2',
+    //     empId: 'NV002',
+    //     empName: 'Trần Thị B',
+    //     empCCCD: '012345678902',
+    //     empDob: '1992-03-15',
+    //     gender: 'Nữ',
+    //     empPhone: '0902345678',
+    //     empAddress: 'TP.HCM',
+    //     empStartDate: '2021-06-15',
+    //     warehouseId: 'K02',
+    //     empRole: 'Nhân viên xuất hàng',
+    //     empStatus: 'Đang làm',
+    //     empImage:
+    //         'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482784zzu/anh-mo-ta.png',
+    // },
+    // {
+    //     key: '3',
+    //     empId: 'NV003',
+    //     empName: 'Lê Văn C',
+    //     empCCCD: '012345678903',
+    //     empDob: '1995-07-20',
+    //     gender: 'Nam',
+    //     empPhone: '0903456789',
+    //     empAddress: 'Đà Nẵng',
+    //     empStartDate: '2022-01-10',
+    //     warehouseId: 'K01',
+    //     empRole: 'Nhân viên nhận hàng',
+    //     empStatus: 'Nghỉ việc',
+    //     empImage:
+    //         'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482784zzu/anh-mo-ta.png',
+    // },
+    // {
+    //     key: '4',
+    //     empId: 'NV004',
+    //     empName: 'Phạm Thị D',
+    //     empCCCD: '012345678904',
+    //     empDob: '1998-12-05',
+    //     gender: 'Nữ',
+    //     empPhone: '0904567890',
+    //     empAddress: 'Cần Thơ',
+    //     empStartDate: '2023-03-01',
+    //     warehouseId: 'K03',
+    //     empRole: 'Quản lý kho',
+    //     empStatus: 'Đang làm',
+    //     empImage:
+    //         'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482784zzu/anh-mo-ta.png',
+    // },
+    // {
+    //     key: '5',
+    //     empId: 'NV005',
+    //     empName: 'Đỗ Văn E',
+    //     empCCCD: '012345678905',
+    //     empDob: '2000-10-12',
+    //     gender: 'Nam',
+    //     empPhone: '0905678901',
+    //     empAddress: 'Hải Phòng',
+    //     empStartDate: '2024-01-20',
+    //     warehouseId: 'K02',
+    //     empRole: 'Kế toán',
+    //     empStatus: 'Đang làm',
+    //     empImage:
+    //         'https://img.tripi.vn/cdn-cgi/image/width=700,height=700/https://gcs.tripi.vn/public-tripi/tripi-feed/img/482784zzu/anh-mo-ta.png',
+    // },
 ];
 
 const columnsFilter = [
@@ -221,6 +225,11 @@ const AuthPage = () => {
     const dispatch = useDispatch();
 
     const [statusCreateAccount, setStatusCreateAccount] = useState(false);
+    const [currentPageEmployee, setCurrentPageEmployee] = useState(1)
+
+    const onChangeEmployeeTable = (newPage, pageSize) => [
+        setCurrentPageEmployee(newPage)
+    ]
 
     const rowSelection = {
         type: 'radio',
@@ -405,35 +414,49 @@ const AuthPage = () => {
     return (
         <div className={cx('wrapper-auth')}>
             {action.add && (
-                <ModalEmployee
+                <Modal isOpenInfo={true} showButtonClose={false} onClose={() =>{}} arrButton={[
+                    (index) => (
+                        <Button key={index} primary onClick={handleAddEmployee}>
+                            <span>Thêm nhân viên</span>
+                        </Button>
+                    ),
+                    (index) => (
+                        <Button key={index} primary onClick={showModalCreateAccount}>
+                            <span>Tạo tài khoản</span>
+                        </Button>
+                    )
+                ]}>
+                    <ModalEmployee
+                    className={cx('wrapper-model-employee')}
                     data={empData}
                     isAdmin={true}
                     onClose={() => handleCloseModal('add', false)}
                     setData={setEmpData}
                     action={'add'}
-                >
-                    <>
-                        <Button primary onClick={handleAddEmployee}>
-                            <span>Thêm nhân viên</span>
-                        </Button>
-                        <Button primary onClick={showModalCreateAccount}>
-                            <span>Tạo tài khoản</span>
-                        </Button>
-                    </>
-                </ModalEmployee>
+                />
+                
+                </Modal>
+                
             )}
             {action.update && (
-                <ModalEmployee
-                    isAdmin={true}
-                    data={empData}
-                    onClose={() => handleCloseModal('update', false)}
-                    setData={setEmpData}
-                    action={'update'}
-                >
-                    <Button primary onClick={handleUpdateEmployee}>
+                <Modal isOpenInfo={true} showButtonClose={false} onClose={() =>{}} arrButton={[
+                    (index) => (
+                        <Button key={index} primary onClick={handleUpdateEmployee}>
                         <span>Cập nhật</span>
                     </Button>
-                </ModalEmployee>
+                    )
+                ]}>
+                    <ModalEmployee
+                        className={cx('wrapper-model-employee')}
+                        isAdmin={true}
+                        data={empData}
+                        onClose={() => handleCloseModal('update', false)}
+                        setData={setEmpData}
+                        action={'update'}
+                />
+                
+                </Modal>
+                
             )}
 
             {/** Lọc theo điều kiện */}
@@ -451,6 +474,8 @@ const AuthPage = () => {
                 pageSize={4}
                 pagination
                 className={cx('my-table-employee')}
+                currentPage={currentPageEmployee}
+                onChangePage={onChangeEmployeeTable}
             ></MyTable>
 
             {showModalAccount && (

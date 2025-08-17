@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import classNames from 'classnames/bind';
 import { MyTable, Button, Popper, Modal, ModalOrder } from '@/components';
-import { Eye, PencilIcon } from 'lucide-react';
+import { CakeSlice, Eye, PencilIcon } from 'lucide-react';
 import { Trash2 } from 'lucide-react';
 import styles from './SupplierPage.module.scss';
 import globalStyle from '../../components/GlobalStyle/GlobalStyle.module.scss';
@@ -13,6 +13,10 @@ import { del } from '@/utils/httpRequest';
 import axios from 'axios';
 import { put } from '../../utils/httpRequest';
 import { set } from 'react-hook-form';
+import toast from 'react-hot-toast';
+import { styleMessage } from '../../constants';
+import { message } from 'antd';
+import PopupMessage from '../../components/PopupMessage';
 const cxGlobal = classNames.bind(globalStyle);
 
 const cx = classNames.bind(styles);
@@ -21,46 +25,70 @@ const SupplierPage = () => {
     const [page, setPage] = useState(1);
     const [data, setData] = useState([]);
     const [total, setTotal] = useState(0);
-    const pageSize = 10;
+    const pageSize = 3;
     const [supplierId, setSupplierId] = useState(null);
     const [supplierName, setSupplierName] = useState('');
     const [supplierPhone, setSupplierPhone] = useState('');
     const [supplierAddress, setSupplierAddress] = useState('');
     const [supplierEmail, setSupplierEmail] = useState('');
-    const [updateError, setUpdateError] = useState('');
+    //const [updateError, setUpdateError] = useState('');
     const [isOpenInfo, setIsOpenInfo] = useState(false);
     const [isOpenCreate, setIsOpenCreate] = useState(false);
-    const [newSupplier, setNewSupplier] = useState({
-        supplierId: '',
-        supplierName: '',
-        address: '',
-        phoneNumber: '',
-        email: '',
-    });
-    const [createError, setCreateError] = useState('');
+    const [showPopupConfirm, setShowPopupConfirm] = useState(false);
     const [filters, setFilters] = useState({
         supplierId: '',
         phoneNumber: '',
         email: '',
     });
-    // Hàm tạo mã NCC ngẫu nhiên
-    const generateSupplierId = () => {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let result = '';
-        for (let i = 0; i < 5; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return 'NCC' + result;
+
+    // product state
+    const productPageSize = 10;
+    const [productPage, setProductPage] = useState(1);
+    const [showProductTable, setShowProductTable] = useState(false)
+    const [productData, setProductData] = useState([])
+
+    const onChangeProductTable = (newPage, pageSize) => {
+        setProductPage(newPage);
     };
+
+    // fetch product by supplier id
+    const openProductTableBySupplier = async () => {
+        try{
+            // call api 
+            const response = await new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve([{
+                        key: 1,
+                        productID: 'SP01',
+                        productName: 'Sữa Vina Milk',
+                        productDes: 'Sản phẩm tuyệt trùng phù hợp cho mọi lứa tuổi',
+                        statusProduct: 'Đang kinh doanh',
+                    }])
+                }, 2000)
+            })
+            if(response) {
+                console.log(response)
+                setProductData(response)
+                setShowProductTable(true)
+            }   
+        }catch(err) {
+            console.log(err)
+            setShowProductTable(false)
+        }
+    }
+    // ------------------------------------
+
+    // Hàm tạo mã NCC ngẫu nhiên
+    // const generateSupplierId = () => {
+    //     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    //     let result = '';
+    //     for (let i = 0; i < 5; i++) {
+    //         result += chars.charAt(Math.floor(Math.random() * chars.length));
+    //     }
+    //     return 'NCC' + result;
+    // };
     // Xử lý mở modal tạo mới
     const openCreateModal = () => {
-        setNewSupplier({
-            supplierId: generateSupplierId(),
-            supplierName: '',
-            address: '',
-            phoneNumber: '',
-            email: '',
-        });
         setIsOpenCreate(true);
     };
 
@@ -69,29 +97,35 @@ const SupplierPage = () => {
         setIsOpenCreate(false);
     };
 
-    // Xử lý thay đổi input
-    const handleChangeNewSupplier = (field, value) => {
-        setNewSupplier((prev) => ({ ...prev, [field]: value }));
-    };
-
     // Xử lý submit tạo mới
-    const handleCreateSupplier = async () => {
-        setCreateError('');
+    const handleCreateSupplier = async (data) => {
         try {
             const tokenUser = JSON.parse(localStorage.getItem('tokenUser'));
             //const employeeId = JSON.parse(localStorage.getItem('employeeID'));
-            const res = await post('/api/supplier', newSupplier, tokenUser.accessToken, tokenUser.employeeID);
+            const res = await post(
+                '/api/supplier',
+                {
+                    supplierId: data.supplierId,
+                    supplierName: data.supplierName,
+                    address: data.supplierAddress,
+                    phoneNumber: data.supplierPhone,
+                    email: data.supplierEmail,
+                },
+                tokenUser.accessToken,
+                tokenUser.employeeID,
+            );
             console.log('123' + res);
             if (res.status === 'ERR') {
-                setCreateError(res.message);
+                toast.error(res.message, styleMessage);
                 console.log('123');
             } else {
-                setIsOpenCreate(false);
+                toast.success('Thêm nhà cung cấp thành công', styleMessage);
                 fetchSuppliers(page);
+                setIsOpenCreate(false);
             }
         } catch (error) {
             console.error('Error occurred while creating supplier:', error.response.data.messages);
-            setCreateError(error.response.data.messages[0]);
+            toast.error(error.response.data.messages[0], styleMessage);
         }
     };
 
@@ -132,7 +166,14 @@ const SupplierPage = () => {
             ellipsis: true,
         },
         {
-            title: 'Lịch sử GD',
+            title: 'Trạng thái',
+            dataIndex: 'statusWork',
+            key: 'statusWork',
+            width: '10%',
+            ellipsis: true,
+        },
+        {
+            title: 'Thao tác',
             dataIndex: 'transactionHistory',
             key: 'transactionHistory',
             width: '10%',
@@ -141,6 +182,17 @@ const SupplierPage = () => {
             render: (_, record) => {
                 return (
                     <div className={cxGlobal('action-table')}>
+                        <Tippy content={'Xem danh sách sản phẩm'} placement="bottom-end">
+                            <button
+                                className={cxGlobal('action-table-icon')}
+                                onClick={() => {
+                                    setSupplierId(record.supplierId);
+                                    openProductTableBySupplier()
+                                }}
+                            >
+                                <CakeSlice size={20} />
+                            </button>
+                        </Tippy>
                         <Tippy content={'Chỉnh sửa'} placement="bottom-end">
                             <button
                                 className={cxGlobal('action-table-icon')}
@@ -160,17 +212,9 @@ const SupplierPage = () => {
                             <button
                                 className={cxGlobal('action-table-icon')}
                                 style={{ color: 'red' }}
-                                onClick={async () => {
-                                    if (window.confirm('Bạn có chắc muốn xóa nhà cung cấp này?')) {
-                                        const tokenUser = JSON.parse(localStorage.getItem('tokenUser'));
-                                        const employeeId = tokenUser.employeeID
-                                        await del(
-                                            `/api/supplier/${record.supplierId}`,
-                                            tokenUser.accessToken,
-                                            employeeId,
-                                        );
-                                        fetchSuppliers(page);
-                                    }
+                                onClick={() => {
+                                    setSupplierId(record.supplierId);
+                                    setShowPopupConfirm(true);
                                 }}
                             >
                                 <Trash2 size={20} />
@@ -181,10 +225,25 @@ const SupplierPage = () => {
             },
         },
     ];
+
+    const handelDeleteSupplier = async () => {
+        try {
+            const tokenUser = JSON.parse(localStorage.getItem('tokenUser'));
+            const employeeId = tokenUser.employeeID;
+            await del(`/api/supplier/${supplierId}`, tokenUser.accessToken, employeeId);
+            toast.success('Xoá nhà cung cấp thành công', styleMessage);
+            fetchSuppliers(page);
+            setShowPopupConfirm(false);
+        } catch (err) {
+            toast.error(err.response.data.message, styleMessage);
+            setSupplierId('');
+            setShowPopupConfirm(false);
+        }
+    };
     const fetchSuppliers = async (pageReload = page) => {
         try {
             const res = await get('/api/supplier?page=' + pageReload + '&limit=' + pageSize);
-            console.log(res)
+            console.log(res);
             setData(
                 res.suppliers.map((item, idx) => ({
                     supplierId: item.supplierId || '',
@@ -201,7 +260,7 @@ const SupplierPage = () => {
             setTotal(res.total || 0);
         } catch (err) {
             setData([]);
-            console.log(err)
+            console.log(err);
             setTotal(0);
         }
     };
@@ -279,37 +338,91 @@ const SupplierPage = () => {
         {
             id: 1,
             label: 'Mã NCC',
-            value: supplierId,
-            setValue: setSupplierId,
+            name: 'supplierId',
+            pattern: null,
+            message: '',
+            readOnly: true,
         },
         {
             id: 2,
             label: 'Tên nhà cung cấp',
-            value: supplierName,
-            setValue: setSupplierName,
+            name: 'supplierName',
+            pattern: null,
+            message: '',
+            readOnly: false,
         },
         {
             id: 3,
             label: 'SDT',
-            value: supplierPhone,
-            setValue: setSupplierPhone,
+            name: 'supplierPhone',
+            pattern: /^(03|07|08|09)\d{8}/,
+            message: 'Số điện thoại phải bắt đầu bằng 03 hoặc 07 hoặc 08 hoặc 09 và có độ dài tối đa 10 chữ số',
+            readOnly: false,
         },
         {
             id: 4,
             label: 'Địa chỉ',
-            value: supplierAddress,
-            setValue: setSupplierAddress,
+            name: 'supplierAddress',
+            pattern: null,
+            message: '',
+            readOnly: false,
         },
         {
             id: 5,
             label: 'Email',
-            value: supplierEmail,
-            setValue: setSupplierEmail,
+            name: 'supplierEmail',
+            pattern: /^\w+@\w+(.com|.vn)$/,
+            message: 'Email không hợp lệ',
+            readOnly: false,
         },
     ];
 
-    const handleUpdateSupplier = async () => {
-        setUpdateError('');
+    const columnCreate = [
+        {
+            id: 1,
+            label: 'Mã NCC',
+            name: 'supplierId',
+            pattern: null,
+            message: '',
+            readOnly: false,
+        },
+        {
+            id: 2,
+            label: 'Tên nhà cung cấp',
+            name: 'supplierName',
+            pattern: null,
+            message: '',
+            readOnly: false,
+        },
+        {
+            id: 3,
+            label: 'SDT',
+            name: 'supplierPhone',
+            pattern: /^(03|07|08|09)\d{8}/,
+            message: 'Số điện thoại phải bắt đầu bằng 03 hoặc 07 hoặc 08 hoặc 09 và có độ dài tối đa 10 chữ số',
+            readOnly: false,
+        },
+        {
+            id: 4,
+            label: 'Địa chỉ',
+            name: 'supplierAddress',
+            pattern: null,
+            message: '',
+            readOnly: false,
+        },
+        {
+            id: 5,
+            label: 'Email',
+            name: 'supplierEmail',
+            pattern: /^\w+@\w+(.com|.vn)$/,
+            message: 'Email không hợp lệ',
+            readOnly: false,
+        },
+    ];
+
+    const handleUpdateSupplier = async (data) => {
+        //setUpdateError('');
+        const { supplierId, supplierName, supplierAddress, supplierEmail } = data;
         console.log('supplierId', supplierId);
         const tokenUser = JSON.parse(localStorage.getItem('tokenUser'));
         const employeeId = tokenUser.employeeID;
@@ -328,14 +441,14 @@ const SupplierPage = () => {
             );
 
             if (res.status === 'ERR') {
-                setUpdateError(res.message);
+                toast.error(res.message, styleMessage);
             } else {
                 setIsOpenInfo(false);
                 fetchSuppliers(page);
             }
         } catch (error) {
             console.error('Error occurred while updating supplier:', error.response.data.messages);
-            setUpdateError(error.response.data.messages[0]);
+            toast.error(error.response.data.messages[0], styleMessage);
         }
     };
 
@@ -360,8 +473,58 @@ const SupplierPage = () => {
         },
     ];
 
+    // columns product table
+    const columnsProduct = [
+        {
+            title: 'Mã sản phẩm',
+            dataIndex: 'productID',
+            key: 'productID',
+        },
+        {
+            title: 'Tên sản phẩm',
+            dataIndex: 'productName',
+            key: 'productName',
+        },
+        {
+            title: 'Mô tả',
+            dataIndex: 'productDes',
+            key: 'productDes',
+        },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'statusProduct',
+            key: 'statusProduct',
+        },
+    ];
+
+    const dataProduct = [
+        {
+            key: 1,
+            productID: 'SP01',
+            productName: 'Sữa Vina Milk',
+            productDes: 'Sản phẩm tuyệt trùng phù hợp cho mọi lứa tuổi',
+            statusProduct: 'Đang kinh doanh',
+        },
+    ];
+
     return (
         <div className={cx('wrapper-report')}>
+            {showPopupConfirm && (
+                <PopupMessage>
+                    <div className={cx('wrapper-message')}>
+                        <h1>Thông báo</h1>
+                        <p className={cx('des')}>Bạn có chắc muốn xoá nhà cung cấp này không?</p>
+                        <div className={cx('action-confirm')}>
+                            <Button primary onClick={handelDeleteSupplier}>
+                                <span>Có</span>
+                            </Button>
+                            <Button outline onClick={() => setShowPopupConfirm(false)}>
+                                <span>Không</span>
+                            </Button>
+                        </div>
+                    </div>
+                </PopupMessage>
+            )}
             <ModelFilter
                 handleSubmitFilter={handleSearch}
                 handleResetFilters={handleResetFilters}
@@ -373,110 +536,12 @@ const SupplierPage = () => {
             </ModelFilter>
             {/* Modal tạo mới nhà cung cấp */}
             <Modal showButtonClose={false} isOpenInfo={isOpenCreate} onClose={closeCreateModal}>
-                <div
-                    style={{
-                        position: 'relative',
-                        padding: 32,
-                        minWidth: 420,
-                        maxWidth: 480,
-                        background: '#fff',
-                        borderRadius: 12,
-                    }}
-                >
-                    <button
-                        style={{
-                            position: 'absolute',
-                            top: 16,
-                            right: 16,
-                            background: 'transparent',
-                            border: 'none',
-                            fontSize: 22,
-                            cursor: 'pointer',
-                            color: '#333',
-                        }}
-                        onClick={closeCreateModal}
-                        aria-label="Đóng"
-                    >
-                        ×
-                    </button>
-                    <h2 style={{ marginBottom: 24, textAlign: 'center' }}>Thêm nhà cung cấp</h2>
-                    <div style={{ marginBottom: 18 }}>
-                        <label style={{ fontWeight: 500 }}>Mã NCC</label>
-                        <input
-                            value={newSupplier.supplierId}
-                            disabled
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                marginTop: 4,
-                            }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: 18 }}>
-                        <label style={{ fontWeight: 500 }}>Tên nhà cung cấp</label>
-                        <input
-                            value={newSupplier.supplierName}
-                            onChange={(e) => handleChangeNewSupplier('supplierName', e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                marginTop: 4,
-                            }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: 18 }}>
-                        <label style={{ fontWeight: 500 }}>Số điện thoại</label>
-                        <input
-                            value={newSupplier.phoneNumber}
-                            onChange={(e) => handleChangeNewSupplier('phoneNumber', e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                marginTop: 4,
-                            }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: 18 }}>
-                        <label style={{ fontWeight: 500 }}>Địa chỉ</label>
-                        <input
-                            value={newSupplier.address}
-                            onChange={(e) => handleChangeNewSupplier('address', e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                marginTop: 4,
-                            }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: 18 }}>
-                        <label style={{ fontWeight: 500 }}>Email</label>
-                        <input
-                            value={newSupplier.email}
-                            onChange={(e) => handleChangeNewSupplier('email', e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                marginTop: 4,
-                            }}
-                        />
-                    </div>
-                    {createError && <div style={{ marginBottom: 18, color: 'red', fontSize: 14 }}>{createError}</div>}
-                    <div style={{ textAlign: 'right', marginTop: 24 }}>
-                        <Button primary onClick={handleCreateSupplier}>
-                            Tạo mới
-                        </Button>
-                    </div>
-                </div>
+                <ModalUpdate
+                    columns={columnCreate}
+                    label={'Thêm mới nhà cung cấp'}
+                    onClose={closeCreateModal}
+                    onSubmit={handleCreateSupplier}
+                />
             </Modal>
             {/* <div className={cx('header')}>
                 <Popper>
@@ -498,112 +563,36 @@ const SupplierPage = () => {
                 />
             </div>
             <Modal showButtonClose={false} isOpenInfo={isOpenInfo} onClose={closeModal}>
-                <div
-                    style={{
-                        position: 'relative',
-                        padding: 32,
-                        minWidth: 420,
-                        maxWidth: 480,
-                        background: '#fff',
-                        borderRadius: 12,
+                <ModalUpdate
+                    columns={columnUpdate}
+                    label={'Cập nhật nhà cung cấp'}
+                    onClose={closeModal}
+                    onSubmit={handleUpdateSupplier}
+                    defaultValue={{
+                        supplierId,
+                        supplierEmail,
+                        supplierAddress,
+                        supplierPhone,
+                        supplierName,
                     }}
-                >
-                    <button
-                        style={{
-                            position: 'absolute',
-                            top: 16,
-                            right: 16,
-                            background: 'transparent',
-                            border: 'none',
-                            fontSize: 22,
-                            cursor: 'pointer',
-                            color: '#333',
-                        }}
-                        onClick={closeModal}
-                        aria-label="Đóng"
-                    >
-                        ×
-                    </button>
-                    <h2 style={{ marginBottom: 24, textAlign: 'center' }}>Cập nhật nhà cung cấp</h2>
-                    {updateError && (
-                        <div style={{ color: 'red', marginBottom: 12, textAlign: 'center' }}>{updateError}</div>
-                    )}
-                    <div style={{ marginBottom: 18 }}>
-                        <label style={{ fontWeight: 500 }}>Mã NCC</label>
-                        <input
-                            value={supplierId}
-                            disabled
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                marginTop: 4,
-                            }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: 18 }}>
-                        <label style={{ fontWeight: 500 }}>Tên nhà cung cấp</label>
-                        <input
-                            value={supplierName}
-                            onChange={(e) => setSupplierName(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                marginTop: 4,
-                            }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: 18 }}>
-                        <label style={{ fontWeight: 500 }}>Số điện thoại</label>
-                        <input
-                            value={supplierPhone}
-                            onChange={(e) => setSupplierPhone(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                marginTop: 4,
-                            }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: 18 }}>
-                        <label style={{ fontWeight: 500 }}>Địa chỉ</label>
-                        <input
-                            value={supplierAddress}
-                            onChange={(e) => setSupplierAddress(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                marginTop: 4,
-                            }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: 18 }}>
-                        <label style={{ fontWeight: 500 }}>Email</label>
-                        <input
-                            value={supplierEmail}
-                            onChange={(e) => setSupplierEmail(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: 6,
-                                border: '1px solid #ccc',
-                                marginTop: 4,
-                            }}
-                        />
-                    </div>
-                    <div style={{ textAlign: 'right', marginTop: 24 }}>
-                        <Button primary onClick={handleUpdateSupplier}>
-                            Cập nhật
-                        </Button>
-                    </div>
+                />
+            </Modal>
+
+            {/** danh sách sản phẩm của nhà cung cấp */}
+            <Modal isOpenInfo={showProductTable} onClose={() => setShowProductTable(false)}>
+                <div className={cx('wrapper-product-supplier')}>
+                    <h1>Danh sách sản phẩm thuộc về nhà cung cấp</h1>
+                    <MyTable
+                        className={cx('product-supplier-table')}
+                        columns={columnsProduct}
+                        data={productData}
+                        pageSize={productPageSize}
+                        onChangePage={onChangeProductTable}
+                        pagination
+                        currentPage={productPage}
+                     />
                 </div>
+                
             </Modal>
         </div>
     );

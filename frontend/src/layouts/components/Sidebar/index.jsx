@@ -18,6 +18,8 @@ import {
     ShieldX,
     Info,
     Users,
+    ShoppingCart,
+    BookMinus
 } from 'lucide-react';
 import logo from '../../../assets/logo_v2.jpg';
 import { useLocation } from 'react-router-dom';
@@ -35,19 +37,43 @@ const Sidebar = () => {
             path: '/',
         },
         {
-            title: 'Sản phẩm',
+            title: 'Quản lý sản phẩm',
             iconName: ShoppingBasket,
-            path: '/products',
+            subMenu: [
+                {
+                    title: 'Sản phẩm',
+                    iconName: ShoppingBasket,
+                    path: '/products',
+                },
+                {
+                    title: 'Hàng lỗi',
+                    iconName: ShieldX,
+                    path: '/product-error',
+                },
+                
+            ]
         },
         {
-            title: 'Nhập kho',
-            iconName: CircleArrowRight,
-            path: '/ware-receive',
-        },
-        {
-            title: 'Xuất kho',
-            iconName: CircleArrowLeft,
-            path: '/ware-release',
+            title: 'Quản lý mua hàng',
+            iconName: BookMinus,
+            // path: '/ware-receive',
+            subMenu: [
+                {
+                    title: 'Tạo phiếu đề xuất',
+                    iconName: CircleArrowRight,
+                    path: '/ware-receive'
+                },
+                {
+                    title: 'Nhập kho',
+                    iconName: CircleArrowRight,
+                    path: '/ware-receive'
+                },
+                {
+                    title: 'Xuất kho',
+                    iconName: CircleArrowLeft,
+                    path: '/ware-release',
+                },
+            ]
         },
         {
             title: 'Kiểm kê kho',
@@ -73,11 +99,6 @@ const Sidebar = () => {
             title: 'Nhà cung cấp',
             iconName: Factory,
             path: '/supplier',
-        },
-        {
-            title: 'Quản lý hàng lỗi',
-            iconName: ShieldX,
-            path: '/product-error',
         },
         {
             title: 'Chuyển kho',
@@ -117,6 +138,7 @@ const Sidebar = () => {
                                 iconName={item.iconName}
                                 path={item.path}
                                 location={location.pathname}
+                                subMenu={item?.subMenu}
                             />
                         ))}
                     </div>

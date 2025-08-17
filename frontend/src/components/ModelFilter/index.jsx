@@ -23,7 +23,7 @@ const ModelFilter = ({handleSubmitFilter, handleResetFilters, columns, children}
                     contentRef.current.style.transition = `transform 0.1s linear`;
                 } else {
                     contentRef.current.style.transition = `transform 0.1s linear`;
-                    contentRef.current.style.transform = `translateY(-100%)`;
+                    contentRef.current.style.transform = `translateY(-110%)`;
                 }
             } else {
                 // Cuộn lên

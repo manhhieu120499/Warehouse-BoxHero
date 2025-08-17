@@ -12,6 +12,7 @@ import { post } from '../../utils/httpRequest';
 import { login } from '../../lib/redux/auth/authSlice';
 import { jwtDecode } from 'jwt-decode';
 import EmployeeDTO from '../../dtos/EmployeeDTO';
+import { useNavigate } from 'react-router-dom';
 
 const cx = classNames.bind(styles);
 
@@ -19,6 +20,7 @@ const DefaultLayout = ({ children }) => {
     const [showChatBox, setShowChatBox] = useState(false);
     const { statusLoading } = useSelector((state) => state.LoadingSlice);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchUser = async (accessToken, email, employeeID) => {
@@ -39,9 +41,12 @@ const DefaultLayout = ({ children }) => {
             }
         };
         const tokenUser = localStorage.getItem('tokenUser');
-        if (tokenUser != null) {
+        console.log(typeof tokenUser)
+        if (tokenUser != 'null') {
             const { employeeID, email, accessToken, refreshToken } = JSON.parse(localStorage.getItem('tokenUser'));
             fetchUser(accessToken, email, employeeID);
+        }else {
+            navigate('/login')
         }
     }, []);
     return (

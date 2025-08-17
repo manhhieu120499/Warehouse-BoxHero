@@ -39,7 +39,7 @@ const FormGroup = ({
     );
 };
 
-const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, profile = false, action }) => {
+const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, profile = false, action, className }) => {
     const [listWarehouseId, setListWarehouseId] = useState(['K01', 'K02', 'K03']);
     const [viewDetailRole, setViewDetailRole] = useState(false);
     //const [listRoleUser, setListRoleUser] = useState([]);
@@ -134,7 +134,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
     };
 
     return (
-        <div className={cx('modal-employee-info')}>
+        <div className={cx('modal-employee-info', className)}>
             <div className={cx('modal-header')}>
                 <h1>Thông tin nhân viên</h1>
                 {location.pathname === '/auth' && (

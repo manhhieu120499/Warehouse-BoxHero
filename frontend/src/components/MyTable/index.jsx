@@ -13,6 +13,7 @@ export default function MyTable({
     onChangePage,
     currentPage = 1,
     rowSelection = null,
+    total,
     ...props
 }) {
     return (
@@ -27,7 +28,7 @@ export default function MyTable({
                 pagination && {
                     pageSize, // số dòng mỗi trang
                     current: currentPage, // trang hiện tại (controlled)
-                    total: data.length, // tổng số dòng (nếu dùng server side)
+                    total: total ?? data.length, // tổng số dòng (nếu dùng server side)
                     position: ['bottomRight'], // vị trí thanh trang
                     onChange: (page, pageSize) => {
                         onChangePage(page, pageSize);
