@@ -31,8 +31,9 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: false,
             },
             status: {
-                type: Sequelize.STRING,
+                type: Sequelize.ENUM('AVAILABLE', 'OUT_OF_STOCK', 'DISCONTINUED'),
                 allowNull: false,
+                defaultValue: 'AVAILABLE',
             },
             qrCode: {
                 type: Sequelize.STRING,
@@ -46,12 +47,7 @@ module.exports = (sequelize, Sequelize) => {
     );
 
     Product.associate = (models) => {
-        Product.belongsToMany(models.Supplier, {
-            through: 'ProductSuppliers', // bảng trung gian
-            foreignKey: 'productID',
-            otherKey: 'supplierID',
-            as: 'suppliers',
-        });
+        Product.hasMany(models.Batch, { foreignKey: 'productID', as: 'batches' });
     };
 
     return Product;

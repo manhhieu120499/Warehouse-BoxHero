@@ -1,0 +1,23 @@
+module.exports = (sequelize, DataTypes) => {
+    const Zone = sequelize.define('Zone', {
+        zoneID: {
+            type: DataTypes.STRING,
+            primaryKey: true,
+        },
+        zoneName: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        warehouseID: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+    });
+
+    Zone.associate = (models) => {
+        Zone.belongsTo(models.Warehouse, { foreignKey: 'warehouseID' });
+        Zone.hasMany(models.Shelf, { foreignKey: 'zoneID' });
+    };
+
+    return Zone;
+};
