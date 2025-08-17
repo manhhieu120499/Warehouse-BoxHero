@@ -43,7 +43,7 @@ module.exports = {
                 type: Sequelize.DATE,
                 allowNull: true,
             },
-            warehouseId: {
+            warehouseID: {
                 type: Sequelize.STRING,
                 allowNull: false,
             },

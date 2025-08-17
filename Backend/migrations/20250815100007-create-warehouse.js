@@ -2,9 +2,9 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
-    await queryInterface.createTable('warehouses', {
-            warehouseId: {
+    async up(queryInterface, Sequelize) {
+        await queryInterface.createTable('warehouses', {
+            warehouseID: {
                 type: Sequelize.STRING,
                 primaryKey: true,
                 allowNull: false,
@@ -25,10 +25,10 @@ module.exports = {
                 type: Sequelize.STRING,
                 allowNull: false,
             },
-    })
-  },
+        });
+    },
 
-  async down (queryInterface, Sequelize) {
-    await queryInterface.dropTable('warehouses')
-  }
+    async down(queryInterface, Sequelize) {
+        await queryInterface.dropTable('warehouses');
+    },
 };
