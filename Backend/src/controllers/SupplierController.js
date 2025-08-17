@@ -44,7 +44,7 @@ class SupplierController {
                         .json({ status: 'ERR', message: 'Email đã tồn tại với nhà cung cấp khác' });
                 }
             }
-            const { status, message, supplier } = await SupplierService.updateSupplier(supplierIDl, req.body);
+            const { status, message, supplier } = await SupplierService.updateSupplier(supplierID, req.body);
             if (status === 'OK') {
                 return res.status(HTTP_OK).json({ status, message, supplier });
             } else {

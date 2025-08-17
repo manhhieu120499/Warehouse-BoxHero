@@ -17,7 +17,8 @@ class EmployeeController {
     }
     async getAllEmployee(req, res) {
         try {
-            const { statusHttp, ...response } = await EmployeeService.findAllEmployee();
+            const {employeeID} = req.body
+            const { statusHttp, ...response } = await EmployeeService.findAllEmployee(employeeID);
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp).json({

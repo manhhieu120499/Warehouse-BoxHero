@@ -8,6 +8,6 @@ router.get('/', (req, res) => {
     return res.send('EmployeeRouter Router is working!');
 });
 
-router.get('/list', authUserIsManager, EmployeeController.getAllEmployee);
+router.post('/list', authUserIsManager, EmployeeController.getAllEmployee);
 router.post('/employee-detail', authUser, checkEmail, validate, EmployeeController.getEmployee);
 module.exports = router;
