@@ -42,6 +42,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.DATE,
                 allowNull: true,
             },
+            status: {
+                type: Sequelize.ENUM('ACTIVE', 'INACTIVE'),
+                allowNull: false,
+            },
             warehouseID: {
                 type: Sequelize.STRING,
                 allowNull: false,
