@@ -38,7 +38,7 @@ const Sidebar = () => {
         },
         {
             title: 'Quản lý sản phẩm',
-            iconName: ShoppingBasket,
+            iconName: ShoppingCart,
             subMenu: [
                 {
                     title: 'Sản phẩm',

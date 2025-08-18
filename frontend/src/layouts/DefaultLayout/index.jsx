@@ -19,36 +19,37 @@ const cx = classNames.bind(styles);
 const DefaultLayout = ({ children }) => {
     const [showChatBox, setShowChatBox] = useState(false);
     const { statusLoading } = useSelector((state) => state.LoadingSlice);
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
+    // const dispatch = useDispatch();
+    // const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchUser = async (accessToken, email, employeeID) => {
-            try {
-                const { roles } = jwtDecode(accessToken).payload;
-                const responseUser = await post(
-                    '/api/employee/employee-detail',
-                    {
-                        email: email,
-                        employeeID,
-                    },
-                    accessToken,
-                );
-                const {employee} = responseUser
-                dispatch(login({ ...new EmployeeDTO({ ...employee, roles }) }));
-            } catch (err) {
-                console.log(err);
-            }
-        };
-        const tokenUser = localStorage.getItem('tokenUser');
-        console.log(typeof tokenUser)
-        if (tokenUser != 'null') {
-            const { employeeID, email, accessToken, refreshToken } = JSON.parse(localStorage.getItem('tokenUser'));
-            fetchUser(accessToken, email, employeeID);
-        }else {
-            navigate('/login')
-        }
-    }, []);
+    // useEffect(() => {
+    //     const fetchUser = async (accessToken, email, employeeID) => {
+    //         try {
+    //             const { roles } = jwtDecode(accessToken).payload;
+    //             const responseUser = await post(
+    //                 '/api/employee/employee-detail',
+    //                 {
+    //                     email: email,
+    //                     employeeID,
+    //                 },
+    //                 accessToken,
+    //             );
+    //             const {employee} = responseUser
+    //             dispatch(login({ ...new EmployeeDTO({ ...employee, roles }) }));
+    //         } catch (err) {
+    //             console.log(err);
+    //         }
+    //     };
+    //     const tokenUser = localStorage.getItem('tokenUser');
+    //     console.log(typeof tokenUser)
+    //     if (tokenUser != 'null') {
+    //         const { employeeID, email, accessToken, refreshToken } = JSON.parse(localStorage.getItem('tokenUser'));
+    //         fetchUser(accessToken, email, employeeID);
+    //     }else {
+    //         navigate('/login')
+    //     }
+    // }, [])
+        
     return (
         <div className={cx('wrapper-layout')}>
             <Header />

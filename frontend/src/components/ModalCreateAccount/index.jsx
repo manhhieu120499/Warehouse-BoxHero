@@ -21,7 +21,6 @@ const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccoun
     const phaseContent = useRef();
     const [showPassword, setShowPassword] = useState(false);
     const [showRetypedPassword, setShowRetypedPassword] = useState(false);
-    const [stepAccount, setStepAccount] = useState(1);
 
     const onSubmitForm = (data) => {
         const { email, password } = data;
@@ -31,7 +30,7 @@ const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccoun
             // call api
             setAccount((prev) => ({ ...prev, email: email, password: password }));
             setStatusCreateAccount(true);
-            toast.success('Tạo tài khoản thành công', styleMessage);
+            toast.success('Tài khoản được tạo tạm thời và sẽ hoàn tất sau khi thêm nhân viên thành công', styleMessage);
             onClose();
         }
     };
@@ -63,49 +62,7 @@ const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccoun
         <Modal
             isOpenInfo={isOpen}
             onClose={onClose}
-            arrButton={
-                stepAccount == 1
-                    ? [
-                          (index) => (
-                              <Button
-                                  key={index}
-                                  type="button"
-                                  primary
-                                  medium
-                                  borderRadiusSmall
-                                  onClick={() => {
-                                      handleScrollX(phaseContent, -1, 'email');
-                                      setStepAccount((prev) => prev + 1);
-                                  }}
-                                  disabled={!email || errors.email}
-                              >
-                                  <span>Tiếp tục</span>
-                              </Button>
-                          ),
-                      ]
-                    : [
-                          (index) => (
-                              <Button
-                                  key={index}
-                                  type="button"
-                                  primary
-                                  medium
-                                  borderRadiusSmall
-                                  onClick={() => {
-                                      handleScrollX(phaseContent, 0, 'back');
-                                      setStepAccount((prev) => prev - 1);
-                                  }}
-                              >
-                                  <span>Quay lại</span>
-                              </Button>
-                          ),
-                          (index) => (
-                              <Button key={index} type="submit" primary medium borderRadiusSmall>
-                                  <span>Tạo</span>
-                              </Button>
-                          ),
-                      ]
-            }
+            showButtonClose={false}
         >
             <form ref={formRef} onSubmit={handleSubmit(onSubmitForm)} className={cx('wrapper-modal-account')}>
                 <div ref={phaseContent} className={cx('content')}>
@@ -125,6 +82,29 @@ const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccoun
                             />
                         </div>
                         {errors.email && <p className={cx('message-error')}>{errors.email.message}</p>}
+                        <div className={cx('form-action')}>
+                            <Button
+                                  type="button"
+                                  primary
+                                  medium
+                                  borderRadiusSmall
+                                  onClick={() => {
+                                      handleScrollX(phaseContent, -1, 'email');
+                                  }}
+                                  disabled={!email || errors.email}
+                              >
+                                  <span>Tiếp tục</span>
+                              </Button>
+                              <Button type="button"
+                                  primary
+                                  medium
+                                  borderRadiusSmall
+                                  onClick={onClose}
+                                  >
+                                <span>Đóng</span>
+                              </Button>
+                        </div>
+                        
                     </div>
                     {/* <div className={cx('wrapper-verify-email')}>
                         <h2>Xác thực email</h2>
@@ -161,7 +141,7 @@ const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccoun
                                     {...register('password', {
                                         required: 'Vui lòng nhập mật khẩu',
                                         pattern: {
-                                            value: /^[\w]+(@|#|%)$/,
+                                            value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/,
                                             message: 'Mật khẩu có cả chữ hoa, chữ thường, số và kí tự đặc biệt',
                                         },
                                         minLength: {
@@ -202,14 +182,17 @@ const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccoun
                                 <p className={cx('message-error')}>{errors.retypedPassword.message}</p>
                             )}
                         </div>
-                        {/* <div className={cx('footer-action')}>
-                            <Button type="button" primary onClick={() => handleScrollX(phaseContent, 0, 'back')}>
+                        <div className={cx('footer-action')}>
+                            <Button type="button" primary medium borderRadiusSmall onClick={() => handleScrollX(phaseContent, 0, 'back')}>
                                 <span>Quay lại</span>
                             </Button>
-                            <Button type="submit" primary>
-                                <span>Tạo</span>
-                            </Button>
-                        </div> */}
+                            <Button type="submit" primary medium borderRadiusSmall>
+                                  <span>Tạo</span>
+                              </Button>
+                              <Button type="button" primary medium borderRadiusSmall onClick={onClose}>
+                                  <span>Đóng</span>
+                              </Button>
+                        </div>
                     </div>
                 </div>
             </form>

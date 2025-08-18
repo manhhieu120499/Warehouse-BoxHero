@@ -5,6 +5,7 @@
 
     .content {
         width: 820px;
+        min-height: 100px;
         display: flex;
         justify-content: space-between;
         transform: translateX(0px);
@@ -42,6 +43,15 @@
                 }
 
                 
+            }
+
+            .form-action{
+                width: 100%;
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                column-gap: 8px;
+                margin-top: 22px;
             }
             
         }
@@ -112,9 +122,10 @@
             .footer-action {
                 width: 100%;
                 display: flex;
-                justify-content: space-between;
+                justify-content: flex-end;
                 align-items: center;
-                margin-top: 18px;
+                column-gap: 8px;
+                margin-top: 22px;
             }
         }
     }

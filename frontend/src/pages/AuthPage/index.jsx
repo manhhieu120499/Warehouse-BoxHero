@@ -7,12 +7,13 @@ import globalStyle from '../../components/GlobalStyle/GlobalStyle.module.scss';
 import Tippy from '@tippyjs/react';
 import { Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { styleMessage } from '../../constants';
+import { formatRole, styleMessage } from '../../constants';
 import request, { post } from '../../utils/httpRequest';
 import { uploadImage } from '../../utils/uploadImage';
 import { useDispatch } from 'react-redux';
 import { startLoading, stopLoading } from '../../lib/redux/loading/slice';
 import { isOver18 } from '../../utils/validate';
+import EmployeeDTO from '../../dtos/EmployeeDTO';
 
 const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle);
@@ -66,7 +67,7 @@ const tableColumns = [
         title: 'Chức vụ',
         dataIndex: 'empRole',
         key: 'empRole',
-        render: (_, record) => <p>{record.empRole.map(item => item.roleName).join(',')}</p>
+        render: (_, record) => <p>{record.empRole.map(item => formatRole[item.roleName]).join(',')}</p>
     },
     {
         title: 'Trạng thái',
@@ -201,6 +202,7 @@ const resetData = {
     empPhone: '',
     empAddress: '',
     empStartDate: '',
+    empEndDate: '',
     warehouseId: '',
     empRole: [],
     empStatus: '',
@@ -230,6 +232,8 @@ const AuthPage = () => {
     const onChangeEmployeeTable = (newPage, pageSize) => [
         setCurrentPageEmployee(newPage)
     ]
+
+    const [employeeList, setEmployeeList] = useState([])
 
     const rowSelection = {
         type: 'radio',
@@ -279,6 +283,23 @@ const AuthPage = () => {
             });
             return false;
         }
+
+        if(empStatus == "Nghỉ việc") {
+            if(!data.empEndDate) {
+                toast.error("Vui lòng điền ngày nghỉ làm khi nhân viên nghỉ việc", {
+                    ...styleMessage
+                })
+                return false;
+            }else {
+                if(new Date(data.empEndDate) < new Date(empStartDate)) {
+                     toast.error("Ngày nghỉ làm phải sau ngày vào làm", {
+                        ...styleMessage
+                    })
+                    return false;
+                }
+            }
+        }
+
         if (!/^[\p{L}\s]+$/u.test(empName)) {
             toast.error('Tên chỉ chứa chữ và khoảng trắng', {
                 ...styleMessage
@@ -339,7 +360,7 @@ const AuthPage = () => {
                 email: account.email,
                 password: account.password,
                 confirmPassword: account.password,
-                statusWork: account.statusWork == 'Đang làm' ? 'active' : 'inactive',
+                status: account.statusWork == 'Đang làm' ? 'ACTIVE' : 'INACTIVE',
                 employeeName: empData.empName,
                 cccd: empData.empCCCD,
                 dob: empData.empDob,
@@ -369,6 +390,7 @@ const AuthPage = () => {
                 statusWork: 'Đang làm',
             });
             setStatusCreateAccount(false);
+            fetchEmployeeList()
         } catch (err) {
             dispatch(stopLoading())
             console.log(err);
@@ -390,17 +412,19 @@ const AuthPage = () => {
     useEffect(() => {
         if (selectedRowKeys.length > 0) {
             console.log(selectedRowKeys);
-            setEmpData(dataSource[Number.parseInt(selectedRowKeys[0]) - 1]);
+            setEmpData(employeeList.find(item => item.empId == selectedRowKeys));
         }
     }, [selectedRowKeys]);
 
-    const handleUpdateEmployee = useCallback(async () => {
+    const handleUpdateEmployee = async () => {
+        const validValue = validateEmployeeData(empData)
+        if(!validValue) return;
         try {
             // call api update employee
         } catch (err) {
             // throw err
         }
-    }, []);
+    };
 
     const showModalCreateAccount = async () => {
         try {
@@ -410,6 +434,29 @@ const AuthPage = () => {
             toast.error('Vui lòng tạo nhân viên trước khi tạo tài khoản');
         }
     };
+
+    const fetchEmployeeList = async () => {
+        try{
+            const {employeeID, accessToken} = JSON.parse(localStorage.getItem('tokenUser'))
+            const response = await post('/api/employee/list', {
+                employeeID: employeeID
+            }, accessToken, employeeID)
+            console.log(response)
+            const formatEmployee = response.employees.map(item => {
+                const emp = new EmployeeDTO(item)
+                return {...emp}
+             })
+            console.log(formatEmployee)
+            setEmployeeList(formatEmployee)
+        }catch(err) {
+            console.log('fetch employee list err', err.response.data.message)
+            setEmployeeList([])
+        }   
+    }
+
+    useEffect(() => {
+        fetchEmployeeList()
+    }, [])
 
     return (
         <div className={cx('wrapper-auth')}>
@@ -469,7 +516,7 @@ const AuthPage = () => {
             <h1>Danh sách nhân viên</h1>
             <MyTable
                 rowSelection={rowSelection}
-                data={dataSource}
+                data={employeeList}
                 columns={tableColumns}
                 pageSize={4}
                 pagination

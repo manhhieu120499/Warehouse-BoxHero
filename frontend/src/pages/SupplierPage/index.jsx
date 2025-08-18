@@ -105,7 +105,7 @@ const SupplierPage = () => {
             const res = await post(
                 '/api/supplier',
                 {
-                    supplierId: data.supplierId,
+                    supplierID: data.supplierId,
                     supplierName: data.supplierName,
                     address: data.supplierAddress,
                     phoneNumber: data.supplierPhone,
@@ -169,7 +169,7 @@ const SupplierPage = () => {
             title: 'Trạng thái',
             dataIndex: 'statusWork',
             key: 'statusWork',
-            width: '10%',
+            width: '12%',
             ellipsis: true,
         },
         {
@@ -246,12 +246,13 @@ const SupplierPage = () => {
             console.log(res);
             setData(
                 res.suppliers.map((item, idx) => ({
-                    supplierId: item.supplierId || '',
+                    supplierId: item.supplierID || '',
                     name: item.supplierName || '',
                     phone: item.phoneNumber || '',
                     address: item.address || '',
                     email: item.email || '',
                     key: item.supplierId,
+                    statusWork: 'active' ? "Đang hoạt động" : 'Ngừng hoạt động',
                     transactionHistory: (
                         <Button onClick={() => setIsOpenInfo(true)} small leftIcon={<Eye size={20} />} />
                     ),
@@ -278,8 +279,10 @@ const SupplierPage = () => {
             console.log(filters);
             setPage(1);
             try {
+                const {supplierId, ...rest} = filters
                 const params = {
-                    ...filters,
+                    ...rest,
+                    supplierID: supplierId,
                     page: 1,
                     limit: pageSize,
                 };
@@ -287,7 +290,7 @@ const SupplierPage = () => {
                 if (res.suppliers && res.suppliers.length > 0) {
                     setData(
                         res.suppliers.map((item) => ({
-                            supplierId: item.supplierId || '',
+                            supplierId: item.supplierID || '',
                             name: item.supplierName || '',
                             phone: item.phoneNumber || '',
                             address: item.address || '',
@@ -421,6 +424,7 @@ const SupplierPage = () => {
     ];
 
     const handleUpdateSupplier = async (data) => {
+        console.log(data)
         //setUpdateError('');
         const { supplierId, supplierName, supplierAddress, supplierEmail } = data;
         console.log('supplierId', supplierId);
@@ -430,7 +434,7 @@ const SupplierPage = () => {
             const res = await put(
                 '/api/supplier/' + supplierId,
                 {
-                    supplierId,
+                    supplierID: supplierId,
                     supplierName,
                     address: supplierAddress,
                     phoneNumber: supplierPhone,
@@ -575,6 +579,7 @@ const SupplierPage = () => {
                         supplierPhone,
                         supplierName,
                     }}
+                    type={'update'}
                 />
             </Modal>
 

@@ -40,6 +40,7 @@ const FormGroup = ({
 };
 
 const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, profile = false, action, className }) => {
+    console.log(action == 'add')
     const [listWarehouseId, setListWarehouseId] = useState(['K01', 'K02', 'K03']);
     const [viewDetailRole, setViewDetailRole] = useState(false);
     //const [listRoleUser, setListRoleUser] = useState([]);
@@ -105,8 +106,10 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
     }, []);
 
     const handleAddNewRole = (e) => {
+        console.log(listRoleUser)
+        const checkRole = listRoleUser.find(item => item.roleName == mapperRole[e.target.value].roleName)
         if (e.target.checked) {
-            if (!listRoleUser.includes(e.target.value))
+            if (!checkRole)
                 setData((prev) => {
                 const updateListRole = [...listRoleUser, mapperRole[e.target.value]]
                 return ({
@@ -114,7 +117,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                     empRole: updateListRole
                 })});
         } else {
-            if (listRoleUser.includes(e.target.value)) {
+            if (checkRole) {
                 setData((prev) => ({
                     ...prev,
                     empRole: listRoleUser.filter((item) => item.roleName != mapperRole[e.target.value].roleName)
@@ -126,10 +129,12 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
     const handleUpdateRoleEmployee = () => {
         if (action == 'add') {
             //console.log(listRoleUser);
-            setData((prev) => ({ ...prev, empRole: listRoleUser}));
+            setData((prev) => ({ ...prev, empRole: listRoleUser, empStatus: 'Đang làm'}));
             handleShowViewDetailRole();
         } else {
-            //
+            //action == update 
+            setData((prev) => ({ ...prev, empRole: listRoleUser}));
+            handleShowViewDetailRole();
         }
     };
 
@@ -287,7 +292,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                             labelTitle={'Chức vụ'}
                             htmlForLabel={'employeeRole'}
                             typeInput={'text'}
-                            valueInput={data.empRole.map(role => formatRole[role.roleName])}
+                            valueInput={data?.empRole ? data.empRole.map(role => formatRole[role.roleName]) : ""}
                             idInput={'employeeRole'}
                             onChange={(e) => onChangeInput('employeeRole', e.target.value)}
                             readOnly={isAdmin ? false : true}
@@ -300,12 +305,11 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                             <label htmlFor="employeeStatus">Trạng thái</label>
                             <select
                                 id="employeeStatus"
-                                defaultValue={data.empStatus}
                                 onChange={(e) => onChangeInput('empStatus', e.target.value)}
-                                disabled={!isAdmin}
+                                disabled={action=='add' ||!isAdmin}
                             >
-                                <option value={''} disabled selected={data.empStatus === ''}></option>
-                                <option value={'Đang làm'} selected={data.empStatus == 'Đang làm'}>
+                                <option value={''} disabled selected={action =='add' ? false : data.empStatus === ''}></option>
+                                <option value={'Đang làm'} selected={action == 'add' ||data.empStatus == 'Đang làm'}>
                                     Đang làm
                                 </option>
                                 <option value={'Nghỉ việc'} selected={data.empStatus == 'Nghỉ việc'}>
@@ -313,7 +317,19 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                                 </option>
                             </select>
                         </div>
+                        
                     </div>
+                    <div className={cx('row')}>
+                <FormGroup
+                            labelTitle={'Ngày nghỉ làm'}
+                            htmlForLabel={'employeeEndDate'}
+                            typeInput={'date'}
+                            valueInput={data.empEndDate}
+                            idInput={'employeeEndDate'}
+                            onChange={(e) => onChangeInput('empEndDate', e.target.value)}
+                            readOnly={isAdmin && data.empStatus == "Nghỉ việc" ? false : true}
+                        />
+            </div>
                     <div className={cx('form-action')}>{children}</div>
                 </div>
             </div>
@@ -370,6 +386,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                     </Button>
                 )}
             </Modal>
+            
         </div>
     );
 };
