@@ -1,6 +1,6 @@
 import React from 'react';
-import { ModalEmployee, Button } from '@/components';
 import { useSelector } from 'react-redux';
+import { ModalReadEmployee } from '../../components';
 
 
 const ProfilePage = () => {
@@ -8,7 +8,7 @@ const ProfilePage = () => {
     console.log(currentUser)
 
     return (
-            <ModalEmployee isAdmin={false} data={currentUser} profile={true}/>  
+            <ModalReadEmployee data={currentUser}/>  
     );
 }
 

@@ -32,7 +32,7 @@ const RootLayout = () => {
             }
         };
         const tokenUser = localStorage.getItem('tokenUser');
-        if (tokenUser != 'null') {
+        if (tokenUser && tokenUser != 'null') {
             const { employeeID, email, accessToken, refreshToken } = JSON.parse(localStorage.getItem('tokenUser'));
             fetchUser(accessToken, email, employeeID);
         }else {

@@ -9,7 +9,7 @@ class EmployeeDTO {
         this.empPhone= data.phoneNumber,
         this.empAddress= data.address,
         this.empStartDate= data.startDate.split('T')[0],
-        this.empEndDate= data.endDate ? data.startDate.split('T')[0] : "",
+        this.empEndDate= data.endDate ? data.endDate.split('T')[0] : "",
         this.warehouseId= data.warehouseID,
         this.empRole= data.roles,
         this.empStatus= data.status == 'ACTIVE' ? 'Đang làm' : 'Nghỉ việc',

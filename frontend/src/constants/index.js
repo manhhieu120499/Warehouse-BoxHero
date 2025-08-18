@@ -13,13 +13,13 @@ export const mapperRole = {
         roleID: 2,
        roleName: 'WARE_MANAGER'
     },
-    'Nhân viên nhận hàng': {
-        roleID:3,
-        roleName: 'STOCK_RECEIVER'
-    },
     'Nhân viên xuất hàng': {
-        roleID: 4,
+        roleID: 3,
         roleName:'STOCK_DISPATCHER'
+    },
+    'Nhân viên nhận hàng': {
+        roleID: 4,
+        roleName: 'STOCK_RECEIVER'
     },
     'Kế toán': {
         roleID: 5,

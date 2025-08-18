@@ -21,6 +21,7 @@ import ModalUpdate from "./ModalUpdate"
 import ModalCreateAccount from './ModalCreateAccount';
 import CategoryList from './CategoryList';
 import ModalCreateCategory from './ModalCreateCategory';
+import ModalReadEmployee from './ModalReadEmployee';
 
 export {
     GlobalStyle,
@@ -45,5 +46,6 @@ export {
     ModalUpdate,
     ModalCreateAccount,
     CategoryList,
-    ModalCreateCategory
+    ModalCreateCategory,
+    ModalReadEmployee
 };
