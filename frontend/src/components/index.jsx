@@ -22,6 +22,7 @@ import ModalCreateAccount from './ModalCreateAccount';
 import CategoryList from './CategoryList';
 import ModalCreateCategory from './ModalCreateCategory';
 import ModalReadEmployee from './ModalReadEmployee';
+import ViewAccountProfile from './ViewAccountProfile';
 
 export {
     GlobalStyle,
@@ -47,5 +48,6 @@ export {
     ModalCreateAccount,
     CategoryList,
     ModalCreateCategory,
-    ModalReadEmployee
+    ModalReadEmployee,
+    ViewAccountProfile
 };
