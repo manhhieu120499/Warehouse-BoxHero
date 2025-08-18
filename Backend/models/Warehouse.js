@@ -32,6 +32,7 @@ module.exports = (sequelize, Sequelize) => {
 
     Warehouse.associate = (models) => {
         Warehouse.hasMany(models.Zone, { foreignKey: 'warehouseID' });
+        Warehouse.hasMany(models.Batch, { foreignKey: 'warehouseID', as: 'batches' });
     };
 
     return Warehouse;

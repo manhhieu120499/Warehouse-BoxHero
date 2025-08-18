@@ -34,6 +34,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.INTEGER,
                 allowNull: false,
             },
+            warehouseID: {
+                type: Sequelize.STRING,
+                allowNull: false,
+            },
             status: {
                 type: Sequelize.ENUM('ERROR', 'AVAILABLE', 'EXPIRED'),
                 allowNull: false,
@@ -50,6 +54,7 @@ module.exports = (sequelize, Sequelize) => {
         Batch.belongsTo(models.Product, { foreignKey: 'productID', as: 'product' });
         Batch.belongsTo(models.Supplier, { foreignKey: 'supplierID', as: 'supplier' });
         Batch.belongsTo(models.Unit, { foreignKey: 'unitID', as: 'unit' });
+        Batch.belongsTo(models.Warehouse, { foreignKey: 'warehouseID', as: 'warehouse' });
 
         // Quan hệ với Box
         Batch.belongsToMany(models.Box, {

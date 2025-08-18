@@ -39,6 +39,13 @@ module.exports = (sequelize, Sequelize) => {
 
     Supplier.associate = (models) => {
         Supplier.hasMany(models.Batch, { foreignKey: 'supplierID', as: 'batches' });
+
+        Supplier.belongsToMany(models.Product, {
+            through: models.Batch,
+            foreignKey: 'supplierID',
+            otherKey: 'productID',
+            as: 'products',
+        });
     };
 
     return Supplier;

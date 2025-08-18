@@ -108,6 +108,18 @@ class SupplierController {
             return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: e.message });
         }
     }
+
+    // Lấy danh sách sản phẩm mà nhà cung cấp đã cung cấp
+    async getProductsBySupplierID(req, res) {
+        try {
+            const { supplierID } = req.params;
+            const { statusHttp, ...response } = await SupplierService.getProductsBySupplierID(supplierID);
+            return res.status(statusHttp).json(response);
+        } catch (e) {
+            console.log(e);
+            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: e.message });
+        }
+    }
 }
 
 module.exports = new SupplierController();
