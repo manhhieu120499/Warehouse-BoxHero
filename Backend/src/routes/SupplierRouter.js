@@ -1,13 +1,25 @@
 const express = require('express');
 const validate = require('../validates/validate');
 const SupplierController = require('../controllers/SupplierController');
-const { checkEmailExists, checkSupplierValidate } = require('../validates/supplier.validation');
-const { authUserIsManager } = require('../middleware/AuthMiddleware');
+const {
+    checkEmailExists,
+    checkSupplierValidate,
+    checkSupplierIDValidate,
+} = require('../validates/supplier.validation');
+const { authUserIsManager, authUserIsManagerWithoutWarehouse } = require('../middleware/AuthMiddleware');
 const router = express.Router();
 // router.get("/", (req, res) => {
 //     return res.send("SupplierRouter Router is working!");
 // });
 router.get('/check-email-exists', checkEmailExists, validate, SupplierController.getSupplierByID);
+
+// Lấy danh sách tất cả các sản phẩm mà nhà cung cấp đã cung cấp
+router.get(
+    '/provided-products/:supplierID',
+    checkSupplierIDValidate,
+    authUserIsManagerWithoutWarehouse,
+    SupplierController.getProductsBySupplierID,
+);
 
 // Tạo nhà cung cấp
 router.post('/', authUserIsManager, checkSupplierValidate, validate, SupplierController.createSupplier);

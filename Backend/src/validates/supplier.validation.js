@@ -1,4 +1,4 @@
-const { query, body } = require('express-validator');
+const { query, body, param } = require('express-validator');
 const checkEmailExists = [
     query('email').notEmpty().withMessage('Email là bắt buộc').bail().isEmail().withMessage('Email không hợp lệ'),
 ];
@@ -35,7 +35,9 @@ const checkSupplierValidate = [
             return true;
         }),
 ];
+const checkSupplierIDValidate = [param('supplierID').notEmpty().withMessage('Mã nhà cung cấp là bắt buộc').bail()];
 module.exports = {
     checkEmailExists,
     checkSupplierValidate,
+    checkSupplierIDValidate,
 };

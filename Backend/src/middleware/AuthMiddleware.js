@@ -42,6 +42,7 @@ const authUser = async (req, res, next) => {
     }
 };
 
+// xác nhận xem có phải là system_admin hoặc là warehouse_manager của kho bằng warehouseID
 const authUserIsManager = async (req, res, next) => {
     try {
         const employeeID = req.headers['employeeid'];
@@ -85,7 +86,7 @@ const authUserIsManager = async (req, res, next) => {
         } else {
             return res.status(HTTP_BAD_REQUEST).json({
                 status: 'ERR',
-                message: 'Token is required',
+                message: 'Token là bắt buộc',
             });
         }
     } catch (e) {
@@ -97,4 +98,54 @@ const authUserIsManager = async (req, res, next) => {
     }
 };
 
-module.exports = { authUser, authUserIsManager };
+// xác nhận xem có phải là system_admin hoặc là warehouse_manager
+const authUserIsManagerWithoutWarehouse = async (req, res, next) => {
+    try {
+        const employeeID = req.headers['employeeid'];
+
+        const token = req.headers.token;
+        if (token) {
+            const accessToken = token.split(' ')[1];
+            jwt.verify(accessToken, process.env.ACCESS_TOKEN, (err, user) => {
+                if (err) {
+                    console.log(err);
+                    return res.status(HTTP_UNAUTHORIZED).json({
+                        status: 'ERR',
+                        message: 'Token là không hợp lệ',
+                    });
+                } else if (employeeID != user.payload.employeeID) {
+                    return res.status(HTTP_UNAUTHORIZED).json({
+                        status: 'ERR',
+                        message: 'Employee ID không trùng với token',
+                    });
+                } else {
+                    const hasWareManagerRole = user.payload.roles.some((role) => role.roleName === 'WARE_MANAGER');
+
+                    const hasSysAdminRole = user.payload.roles.some((role) => role.roleName === 'SYSTEM_ADMIN');
+
+                    if (!hasSysAdminRole && !hasWareManagerRole) {
+                        return res.status(HTTP_FORBIDDEN).json({
+                            status: 'ERR',
+                            message: 'Bạn không có quyền truy cập tài nguyên này',
+                        });
+                    } else {
+                        next();
+                    }
+                }
+            });
+        } else {
+            return res.status(HTTP_BAD_REQUEST).json({
+                status: 'ERR',
+                message: 'Token là bắt buộc',
+            });
+        }
+    } catch (e) {
+        console.log(e);
+        return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
+            status: 'ERR',
+            message: e.message,
+        });
+    }
+};
+
+module.exports = { authUser, authUserIsManager, authUserIsManagerWithoutWarehouse };

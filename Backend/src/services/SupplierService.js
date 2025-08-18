@@ -1,5 +1,8 @@
 const db = require('../../models/index');
 const Supplier = db.Supplier;
+const Product = db.Product;
+
+const HTTP_OK = process.env.HTTP_OK || 200;
 
 class SupplierService {
     async searchSuppliers({ supplierID, phoneNumber, email, address, supplierName }, page = 1, limit = 10) {
@@ -128,6 +131,39 @@ class SupplierService {
                     resolve({
                         status: 'OK',
                         message: 'Xóa nhà cung cấp thành công',
+                    });
+                }
+            } catch (e) {
+                console.log(e);
+                reject(e);
+            }
+        });
+    }
+
+    getProductsBySupplierID(supplierID) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const supplier = await Supplier.findByPk(supplierID, {
+                    include: [
+                        {
+                            model: Product,
+                            as: 'products',
+                            through: { attributes: [] }, // không lấy thông tin batch
+                        },
+                    ],
+                });
+                if (supplier) {
+                    resolve({
+                        statusHttp: 200,
+                        status: 'OK',
+                        message: 'Lấy danh sách sản phẩm thành công',
+                        products: supplier.products,
+                    });
+                } else {
+                    resolve({
+                        statusHttp: 404,
+                        status: 'ERR',
+                        message: 'Không tìm thấy sản phẩm nào',
                     });
                 }
             } catch (e) {
