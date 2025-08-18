@@ -27,6 +27,28 @@ class EmployeeController {
             });
         }
     }
+    async updateEmployee(req, res) {
+        try{
+            const { statusHttp, ...response } = await EmployeeService.updateEmployee(req.body);
+            return res.status(statusHttp).json(response);
+        }catch(err) {
+            return res.status(err.statusHttp).json({
+                status: 'ERR',
+                message: err.message,
+            });
+        }
+    }
+    async searchEmployee(req, res) {
+        try{
+            const adminId = req.headers['employeeid']
+            console.log(adminId)
+            const { statusHttp, ...response } = await EmployeeService.searchEmployee(adminId,req.query);
+            console.log(statusHttp)
+            return res.status(statusHttp).json(response);
+        }catch(err) {
+            return res.status(err.statusHttp).json(err.message);
+        }
+    }
 }
 
 module.exports = new EmployeeController();

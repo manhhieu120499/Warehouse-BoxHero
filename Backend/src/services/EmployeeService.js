@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const Employee = db.Employee;
 const Account = db.Account;
 const Role = db.Role;
+const AccountRoles = db.AccountRoles
 
 dotenv.config();
 
@@ -104,9 +105,9 @@ class EmployeeService {
     }
     updateEmployee(employee) {
         return new Promise(async (resolve, reject) => {
-            const transaction = await sequelize.transaction()
+            const transaction = await db.sequelize.transaction()
             try{
-                const {employeeID,
+                const { employeeID,
                         employeeName,
                         image,
                         cccd,
@@ -116,7 +117,8 @@ class EmployeeService {
                         address,
                         startDate,
                         endDate,
-                        statusWork,
+                        status,
+                        roles,
                         warehouseID} = employee
                 let updateEmployee = {
                         employeeID,
@@ -128,7 +130,8 @@ class EmployeeService {
                         gender,
                         address,
                         startDate,
-                        statusWork,
+                        status,
+                        roles,
                         warehouseID
                 }
                 const checkExist = await Employee.findOne({
@@ -141,7 +144,7 @@ class EmployeeService {
                         message: 'Nhân viên không tồn tại'
                     })
                 }
-                if(statusWork == 'inactive') {
+                if(status == 'INACTIVE') {
                     if(!endDate) {
                         resolve({
                         status: 'ERR',
@@ -149,30 +152,90 @@ class EmployeeService {
                         message: 'Ngày kết thúc bắt buộc khi nhân viên nghỉ việc'
                     }) }else {
                         updateEmployee.endDate = endDate
-                        // update account
+                        const updateStatusAccount = await Account.update({
+                            statusWork: status
+                        },{
+                            where: {employeeID},
+                        }, {transaction})
                     }
                 }
                 const updateResponse = await Employee.update({
-                        employeeID,
-                        employeeName,
-                        image,
-                        cccd,
-                        dob,
-                        phoneNumber,
-                        gender,
-                        address,
-                        startDate,
-                        warehouseID
-                })
+                        ...updateEmployee
+                }, {where: {employeeID}}, {transaction})
+                
+                const accountEmployee = await Account.findOne({where: {employeeID}})
+                const newRole = roles.map(roleItem => Number.parseInt(roleItem.roleID))
+                // update new role
+                
+                const updateRoleAccount = await accountEmployee.setRoles(newRole, {transaction})
+                console.log('---check-update-success---')
                 await transaction.commit()
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Cập nhật thông tin nhân viên thành công'
+                })
             }catch(err) {
                 await transaction.rollback()
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
                     message: err,
+                })   
+            }
+        })
+    }
+    searchEmployee(adminId,keyword) {
+        return new Promise(async (resolve, reject) => {
+            try{
+                let where = {employeeID: {[Op.ne]: adminId}}
+                if(keyword.employeeID) where.employeeID = {[Op.like]: `%${keyword.employeeID}%`}
+                if(keyword.phoneNumber) where.phoneNumber = {[Op.like]: `%${keyword.phoneNumber}%`}
+                if(keyword.status) where.status = keyword.status
+                const resultSearch = await Employee.findAll({
+                    where,
+                    include: [
+                        {
+                            model: Account,
+                            as: 'account',
+                            include: [
+                                {
+                                    model: Role,
+                                    as: 'roles',
+                                    through: {attributes: []} // bỏ qua bảng phụ quan hệ nhiều nhiều
+                                }
+                            ]
+                        }
+                    ]
                 })
+                //console.log(resultSearch)
+                if(resultSearch) {
+                    const formatResultSearch = []
+                    resultSearch.forEach(emp => {
+                        const {account, ...response} = emp.toJSON()
+                         const {roles, ...responseAccount} = account
+                         formatResultSearch.push({
+                            ...response,
+                            roles
+                         })
+                    })
                 
+                    resolve({
+                        status: 'OK',
+                        statusHttp: HTTP_OK,
+                        message: 'Lọc danh sách thành công',
+                        employeeFilter: formatResultSearch
+                    })
+                }
+                //console.log(1)
+            } catch (err) {
+                //console.log(3)
+                // throw err
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err
+                })
             }
         })
     }
