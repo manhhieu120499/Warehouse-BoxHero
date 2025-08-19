@@ -22,6 +22,7 @@ const FormGroup = ({
     idInput,
     onChange,
     checked = false,
+    placeholder,
 }) => {
     return (
         <div className={cx('form-group')}>
@@ -33,6 +34,7 @@ const FormGroup = ({
                 value={valueInput}
                 onChange={onChange}
                 checked={checked}
+                placeholder={placeholder}
             />
             {children}
         </div>
@@ -172,6 +174,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                             readOnly={true}
                             valueInput={data.empId}
                             typeInput={'text'}
+                            placeholder={'Nhấn tạo mã'}
                         >
                             {isAdmin && action != 'update' && (
                                 <Button
@@ -277,7 +280,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                                 onChange={(e) => onChangeInput('warehouseId', e.target.value)}
                                 disabled={!isAdmin}
                             >
-                                <option value={''} disabled selected={data.warehouseId === ''}></option>
+                                <option value={''} disabled selected={data.warehouseId === ''}>-- Chọn kho --</option>
                                 {listWarehouseId.map((item, index) => (
                                     <option key={index} value={item} selected={data.warehouseId === item}>
                                         {item}
@@ -295,6 +298,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                             idInput={'employeeRole'}
                             onChange={(e) => onChangeInput('employeeRole', e.target.value)}
                             readOnly={isAdmin ? false : true}
+                            placeholder={"-- Thêm chức vụ --"}
                         >
                             <Tippy content={'Xem tất cả quyền'}>
                                 <Eye size={22} className={cx('view-detail')} onClick={handleShowViewDetailRole} />
