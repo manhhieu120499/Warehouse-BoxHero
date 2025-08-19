@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect } from "react";
-import { Routes, Route, Outlet, useNavigate } from "react-router-dom";
+import { Routes, Route, Outlet, useNavigate, Navigate } from "react-router-dom";
 import { publicRoute } from "./routes";
 import DefaultLayout from "./layouts/DefaultLayout";
 import {Toaster} from "react-hot-toast";
@@ -21,9 +21,9 @@ const RootLayout = () => {
                     '/api/employee/employee-detail',
                     {
                         email: email,
-                        employeeID,
                     },
                     accessToken,
+                    employeeID
                 );
                 const {employee} = responseUser
                 dispatch(login({ ...new EmployeeDTO({ ...employee, roles }) }));
