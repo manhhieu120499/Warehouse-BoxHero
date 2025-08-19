@@ -43,8 +43,6 @@ const ModalReadEmployee = ({ data, onClose, className }) => {
     const [viewDetailRole, setViewDetailRole] = useState(false);
     const listRoleUser = data.empRole || [];
 
-
-    console.log(data)
     const handleShowViewDetailRole = () => {
         setViewDetailRole((prev) => !prev);
     };
