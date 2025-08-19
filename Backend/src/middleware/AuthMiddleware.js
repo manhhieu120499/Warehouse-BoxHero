@@ -8,7 +8,7 @@ const HTTP_FORBIDDEN = process.env.HTTP_FORBIDDEN;
 
 const authUser = async (req, res, next) => {
     try {
-        const employeeID = req.body.employeeID ? req.body.employeeID : req.query.employeeID;
+        const employeeID = req.headers['employeeid'];
         const token = req.headers.token;
         if (token) {
             const accessToken = token.split(' ')[1];

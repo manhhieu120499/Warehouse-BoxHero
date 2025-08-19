@@ -218,6 +218,51 @@ class AccountService {
             }
         });
     }
+
+    changePassword(changePasswordData) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const transaction = await db.sequelize.transaction();
+
+                const { email, oldPassword, newPassword } = changePasswordData;
+
+                const accountFind = await Account.findOne({ where: { email } });
+                if (!accountFind) {
+                    resolve({
+                        status: 'ERR',
+                        message: 'Email không tồn tại',
+                        statusHttp: HTTP_NOT_FOUND,
+                    });
+                }
+
+                const comparePassword = await bcrypt.compare(oldPassword, accountFind.password);
+                console.log(comparePassword);
+
+                if (!comparePassword) {
+                    resolve({
+                        status: 'ERR',
+                        message: 'Mật khẩu cũ không chính xác',
+                        statusHttp: HTTP_UNAUTHORIZED,
+                    });
+                }
+
+                const hashNewPassword = bcrypt.hashSync(newPassword, 10);
+                await Account.update({ password: hashNewPassword }, { where: { email } }, { transaction });
+
+                await transaction.commit();
+                resolve({
+                    status: 'OK',
+                    message: 'Đổi mật khẩu thành công',
+                    statusHttp: HTTP_OK,
+                });
+            } catch (e) {
+                await transaction.rollback();
+
+                console.log(e);
+                reject(e);
+            }
+        });
+    }
 }
 
 module.exports = new AccountService();

@@ -140,8 +140,32 @@ const checkSignInValidate = [
     body('password').notEmpty().withMessage('Mật khẩu là bắt buộc').bail(),
 ];
 
+const changePasswordValidate = [
+    body('email').notEmpty().withMessage('Email là bắt buộc').bail(),
+    body('oldPassword').notEmpty().withMessage('Mật khẩu cũ là bắt buộc').bail(),
+    body('newPassword')
+        .notEmpty()
+        .withMessage('Mật khẩu mới là bắt buộc')
+        .bail()
+        .isLength({ min: 6 })
+        .withMessage('Mật khẩu mới phải có ít nhất 6 ký tự')
+        .bail()
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])/)
+        .withMessage(
+            'Mật khẩu mới phải chứa ít nhất 1 chữ cái viết hoa, 1 chữ cái viết thường, 1 số và 1 ký tự đặc biệt',
+        ),
+    body('confirmPassword').notEmpty().withMessage('Xác nhận mật khẩu là bắt buộc').bail(),
+    body('confirmPassword').custom((value, { req }) => {
+        if (value !== req.body.newPassword) {
+            throw new Error('Xác nhận mật khẩu không khớp');
+        }
+        return true;
+    }),
+];
+
 module.exports = {
     checkEmailExists,
     checkSignUpValidate,
     checkSignInValidate,
+    changePasswordValidate,
 };
