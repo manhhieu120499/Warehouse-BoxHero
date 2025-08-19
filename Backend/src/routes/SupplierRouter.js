@@ -8,9 +8,8 @@ const {
 } = require('../validates/supplier.validation');
 const { authUserIsManager, authUserIsManagerWithoutWarehouse } = require('../middleware/AuthMiddleware');
 const router = express.Router();
-// router.get("/", (req, res) => {
-//     return res.send("SupplierRouter Router is working!");
-// });
+
+// check mail đã tồn tại
 router.get('/check-email-exists', checkEmailExists, validate, SupplierController.getSupplierByID);
 
 // Lấy danh sách tất cả các sản phẩm mà nhà cung cấp đã cung cấp

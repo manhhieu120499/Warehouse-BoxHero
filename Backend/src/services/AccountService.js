@@ -46,6 +46,7 @@ class AccountService {
     }
     createAccount(newAccount) {
         return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
             try {
                 const {
                     employeeID,
@@ -89,31 +90,40 @@ class AccountService {
                 const hash = bcrypt.hashSync(password, 10);
 
                 // Tạo employee
-                const employee = await Employee.create({
-                    employeeID,
-                    employeeName,
-                    image,
-                    cccd,
-                    dob,
-                    phoneNumber,
-                    gender,
-                    address,
-                    startDate,
-                    endDate,
-                    warehouseID,
-                    status,
-                });
+                const employee = await Employee.create(
+                    {
+                        employeeID,
+                        employeeName,
+                        image,
+                        cccd,
+                        dob,
+                        phoneNumber,
+                        gender,
+                        address,
+                        startDate,
+                        endDate,
+                        warehouseID,
+                        status,
+                    },
+                    { transaction },
+                );
 
                 // Tạo account + gán roles nhanh
-                const account = await Account.create({
-                    email,
-                    password: hash,
-                    statusWork: status,
-                    employeeID: employee.employeeID,
-                });
+                const account = await Account.create(
+                    {
+                        email,
+                        password: hash,
+                        statusWork: status,
+                        employeeID: employee.employeeID,
+                    },
+                    { transaction },
+                );
 
                 if (roles?.length) {
-                    await account.setRoles(roles.map((r) => r.roleID));
+                    await account.setRoles(
+                        roles.map((r) => r.roleID),
+                        { transaction },
+                    );
                 }
 
                 // Generate token
@@ -121,6 +131,7 @@ class AccountService {
                 const accessToken = await generateAccessToken(payload);
                 const refreshToken = await generateRefreshToken(payload);
 
+                await transaction.commit();
                 resolve({
                     statusHttp: HTTP_OK,
                     status: 'OK',
@@ -129,6 +140,7 @@ class AccountService {
                     refreshToken,
                 });
             } catch (e) {
+                await transaction.rollback();
                 console.log(e);
                 reject(e);
             }
@@ -221,9 +233,8 @@ class AccountService {
 
     changePassword(changePasswordData) {
         return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
             try {
-                const transaction = await db.sequelize.transaction();
-
                 const { email, oldPassword, newPassword } = changePasswordData;
 
                 const accountFind = await Account.findOne({ where: { email } });
@@ -236,7 +247,6 @@ class AccountService {
                 }
 
                 const comparePassword = await bcrypt.compare(oldPassword, accountFind.password);
-                console.log(comparePassword);
 
                 if (!comparePassword) {
                     resolve({
