@@ -14,6 +14,7 @@ import Login from './Login';
 import Register from './Register';
 import Customer from './CustomerPage';
 import ProfilePage from './ProfilePage';
+import ProposalPage from "./ProposalPage"
 
 export {
     Dashboard,
@@ -31,5 +32,6 @@ export {
     Login,
     Register,
     Customer,
-    ProfilePage
+    ProfilePage,
+    ProposalPage
 };

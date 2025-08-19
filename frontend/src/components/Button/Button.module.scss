@@ -55,6 +55,15 @@
     }
 }
 
+.success {
+    background-color: var(--success);
+    color: var(--white);
+
+    &:hover {
+        background-color: var(--success-hover);
+    }
+}
+
 .text {
     &:hover {
         text-decoration: underline;

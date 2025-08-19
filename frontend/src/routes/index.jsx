@@ -15,6 +15,7 @@ import {
     Register,
     Customer,
     ProfilePage,
+    ProposalPage,
 } from '../pages';
 import DefaultLayout from '../layouts/DefaultLayout';
 
@@ -97,6 +98,11 @@ const publicRoute = [
     {
         page: ProfilePage,
         path: '/profile',
+        layout: DefaultLayout,
+    },
+    {
+        page: ProposalPage,
+        path: '/proposal',
         layout: DefaultLayout,
     },
 ];

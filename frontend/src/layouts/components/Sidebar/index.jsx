@@ -61,7 +61,7 @@ const Sidebar = () => {
                 {
                     title: 'Tạo phiếu đề xuất',
                     iconName: CircleArrowRight,
-                    path: '/ware-receive'
+                    path: '/proposal'
                 },
                 {
                     title: 'Nhập kho',
