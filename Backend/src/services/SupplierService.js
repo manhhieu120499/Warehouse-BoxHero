@@ -70,6 +70,7 @@ class SupplierService {
     }
     createSupplier(newSupplier) {
         return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
             try {
                 const { supplierID, supplierName, address, phoneNumber, email } = newSupplier;
                 const supplierFind = await Supplier.findOne({ where: { supplierID } });
@@ -79,7 +80,11 @@ class SupplierService {
                         message: 'Mã nhà cung cấp đã tồn tại',
                     });
                 } else {
-                    const supplier = await Supplier.create({ supplierID, supplierName, address, phoneNumber, email });
+                    const supplier = await Supplier.create(
+                        { supplierID, supplierName, address, phoneNumber, email },
+                        { transaction },
+                    );
+                    await transaction.commit();
                     resolve({
                         status: 'OK',
                         message: 'Tạo nhà cung cấp thành công',
@@ -87,6 +92,7 @@ class SupplierService {
                     });
                 }
             } catch (e) {
+                await transaction.rollback();
                 console.log(e);
                 reject(e);
             }
@@ -95,6 +101,7 @@ class SupplierService {
 
     updateSupplier(supplierID, updateData) {
         return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
             try {
                 const supplier = await Supplier.findOne({ where: { supplierID } });
                 if (!supplier) {
@@ -103,7 +110,8 @@ class SupplierService {
                         message: 'Không tìm thấy nhà cung cấp',
                     });
                 } else {
-                    await supplier.update(updateData);
+                    await supplier.update(updateData, { transaction });
+                    await transaction.commit();
                     resolve({
                         status: 'OK',
                         message: 'Cập nhật nhà cung cấp thành công',
@@ -111,6 +119,7 @@ class SupplierService {
                     });
                 }
             } catch (e) {
+                await transaction.rollback();
                 console.log(e);
                 reject(e);
             }

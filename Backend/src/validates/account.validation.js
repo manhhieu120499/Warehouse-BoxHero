@@ -110,15 +110,7 @@ const checkSignUpValidate = [
         .bail()
         .isDate()
         .withMessage('Ngày bắt đầu không hợp lệ')
-        .bail()
-        .custom((value) => {
-            const today = new Date();
-            const startDate = new Date(value);
-            if (startDate < today) {
-                throw new Error('Ngày bắt đầu phải là trong tương lai');
-            }
-            return true;
-        }),
+        .bail(),
     body('roles')
         .isArray({ min: 1 })
         .withMessage('Danh sách vai trò là bắt buộc và phải là mảng')
