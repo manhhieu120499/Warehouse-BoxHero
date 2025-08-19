@@ -72,7 +72,7 @@ class SupplierService {
         return new Promise(async (resolve, reject) => {
             const transaction = await db.sequelize.transaction();
             try {
-                const { supplierID, supplierName, address, phoneNumber, email } = newSupplier;
+                const { supplierID, supplierName, address, phoneNumber, email, status } = newSupplier;
                 const supplierFind = await Supplier.findOne({ where: { supplierID } });
                 if (supplierFind) {
                     resolve({
@@ -81,7 +81,7 @@ class SupplierService {
                     });
                 } else {
                     const supplier = await Supplier.create(
-                        { supplierID, supplierName, address, phoneNumber, email },
+                        { supplierID, supplierName, address, phoneNumber, email, status },
                         { transaction },
                     );
                     await transaction.commit();

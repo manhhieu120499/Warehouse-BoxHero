@@ -4,7 +4,7 @@ class EmployeeController {
     // post /employee-detail
     async getEmployee(req, res) {
         try {
-            const { employeeID } = req.body;
+            const employeeID = req.headers['employeeid'];
             const { statusHttp, ...response } = await EmployeeService.findEmployee(employeeID);
             return res.status(statusHttp).json(response);
         } catch (err) {
