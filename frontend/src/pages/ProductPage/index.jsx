@@ -5,7 +5,7 @@ import styles from './ProductPage.module.scss';
 import MyTable from '../../components/MyTable';
 import Tippy from '@tippyjs/react';
 import { Eye, PencilIcon } from 'lucide-react';
-import { ProductDetail, ProductEdit, ModelFilter, Button, CategoryList, ModalCreateCategory } from '@/components';
+import { ProductDetail, ProductEdit, ModelFilter, Button } from '@/components';
 import { useDispatch, useSelector } from 'react-redux';
 import { startLoading, stopLoading } from '../../lib/redux/loading/slice';
 import toast from 'react-hot-toast';
@@ -80,7 +80,6 @@ const ProductPage = () => {
         actionName: '',
     });
     const [productData, setProductData] = useState(null);
-    const [showModalCreateCategory, setShowModalCreateCategory] = useState(false)
     const [productList, setProductList] = useState([])
     const [filterProduct, setFilterProduct] = useState({
         productID: '',
@@ -292,7 +291,6 @@ const ProductPage = () => {
                     <span>Thêm nhóm sản phẩm</span>
                 </Button>
             </ModelFilter>
-            <CategoryList/>
             <h1>Danh sách sản phẩm</h1>
             <MyTable
                 className={cx('my-table')}
@@ -313,7 +311,6 @@ const ProductPage = () => {
             {action.productId && action.actionName === 'edit' && (
                 <ProductEdit data={productData} onClose={() => setAction({ productId: null, actionName: null })} />
             )}
-            {showModalCreateCategory && <ModalCreateCategory handleCreate={handleCreateCategory} onClose={handleOpenModalCreateCategory}/>}
         </div>
     );
 };

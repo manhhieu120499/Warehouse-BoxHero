@@ -35,6 +35,9 @@
     // button-color
     --success: #3b82f6;
     --success-hover: #2563eb;
+
+    // table
+    --color-header-table: #f1f5f9;
 }
 html {
     font-size: 62.5%;
@@ -88,4 +91,17 @@ body {
     border-radius: 5px;
     justify-content: center;
     cursor: pointer;
+}
+
+.overlay-loading {
+    position: fixed;
+    z-index: 1010;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0,0,0,.08);
 }

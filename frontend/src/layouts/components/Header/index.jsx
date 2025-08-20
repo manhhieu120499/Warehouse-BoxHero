@@ -29,7 +29,8 @@ const Header = ({ children }) => {
         "/profile": "Thông tin cá nhân",
         "/proposal": 'Tạo phiếu đề xuất',
         "/batch": 'Quản lý lô hàng',
-        "/zone": 'Quản lý khu vực'
+        "/zone": 'Quản lý khu vực',
+        "/categories": 'Nhóm sản phẩm'
     };
     
     const navigate = useNavigate();

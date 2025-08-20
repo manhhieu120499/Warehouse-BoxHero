@@ -43,6 +43,10 @@ const Sidebar = () => {
             iconName: ShoppingCart,
             subMenu: [
                 {
+                    title: 'Nhóm sản phẩm',
+                    path: "/categories"
+                },
+                {
                     title: 'Sản phẩm',
                     iconName: ShoppingBasket,
                     path: '/products',

@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import { Routes, Route, Outlet, useNavigate, Navigate } from "react-router-dom";
 import { publicRoute } from "./routes";
 import DefaultLayout from "./layouts/DefaultLayout";
@@ -8,6 +8,8 @@ import { jwtDecode } from "jwt-decode";
 import { post } from "./utils/httpRequest";
 import EmployeeDTO from "./dtos/EmployeeDTO";
 import { login } from "./lib/redux/auth/authSlice";
+import { setGlobalLoadingHandler } from "../src/utils/httpRequest";
+import { Loading } from "./components";
 
 const RootLayout = () => {
     const dispatch = useDispatch();
@@ -43,6 +45,16 @@ const RootLayout = () => {
 }
 
 function App() {
+  const [loading, setLoading] = useState(true);
+
+  // useEffect(() =>{
+  //   console.log(loading)
+  // }, [loading])
+
+  useEffect(() => {
+    setGlobalLoadingHandler(setLoading);
+  }, []);
+
   return (
     <>
       <Routes>
@@ -67,6 +79,7 @@ function App() {
         
       </Routes>
       <Toaster />
+      {loading && <Loading/>}
     </>
   );
 }

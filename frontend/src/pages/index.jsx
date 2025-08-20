@@ -17,6 +17,7 @@ import ProfilePage from './ProfilePage';
 import ProposalPage from "./ProposalPage"
 import BatchPage from './BatchPage';
 import ZonePage from './ZonePage';
+import CategoryPage from './CategoryPage'
 
 export {
     Dashboard,
@@ -37,5 +38,6 @@ export {
     ProfilePage,
     ProposalPage,
     BatchPage,
-    ZonePage
+    ZonePage,
+    CategoryPage
 };

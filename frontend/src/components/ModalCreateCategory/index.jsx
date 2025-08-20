@@ -12,7 +12,7 @@ const ModalCreateCategory = ({onClose, handleCreate}) => {
 
     const handleGenerateCategoryCode = () => {
         const code = md5(Date.now()).slice(-5)
-        return `GSP${code}`
+        return `CA${code}`
     }
 
     return (
@@ -20,8 +20,8 @@ const ModalCreateCategory = ({onClose, handleCreate}) => {
             <form onSubmit={handleSubmit(handleCreate)} className={cx('wrapper-modal-create-category')}>
             <div className={cx('form-group')}>
                 <label>Mã nhóm sản phẩm</label>
-                <input type="text" placeholder="Mã nhóm sản phẩm" readOnly {...register("categoryId", {required: "Mã nhóm sản phẩm không được để trống"})}/>
-                <Button type="button" primary onClick={() => setValue("categoryId", handleGenerateCategoryCode())}>
+                <input type="text" placeholder="Mã nhóm sản phẩm" readOnly {...register("categoryID", {required: "Mã nhóm sản phẩm không được để trống"})}/>
+                <Button type="button" primary onClick={() => setValue("categoryID", handleGenerateCategoryCode())}>
                     <span>Tạo mã</span>
                 </Button>
             </div>
@@ -33,7 +33,7 @@ const ModalCreateCategory = ({onClose, handleCreate}) => {
                 })}/>
             </div>
             {errors.categoryName && <p className={cx("message-error")}>{errors.categoryName.message}</p>}
-            <div className={cx('form-group')}>
+            {/* <div className={cx('form-group')}>
                 <label>Chọn kho</label>
                 <select defaultValue={""} {...register('warehouseId', {
                     required: "Kho không được để trống"
@@ -54,7 +54,7 @@ const ModalCreateCategory = ({onClose, handleCreate}) => {
                     <option value={'B01'}>B</option>
                 </select>
             </div>
-            {errors.locationId && <p className={cx("message-error")}>{errors.locationId.message}</p>}
+            {errors.locationId && <p className={cx("message-error")}>{errors.locationId.message}</p>} */}
             <div className={cx('btn-create-category')}>
                 <Button type="submit" primary>
                     <span>Tạo</span>
