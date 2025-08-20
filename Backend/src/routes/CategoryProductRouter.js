@@ -13,4 +13,6 @@ router.post(
     CategoryProductController.createCategory,
 );
 
+router.get('/get-all-categories', authUserIsManagerWithoutWarehouse, CategoryProductController.getAllCategories);
+
 module.exports = router;
