@@ -13,7 +13,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         {
             tableName: 'account_roles',
-            timestamps: false,
+            timestamps: true,
         },
     );
 

@@ -46,7 +46,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         {
             tableName: 'batches',
-            timestamps: false,
+            timestamps: true,
         },
     );
 

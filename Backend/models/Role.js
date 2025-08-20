@@ -19,7 +19,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         {
             tableName: 'roles',
-            timestamps: false,
+            timestamps: true,
         },
     );
 

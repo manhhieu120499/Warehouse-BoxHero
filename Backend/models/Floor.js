@@ -13,7 +13,12 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
-    });
+    },
+        {
+            tableName: 'floors',
+            timestamps: true,
+        } 
+    );
 
     Floor.associate = (models) => {
         Floor.belongsTo(models.Shelf, { foreignKey: 'shelfID' });
