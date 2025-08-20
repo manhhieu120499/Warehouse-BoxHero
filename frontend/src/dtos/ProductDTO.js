@@ -1,9 +1,9 @@
 class ProductDTO {
     constructor(data) {
-        this.skgu = data.categoryID;
+        this.skgu = data.category.categoryName;
         this.sku = data.productID;
         this.productName = data.productName;
-        this.minStock = data.minStock
+        this.minStock = data.minStock;
     }
 }
 

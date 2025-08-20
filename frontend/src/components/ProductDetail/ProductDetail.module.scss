@@ -37,7 +37,6 @@
 
         & > .column-info {
             width: 100%;
-            
 
             & > span {
                 font-size: 1.6rem;
@@ -51,7 +50,7 @@
     }
 
     & > .row-info:nth-of-type(3) {
-         & > .column-info:first-child {
+        & > .column-info:first-child {
             width: 100%;
             & > span {
                 max-width: 850px;
@@ -109,13 +108,12 @@
         border: 1px solid #e7e7e7;
         border-radius: 5px;
         padding: 10px;
-        box-shadow: 0 0 8px rgba(0,0,0,.06);
-        
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
+
         & > .qrcode {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            
         }
     }
 

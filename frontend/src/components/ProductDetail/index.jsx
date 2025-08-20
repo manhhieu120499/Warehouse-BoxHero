@@ -57,6 +57,12 @@ const tableColumns = [
         render: (text) => <p className={cx('number')}>{text}</p>,
     },
     {
+        title: 'Đơn vị nhập',
+        dataIndex: 'unit',
+        key: 'unit',
+        render: (text, record) => <p className={cx('number')}>{record.unit}</p>,
+    },
+    {
         title: 'Vị trí',
         dataIndex: 'location',
         key: 'location',
@@ -172,7 +178,7 @@ const dataSource = [
 
 const ProductDetail = ({ data, classname, onClose }) => {
     const [currentPage, setCurrentPage] = useState(1);
-    const [showQRCode, setShowQRCode] = useState(false)
+    const [showQRCode, setShowQRCode] = useState(false);
     const qrCodeRef = useRef();
 
     const handleOnChange = useCallback((page, pageSize) => {
@@ -180,18 +186,18 @@ const ProductDetail = ({ data, classname, onClose }) => {
     }, []);
 
     const handleCloseQRCodePreview = useCallback(() => {
-        return setShowQRCode(prev => !prev)
-    }, [])
+        return setShowQRCode((prev) => !prev);
+    }, []);
 
     const handleDownloadQRCode = () => {
-        const a = document.createElement("a")
-        a.href = qrCodeRef.current.src
-        a.download = `${Date.now()}-qrcode.png`
-        document.body.appendChild(a)
-        a.click()
+        const a = document.createElement('a');
+        a.href = qrCodeRef.current.src;
+        a.download = `${Date.now()}-qrcode.png`;
+        document.body.appendChild(a);
+        a.click();
         document.body.removeChild(a);
-    }
-    
+    };
+
     return (
         <>
             <Modal isOpenInfo={true} onClose={onClose}>
@@ -218,20 +224,20 @@ const ProductDetail = ({ data, classname, onClose }) => {
                             />
                         </div>
                         <div className={cx('product-info')}>
-                            <RowItem firstTitle="Mã nhóm sản phẩm" firstValue={data.skug} />
                             <RowItem
-                                firstTitle="Mã sản phẩm"
-                                firstValue={data.sku}
+                                firstTitle="Mã nhóm sản phẩm"
+                                firstValue={data.skug}
                                 secondTitle="Tên sản phẩm"
                                 secondValue={data.productName}
                             />
-                            <RowItem firstTitle="Mô tả" firstValue={data.des} />
                             <RowItem
-                                firstTitle="Đơn giá"
-                                firstValue={data.price}
+                                firstTitle="Mã sản phẩm"
+                                firstValue={data.sku}
                                 secondTitle="Đơn vị tính"
                                 secondValue={data.unit}
                             />
+                            <RowItem firstTitle="Mô tả" firstValue={data.des} />
+                            <RowItem firstTitle="Đơn giá" firstValue={data.price} />
                             <RowItem firstTitle="Mã nhà cung cấp" firstValue={data.supplierId} />
                         </div>
                     </div>
@@ -249,17 +255,33 @@ const ProductDetail = ({ data, classname, onClose }) => {
                     </div>
                 </div>
             </Modal>
-            {showQRCode && <Modal isOpenInfo={true} onClose={handleCloseQRCodePreview}>
-                <div className={cx('wrapper-qrcode')}>
-                    <h2>QRCode sản phẩm</h2>
-                    <div className={cx('qrcode-preview')}>
-                        <Image ref={qrCodeRef} classname={cx('qrcode')} src={data.qrcode || 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/QR_Code_Example.svg/368px-QR_Code_Example.svg.png'}/>
+            {showQRCode && (
+                <Modal isOpenInfo={true} onClose={handleCloseQRCodePreview}>
+                    <div className={cx('wrapper-qrcode')}>
+                        <h2>QRCode sản phẩm</h2>
+                        <div className={cx('qrcode-preview')}>
+                            <Image
+                                ref={qrCodeRef}
+                                classname={cx('qrcode')}
+                                src={
+                                    data.qrcode ||
+                                    'https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/QR_Code_Example.svg/368px-QR_Code_Example.svg.png'
+                                }
+                            />
+                        </div>
+                        <Button
+                            className={cx('download-qrcode')}
+                            rounded
+                            text
+                            medium
+                            primary
+                            onClick={handleDownloadQRCode}
+                        >
+                            <a>Tải xuống</a>
+                        </Button>
                     </div>
-                    <Button className={cx('download-qrcode')} rounded text medium primary onClick={handleDownloadQRCode}>
-                        <a>Tải xuống</a>
-                    </Button>
-                </div>
-            </Modal>}
+                </Modal>
+            )}
         </>
     );
 };

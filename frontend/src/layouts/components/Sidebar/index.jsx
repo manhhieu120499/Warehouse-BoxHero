@@ -44,7 +44,7 @@ const Sidebar = () => {
             subMenu: [
                 {
                     title: 'Nhóm sản phẩm',
-                    path: "/categories"
+                    path: '/categories',
                 },
                 {
                     title: 'Sản phẩm',
@@ -144,10 +144,6 @@ const Sidebar = () => {
     const changeDropItem = (ids) => {
         setItemDrop([...ids]);
     };
-
-    useEffect(() => {
-        console.log(itemDrop);
-    }, [itemDrop]);
 
     return (
         <>

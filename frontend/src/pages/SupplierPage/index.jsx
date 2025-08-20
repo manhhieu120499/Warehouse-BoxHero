@@ -17,8 +17,9 @@ import toast from 'react-hot-toast';
 import { styleMessage, formatStatusProduct } from '../../constants';
 import { message } from 'antd';
 import PopupMessage from '../../components/PopupMessage';
-import parseToken from "../../utils/parseToken"
+import parseToken from '../../utils/parseToken';
 const cxGlobal = classNames.bind(globalStyle);
+import { useNavigate } from 'react-router-dom';
 
 const cx = classNames.bind(styles);
 
@@ -32,11 +33,12 @@ const SupplierPage = () => {
     const [supplierPhone, setSupplierPhone] = useState('');
     const [supplierAddress, setSupplierAddress] = useState('');
     const [supplierEmail, setSupplierEmail] = useState('');
-    const [supplierStatus, setSupplierStatus] = useState('Đang hoạt động')
+    const [supplierStatus, setSupplierStatus] = useState('Đang hoạt động');
     //const [updateError, setUpdateError] = useState('');
     const [isOpenInfo, setIsOpenInfo] = useState(false);
     const [isOpenCreate, setIsOpenCreate] = useState(false);
     const [showPopupConfirm, setShowPopupConfirm] = useState(false);
+    const navigate = useNavigate();
     const [filters, setFilters] = useState({
         supplierId: '',
         phoneNumber: '',
@@ -46,8 +48,8 @@ const SupplierPage = () => {
     // product state
     const productPageSize = 10;
     const [productPage, setProductPage] = useState(1);
-    const [showProductTable, setShowProductTable] = useState(false)
-    const [productData, setProductData] = useState([])
+    const [showProductTable, setShowProductTable] = useState(false);
+    const [productData, setProductData] = useState([]);
 
     const onChangeProductTable = (newPage, pageSize) => {
         setProductPage(newPage);
@@ -55,36 +57,35 @@ const SupplierPage = () => {
 
     // fetch product by supplier id
     const openProductTableBySupplier = async (supplierId) => {
-        try{
-            const tokenUser = parseToken('tokenUser')
-            // call api 
+        try {
+            const tokenUser = parseToken('tokenUser');
+            // call api
             const response = await request.get(`/api/supplier/provided-products/${supplierId}`, {
                 headers: {
                     token: `Beare ${tokenUser.accessToken}`,
-                    employeeid: tokenUser.employeeID
-                }
-            })
-            console.log(response)
-            const formatProductsData = response.data.products.map(item => {
+                    employeeid: tokenUser.employeeID,
+                },
+            });
+            console.log(response);
+            const formatProductsData = response.data.products.map((item) => {
                 return {
-                        key: item.productID,
-                        productID: item.productID,
-                        productName: item.productName,
-                        productDes: item.description,
-                        statusProduct: formatStatusProduct[item.status],
-                        categoryID: item.categoryID,
-                        price: new Intl.NumberFormat("vi-VN").format(Number(item.price))
-                }
-            })
-            
-            setProductData(formatProductsData)
-            setShowProductTable(true)
+                    key: item.productID,
+                    productID: item.productID,
+                    productName: item.productName,
+                    productDes: item.description,
+                    statusProduct: formatStatusProduct[item.status],
+                    categoryID: item.categoryID,
+                    price: new Intl.NumberFormat('vi-VN').format(Number(item.price)),
+                };
+            });
 
-        }catch(err) {
-            console.log(err)
-            setShowProductTable(false)
+            setProductData(formatProductsData);
+            setShowProductTable(true);
+        } catch (err) {
+            console.log(err);
+            setShowProductTable(false);
         }
-    }
+    };
     // ------------------------------------
 
     // Hàm tạo mã NCC ngẫu nhiên
@@ -119,7 +120,7 @@ const SupplierPage = () => {
                     address: data.supplierAddress,
                     phoneNumber: data.supplierPhone,
                     email: data.supplierEmail,
-                    status: 'ACTIVE'
+                    status: 'ACTIVE',
                 },
                 tokenUser.accessToken,
                 tokenUser.employeeID,
@@ -197,7 +198,7 @@ const SupplierPage = () => {
                                 className={cxGlobal('action-table-icon')}
                                 onClick={() => {
                                     setSupplierId(record.supplierId);
-                                    openProductTableBySupplier(record.supplierId)
+                                    openProductTableBySupplier(record.supplierId);
                                 }}
                             >
                                 <CakeSlice size={20} />
@@ -212,7 +213,7 @@ const SupplierPage = () => {
                                     setSupplierPhone(record.phone);
                                     setSupplierAddress(record.address);
                                     setSupplierEmail(record.email);
-                                    setSupplierStatus(record.statusWork)
+                                    setSupplierStatus(record.statusWork);
                                     setIsOpenInfo(true);
                                 }}
                             >
@@ -254,7 +255,6 @@ const SupplierPage = () => {
     const fetchSuppliers = async (pageReload = page) => {
         try {
             const res = await get('/api/supplier?page=' + pageReload + '&limit=' + pageSize);
-            console.log(res);
             setData(
                 res.suppliers.map((item, idx) => ({
                     supplierId: item.supplierID || '',
@@ -263,7 +263,7 @@ const SupplierPage = () => {
                     address: item.address || '',
                     email: item.email || '',
                     key: item.supplierId,
-                    statusWork: item.status == "ACTIVE" ? "Đang hoạt động" : 'Ngừng hoạt động',
+                    statusWork: item.status == 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động',
                     transactionHistory: (
                         <Button onClick={() => setIsOpenInfo(true)} small leftIcon={<Eye size={20} />} />
                     ),
@@ -290,7 +290,7 @@ const SupplierPage = () => {
             console.log(filters);
             setPage(1);
             try {
-                const {supplierId, ...rest} = filters
+                const { supplierId, ...rest } = filters;
                 const params = {
                     ...rest,
                     supplierID: supplierId,
@@ -397,15 +397,15 @@ const SupplierPage = () => {
             message: '',
             option: [
                 {
-                    name:'Đang hoạt động',
-                    value: 'ACTIVE'
+                    name: 'Đang hoạt động',
+                    value: 'ACTIVE',
                 },
                 {
                     name: 'Ngừng hoạt động',
-                    value: 'INACTIVE'
-                }
-            ]
-        }
+                    value: 'INACTIVE',
+                },
+            ],
+        },
     ];
 
     const columnCreate = [
@@ -452,7 +452,7 @@ const SupplierPage = () => {
     ];
 
     const handleUpdateSupplier = async (data) => {
-        console.log(data)
+        console.log(data);
         //setUpdateError('');
         const { supplierId, supplierName, supplierAddress, supplierEmail, supplierStatus } = data;
         console.log('supplierId', supplierId);
@@ -467,7 +467,7 @@ const SupplierPage = () => {
                     address: supplierAddress,
                     phoneNumber: supplierPhone,
                     email: supplierEmail,
-                    status: supplierStatus
+                    status: supplierStatus,
                 },
                 tokenUser.accessToken,
                 employeeId,
@@ -476,7 +476,7 @@ const SupplierPage = () => {
             if (res.status === 'ERR') {
                 toast.error(res.message, styleMessage);
             } else {
-                toast.success('Cập nhật nhà cung cấp thành công', styleMessage)
+                toast.success('Cập nhật nhà cung cấp thành công', styleMessage);
                 setIsOpenInfo(false);
                 fetchSuppliers(page);
             }
@@ -538,6 +538,27 @@ const SupplierPage = () => {
             title: 'Trạng thái',
             dataIndex: 'statusProduct',
             key: 'statusProduct',
+        },
+        {
+            title: 'Chi tiết',
+            dataIndex: 'transactionHistory',
+            key: 'transactionHistory',
+            render: (_, record) => {
+                return (
+                    <div className={cxGlobal('action-table')}>
+                        <Tippy content={'Xem chi tiết sản phẩm'} placement="bottom-end">
+                            <button
+                                className={cxGlobal('action-table-icon')}
+                                onClick={() => {
+                                    navigate(`/products?productID=${record.productID}`);
+                                }}
+                            >
+                                <Eye size={20} />
+                            </button>
+                        </Tippy>
+                    </div>
+                );
+            },
         },
     ];
 
@@ -618,7 +639,7 @@ const SupplierPage = () => {
                         supplierAddress,
                         supplierPhone,
                         supplierName,
-                        supplierStatus: supplierStatus == "Đang hoạt động" ? 'ACTIVE' : 'INACTIVE'
+                        supplierStatus: supplierStatus == 'Đang hoạt động' ? 'ACTIVE' : 'INACTIVE',
                     }}
                     type={'update'}
                 />
@@ -636,9 +657,8 @@ const SupplierPage = () => {
                         onChangePage={onChangeProductTable}
                         pagination
                         currentPage={productPage}
-                     />
+                    />
                 </div>
-                
             </Modal>
         </div>
     );
