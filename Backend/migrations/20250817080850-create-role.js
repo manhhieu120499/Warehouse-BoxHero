@@ -20,6 +20,16 @@ module.exports = {
                     ),
                     allowNull: false,
                 },
+                createdAt: {
+                    type: Sequelize.DATE,
+                    allowNull: false,
+                    defaultValue: Sequelize.fn('NOW'),
+                },
+                updatedAt: {
+                    type: Sequelize.DATE,
+                    allowNull: false,
+                    defaultValue: Sequelize.fn('NOW'),
+                },
             },
             {
                 charset: 'utf8mb4',
