@@ -13,32 +13,32 @@ const RootLayout = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchUser = async (accessToken, email, employeeID) => {
-            try {
-                const { roles } = jwtDecode(accessToken).payload;
-                const responseUser = await post(
-                    '/api/employee/employee-detail',
-                    {
-                        email: email,
-                        employeeID,
-                    },
-                    accessToken,
-                );
-                const {employee} = responseUser
-                dispatch(login({ ...new EmployeeDTO({ ...employee, roles }) }));
-            } catch (err) {
-                console.log(err);
-            }
-        };
-        const tokenUser = localStorage.getItem('tokenUser');
-        if (tokenUser != 'null') {
-            const { employeeID, email, accessToken, refreshToken } = JSON.parse(localStorage.getItem('tokenUser'));
-            fetchUser(accessToken, email, employeeID);
-        }else {
-            navigate('/login')
-        }
-    }, [])
+    // useEffect(() => {
+    //     const fetchUser = async (accessToken, email, employeeID) => {
+    //         try {
+    //             const { roles } = jwtDecode(accessToken).payload;
+    //             const responseUser = await post(
+    //                 '/api/employee/employee-detail',
+    //                 {
+    //                     email: email,
+    //                     employeeID,
+    //                 },
+    //                 accessToken,
+    //             );
+    //             const {employee} = responseUser
+    //             dispatch(login({ ...new EmployeeDTO({ ...employee, roles }) }));
+    //         } catch (err) {
+    //             console.log(err);
+    //         }
+    //     };
+    //     const tokenUser = localStorage.getItem('tokenUser');
+    //     if (tokenUser != 'null') {
+    //         const { employeeID, email, accessToken, refreshToken } = JSON.parse(localStorage.getItem('tokenUser'));
+    //         fetchUser(accessToken, email, employeeID);
+    //     }else {
+    //         navigate('/login')
+    //     }
+    // }, [])
   return <Outlet/>
 }
 
