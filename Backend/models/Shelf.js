@@ -13,7 +13,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
-    });
+    },{
+            tableName: 'shelves',
+            timestamps: true,
+        });
 
     Shelf.associate = (models) => {
         Shelf.belongsTo(models.Zone, { foreignKey: 'zoneID' });

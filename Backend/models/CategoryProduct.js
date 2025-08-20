@@ -13,7 +13,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         {
             tableName: 'categories',
-            timestamps: false,
+            timestamps: true,
         },
     );
 

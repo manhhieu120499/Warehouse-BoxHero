@@ -13,7 +13,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         {
             tableName: 'batch_boxes',
-            timestamps: false,
+            timestamps: true,
         },
     );
 

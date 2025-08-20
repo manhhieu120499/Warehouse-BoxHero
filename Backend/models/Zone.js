@@ -12,7 +12,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
-    });
+    }, {
+            tableName: 'zones',
+            timestamps: true,
+        });
 
     Zone.associate = (models) => {
         Zone.belongsTo(models.Warehouse, { foreignKey: 'warehouseID' });
