@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Sidebar.module.scss';
 import SidebarItem from './SidebarItem';
@@ -32,11 +32,13 @@ const cx = classNames.bind(styles);
 const Sidebar = () => {
     const sidebarMenu = [
         {
+            id: 1,
             title: 'Dashboard',
             iconName: LayoutDashboard,
             path: '/',
         },
         {
+            id: 2,
             title: 'Quản lý sản phẩm',
             iconName: ShoppingCart,
             subMenu: [
@@ -53,6 +55,7 @@ const Sidebar = () => {
             ],
         },
         {
+            id: 3,
             title: 'Quản lý nhập xuất',
             iconName: BookMinus,
             // path: '/ware-receive',
@@ -80,6 +83,7 @@ const Sidebar = () => {
             ],
         },
         {
+            id: 4,
             title: 'Quản lý đối tác',
             iconName: BookMinus,
             subMenu: [
@@ -101,6 +105,7 @@ const Sidebar = () => {
             ],
         },
         {
+            id: 5,
             title: 'Quản lý kho',
             iconName: Warehouse,
             subMenu: [
@@ -126,10 +131,19 @@ const Sidebar = () => {
 
     let location = useLocation();
     const [isOpenInfo, setIsOpenInfo] = useState(false);
+    const [itemDrop, setItemDrop] = useState([]);
 
     const closeInfoWarehouse = () => {
         setIsOpenInfo(false);
     };
+
+    const changeDropItem = (ids) => {
+        setItemDrop([...ids]);
+    };
+
+    useEffect(() => {
+        console.log(itemDrop);
+    }, [itemDrop]);
 
     return (
         <>
@@ -145,7 +159,10 @@ const Sidebar = () => {
                     <div className={cx('sidebar-list')}>
                         {sidebarMenu.map((item, index) => (
                             <SidebarItem
+                                changeDropItem={changeDropItem}
+                                itemDrop={itemDrop}
                                 key={index}
+                                id={item.id}
                                 title={item.title}
                                 iconName={item.iconName}
                                 path={item.path}
