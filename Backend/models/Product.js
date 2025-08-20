@@ -42,7 +42,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         {
             tableName: 'products',
-            timestamps: false,
+            timestamps: true,
         },
     );
 
