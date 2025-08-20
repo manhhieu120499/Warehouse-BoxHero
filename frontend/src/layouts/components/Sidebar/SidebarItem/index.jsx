@@ -12,13 +12,13 @@ const SidebarItem = ({ title, iconName, path, location, subMenu=[] }) => {
     const handleScrollSubmenu = () => {
         const checkDrop = !dropDown;
         if(checkDrop) {
-            divRef.current.style.height = '120px';
+            divRef.current.style.height = divRef.current.scrollHeight + 'px';
             divRef.current.style.animation= `slice 1s ease-in-out`;
             // divRef.current.style.display= 'flex';
             // divRef.current.style.flexDirection= 'column';
             // divRef.current.style.alignItems= 'center';
         }else {
-            divRef.current.style.height = '35px';
+            divRef.current.style.height =  '35px';
             // divRef.current.style.display= 'block';
             // divRef.current.style.flexDirection= 'none';
             // divRef.current.style.alignItems= 'none';

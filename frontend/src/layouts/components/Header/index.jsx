@@ -27,7 +27,9 @@ const Header = ({ children }) => {
         '/manage-warehouse': 'Quản lý kho',
         '/customer': 'Khách hàng',
         "/profile": "Thông tin cá nhân",
-        "/proposal": 'Tạo phiếu đề xuất'
+        "/proposal": 'Tạo phiếu đề xuất',
+        "/batch": 'Quản lý lô hàng',
+        "/zone": 'Quản lý khu vực'
     };
     
     const navigate = useNavigate();

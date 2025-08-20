@@ -253,7 +253,7 @@ const ProductDetail = ({ data, classname, onClose }) => {
                 <div className={cx('wrapper-qrcode')}>
                     <h2>QRCode sản phẩm</h2>
                     <div className={cx('qrcode-preview')}>
-                        <Image ref={qrCodeRef} classname={cx('qrcode')} src={'https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/QR_Code_Example.svg/368px-QR_Code_Example.svg.png'}/>
+                        <Image ref={qrCodeRef} classname={cx('qrcode')} src={data.qrcode || 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/QR_Code_Example.svg/368px-QR_Code_Example.svg.png'}/>
                     </div>
                     <Button className={cx('download-qrcode')} rounded text medium primary onClick={handleDownloadQRCode}>
                         <a>Tải xuống</a>

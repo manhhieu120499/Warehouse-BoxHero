@@ -29,11 +29,11 @@ const tableColumns = [
         dataIndex: 'empName',
         key: 'empName',
     },
-    {
-        title: 'CCCD',
-        dataIndex: 'empCCCD',
-        key: 'empCCCD',
-    },
+    // {
+    //     title: 'CCCD',
+    //     dataIndex: 'empCCCD',
+    //     key: 'empCCCD',
+    // },
     {
         title: 'Ngày sinh',
         dataIndex: 'empDob',
@@ -49,11 +49,11 @@ const tableColumns = [
         dataIndex: 'empPhone',
         key: 'empPhone',
     },
-    {
-        title: 'Địa chỉ',
-        dataIndex: 'empAddress',
-        key: 'empAddress',
-    },
+    // {
+    //     title: 'Địa chỉ',
+    //     dataIndex: 'empAddress',
+    //     key: 'empAddress',
+    // },
     {
         title: 'Ngày vào làm',
         dataIndex: 'empStartDate',

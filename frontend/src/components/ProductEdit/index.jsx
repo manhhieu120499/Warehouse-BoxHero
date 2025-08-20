@@ -20,18 +20,21 @@ const ProductEdit = ({ data, onClose }) => {
     {
         id:1,
         label: 'Tên sản phẩm',
+        name: 'productName',
         value: productData.productName,
         setValue: (value) => setProductData(prev => ({...prev, productName: value}))
     },
     {
         id: 2,
         label: 'Đơn vị tính',
+        name: 'unit',
         value: productData.productUnit,
         setValue: (value) => setProductData(prev => ({...prev, productUnit: value}))
     },
     {
         id: 3, 
         label: 'Tồn kho tối thiểu',
+        name: 'minStock',
         value: productData.productMinStock,
         setValue: (value) => setProductData(prev => ({...prev, productMinStock: value}))
     }

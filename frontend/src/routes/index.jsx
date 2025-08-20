@@ -16,6 +16,8 @@ import {
     Customer,
     ProfilePage,
     ProposalPage,
+    BatchPage,
+    ZonePage
 } from '../pages';
 import DefaultLayout from '../layouts/DefaultLayout';
 
@@ -103,6 +105,16 @@ const publicRoute = [
     {
         page: ProposalPage,
         path: '/proposal',
+        layout: DefaultLayout,
+    },
+    {
+        page: BatchPage,
+        path: '/batch',
+        layout: DefaultLayout,
+    },
+    {
+        page: ZonePage,
+        path: '/zone',
         layout: DefaultLayout,
     },
 ];

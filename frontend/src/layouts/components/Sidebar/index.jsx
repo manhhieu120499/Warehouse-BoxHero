@@ -19,7 +19,7 @@ import {
     Info,
     Users,
     ShoppingCart,
-    BookMinus
+    BookMinus,
 } from 'lucide-react';
 import logo from '../../../assets/logo_v2.jpg';
 import { useLocation } from 'react-router-dom';
@@ -46,69 +46,81 @@ const Sidebar = () => {
                     path: '/products',
                 },
                 {
-                    title: 'Hàng lỗi',
-                    iconName: ShieldX,
-                    path: '/product-error',
+                    title: 'Quản lý lô hàng',
+                    iconName: ShoppingBasket,
+                    path: '/batch',
                 },
-                
-            ]
+            ],
         },
         {
-            title: 'Quản lý mua hàng',
+            title: 'Quản lý nhập xuất',
             iconName: BookMinus,
             // path: '/ware-receive',
             subMenu: [
                 {
                     title: 'Tạo phiếu đề xuất',
                     iconName: CircleArrowRight,
-                    path: '/proposal'
+                    path: '/proposal',
                 },
                 {
                     title: 'Nhập kho',
                     iconName: CircleArrowRight,
-                    path: '/ware-receive'
+                    path: '/ware-receive',
                 },
                 {
                     title: 'Xuất kho',
                     iconName: CircleArrowLeft,
                     path: '/ware-release',
                 },
-            ]
+                {
+                    title: 'Chuyển kho',
+                    iconName: Truck,
+                    path: '/ware-transfer',
+                },
+            ],
         },
         {
-            title: 'Kiểm kê kho',
-            iconName: CalendarCheck,
-            path: '/check-inventory',
-        },
-        {
-            title: 'Khách hàng',
-            iconName: Users,
-            path: '/customer',
-        },
-        {
-            title: 'Đổi trả',
-            iconName: Undo2,
-            path: '/return-order',
-        },
-        {
-            title: 'Nhân sự',
-            iconName: User,
-            path: '/auth',
-        },
-        {
-            title: 'Nhà cung cấp',
-            iconName: Factory,
-            path: '/supplier',
-        },
-        {
-            title: 'Chuyển kho',
-            iconName: Truck,
-            path: '/ware-transfer',
+            title: 'Quản lý đối tác',
+            iconName: BookMinus,
+            subMenu: [
+                {
+                    title: 'Khách hàng',
+                    iconName: Users,
+                    path: '/customer',
+                },
+                {
+                    title: 'Nhà cung cấp',
+                    iconName: Factory,
+                    path: '/supplier',
+                },
+                {
+                    title: 'Đổi trả',
+                    iconName: Undo2,
+                    path: '/return-order',
+                },
+            ],
         },
         {
             title: 'Quản lý kho',
             iconName: Warehouse,
-            path: '/manage-warehouse',
+            subMenu: [
+                {
+                    title: 'Kiểm kê kho',
+                    iconName: CalendarCheck,
+                    path: '/check-inventory',
+                },
+
+                {
+                    title: 'Nhân sự',
+                    iconName: User,
+                    path: '/auth',
+                },
+                {
+                    title: 'Quản lý khu vực',
+                    iconName: Warehouse,
+                    path: '/zone',
+                },
+            ],
         },
     ];
 
