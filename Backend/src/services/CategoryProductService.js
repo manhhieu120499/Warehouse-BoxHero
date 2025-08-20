@@ -49,6 +49,21 @@ class CategoryProductService {
             }
         });
     }
+    getAllCategories() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const categories = await CategoryProduct.findAll();
+                resolve({
+                    statusHttp: HTTP_OK,
+                    status: 'OK',
+                    data: categories,
+                });
+            } catch (e) {
+                console.log(e);
+                reject(e);
+            }
+        });
+    }
 }
 
 module.exports = new CategoryProductService();
