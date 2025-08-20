@@ -15,6 +15,10 @@ import {
     Register,
     Customer,
     ProfilePage,
+    ProposalPage,
+    BatchPage,
+    ZonePage,
+    CategoryPage
 } from '../pages';
 import DefaultLayout from '../layouts/DefaultLayout';
 
@@ -99,6 +103,26 @@ const publicRoute = [
         path: '/profile',
         layout: DefaultLayout,
     },
+    {
+        page: ProposalPage,
+        path: '/proposal',
+        layout: DefaultLayout,
+    },
+    {
+        page: BatchPage,
+        path: '/batch',
+        layout: DefaultLayout,
+    },
+    {
+        page: ZonePage,
+        path: '/zone',
+        layout: DefaultLayout,
+    },
+    {
+        page: CategoryPage,
+        path: '/categories',
+        layout: DefaultLayout
+    }
 ];
 
 export { publicRoute };

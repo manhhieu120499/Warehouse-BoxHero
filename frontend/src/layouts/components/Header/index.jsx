@@ -26,6 +26,11 @@ const Header = ({ children }) => {
         '/ware-transfer': 'Chuyển kho',
         '/manage-warehouse': 'Quản lý kho',
         '/customer': 'Khách hàng',
+        "/profile": "Thông tin cá nhân",
+        "/proposal": 'Tạo phiếu đề xuất',
+        "/batch": 'Quản lý lô hàng',
+        "/zone": 'Quản lý khu vực',
+        "/categories": 'Nhóm sản phẩm'
     };
     
     const navigate = useNavigate();

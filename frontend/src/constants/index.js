@@ -13,13 +13,13 @@ export const mapperRole = {
         roleID: 2,
        roleName: 'WARE_MANAGER'
     },
-    'Nhân viên nhận hàng': {
-        roleID:3,
-        roleName: 'STOCK_RECEIVER'
-    },
     'Nhân viên xuất hàng': {
-        roleID: 4,
+        roleID: 3,
         roleName:'STOCK_DISPATCHER'
+    },
+    'Nhân viên nhận hàng': {
+        roleID: 4,
+        roleName: 'STOCK_RECEIVER'
     },
     'Kế toán': {
         roleID: 5,
@@ -34,3 +34,9 @@ export const formatRole = {
     'STOCK_DISPATCHER': 'Nhân viên xuất hàng',
     'ACCOUNTANT': 'Kế toán',
 };
+
+export const formatStatusProduct = {
+    'AVAILABLE': 'Đang kinh doanh',
+    'OUT_OF_STOCK': 'Hàng trong kho đã hết',
+    'DISCONTINUED': 'Ngừng kinh doanh'
+}

@@ -1,8 +1,38 @@
 import axios from 'axios';
 
+// Một biến toàn cục hoặc callback để set loading
+let setLoadingCallback = null;
+
+export const setGlobalLoadingHandler = (callback) => {
+  setLoadingCallback = callback;
+};
+
 const request = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
 });
+
+request.interceptors.request.use(
+  (config) => {
+    if (setLoadingCallback) setLoadingCallback(true); // bật loading
+    return config;
+  },
+  (error) => {
+    if (setLoadingCallback) setLoadingCallback(false); // tắt nếu lỗi
+    return Promise.reject(error);
+  }
+);
+
+// Thêm interceptor cho response
+request.interceptors.response.use(
+  (response) => {
+    if (setLoadingCallback) setLoadingCallback(false); // tắt loading khi xong
+    return response;
+  },
+  (error) => {
+    if (setLoadingCallback) setLoadingCallback(false); // tắt loading nếu lỗi
+    return Promise.reject(error);
+  }
+);
 
 export const get = async (path, options = {}) => {
     const response = await request.get(path, options);

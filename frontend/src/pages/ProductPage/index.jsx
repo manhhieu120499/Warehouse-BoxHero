@@ -1,14 +1,19 @@
 /* eslint-disable no-unused-vars */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ProductPage.module.scss';
 import MyTable from '../../components/MyTable';
 import Tippy from '@tippyjs/react';
 import { Eye, PencilIcon } from 'lucide-react';
-import { ProductDetail, ProductEdit, ModelFilter, Button, CategoryList, ModalCreateCategory } from '@/components';
-import { useDispatch } from 'react-redux';
+import { ProductDetail, ProductEdit, ModelFilter, Button } from '@/components';
+import { useDispatch, useSelector } from 'react-redux';
 import { startLoading, stopLoading } from '../../lib/redux/loading/slice';
 import toast from 'react-hot-toast';
+import request from '../../utils/httpRequest'
+import parseToken from "../../utils/parseToken"
+import ProductDTO from '../../dtos/ProductDTO';
+import BatchDTO from '../../dtos/BatchDTO';
+import ProductDetailDTO from '../../dtos/ProductDetailDTO';
 
 const cx = classNames.bind(styles);
 
@@ -65,33 +70,23 @@ const api = () => {
     });
 };
 
-const columnsModelFilter = [
-    {
-        id: 1, 
-        label: "Mã sản phẩm",
-        value: "" 
-    },
-    {
-        id: 2, 
-        label: "Tên sản phẩm",
-        value: "" 
-    },
-    {
-        id: 3, 
-        label: "Tồn kho tối thiểu",
-        value: "" 
-    }
-    
-]
+
 
 const ProductPage = () => {
+    const currentUser = useSelector(state => state.AuthSlice.user)
     const [currentPage, setCurrentPage] = useState(1);
     const [action, setAction] = useState({
         productId: '',
         actionName: '',
     });
     const [productData, setProductData] = useState(null);
-    const [showModalCreateCategory, setShowModalCreateCategory] = useState(false)
+    const [productList, setProductList] = useState([])
+    const [filterProduct, setFilterProduct] = useState({
+        productID: '',
+        productName: '',
+        categoryID: '',
+        minStock: '',
+    })
     const dispatch = useDispatch();
 
     const handleOnChange = useCallback((page, pageSize) => {
@@ -100,12 +95,26 @@ const ProductPage = () => {
 
     const handleShowProductDetail = async (productId) => {
         try {
+            const tokenUser = parseToken('tokenUser')
             dispatch(startLoading());
             // call api lấy thông tin product
-            const res = await api();
-            setProductData(res);
+            const res = await request.get(`/api/product?productID=${productId}`, {
+                headers: {
+                    token: `Beare ${tokenUser.accessToken}`,
+                    employeeid: tokenUser.employeeID,
+                    warehouseid: currentUser.warehouseId ? currentUser.warehouseId : null
+                }
+            });
+            //console.log(res.data)
+            const {batches, ...rest} = res.data.product
+            const formatBatch = batches.map(item => {
+                const batch = new BatchDTO(item)
+                return {...batch}
+            })
+            const productDetail = new ProductDetailDTO({...rest, listBatch: formatBatch})
+            setProductData(productDetail);
         } catch (err) {
-            throw new Error(err);
+            console.log(err)
         } finally {
             setAction({
                 productId,
@@ -131,7 +140,34 @@ const ProductPage = () => {
             dispatch(stopLoading());
         }
     };
+
+    const columnsModelFilter = [
+    {
+        id: 1, 
+        label: "Mã sản phẩm",
+        value: filterProduct.productID, 
+        setValue: (value) => setFilterProduct(prev => ({...prev, productID: value}))
+    },
+    {
+        id: 2, 
+        label: "Tên sản phẩm",
+        value: filterProduct.productName,
+        setValue: (value) => setFilterProduct(prev => ({...prev, productName: value})) 
+    },
+    {
+        id: 3, 
+        label: "Tồn kho tối thiểu",
+        value: filterProduct.minStock,
+        setValue: (value) => setFilterProduct(prev => ({...prev, minStock: value})) 
+    }
+    
+]
     const tableColumns = [
+         {
+            title: 'Mã nhóm sản phẩm',
+            dataIndex: 'skgu',
+            key: 'skgu',
+        },
         {
             title: 'Mã sản phẩm',
             dataIndex: 'sku',
@@ -147,6 +183,12 @@ const ProductPage = () => {
             dataIndex: 'minStock',
             key: 'minStock',
             render: (text) => <p className={cx('min-stock-product')}>{text}</p>,
+        },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'status',
+            key: 'status',
+            render: (text) => <p className={cx('status-product')}>{text}</p>,
         },
         {
             title: 'Thao tác',
@@ -188,19 +230,72 @@ const ProductPage = () => {
             return;
         }
     }
+
+    const fetchProducts = async () =>{
+        try{    
+            const tokenUser = parseToken('tokenUser')
+            const result = await request.get('/api/product/list', {
+                headers: {
+                    token: `Beare ${tokenUser.accessToken}`,
+                    employeeid: tokenUser.employeeID
+                }
+            })
+            const formatProducts = result.data.products.map(item => {
+                const product = new ProductDTO(item)
+                return {...product}
+            })
+            setProductList(formatProducts)
+        }catch(err) {
+            console.log('fetch err', err)
+        }
+    }
+
+    const handleSearch = async () => {
+        try{
+            const params = {
+                ...filterProduct
+            }
+            const tokenUser = parseToken('tokenUser')
+            const res = await request.get('/api/product/filter', {params, 
+                headers: {
+                    token: `Beare ${tokenUser.accessToken}`,
+                    employeeid: tokenUser.employeeID,
+                    warehouseid: currentUser.warehouseId ? currentUser.warehouseId : null
+                }
+            })
+            //console.log(res.data)
+            setProductList(res.data.products || [])
+        }catch(err) {
+            console.log(err)
+            fetchProducts()
+        }
+    }
+
+    const handleResetFilterProduct = () =>{
+        setFilterProduct({
+            productID: '',
+            productName: '',
+            minStock: ''
+        })
+        fetchProducts()
+    }
+
+    useEffect(() => {
+        fetchProducts()
+    }, [])
+
     return (
         <div className={cx('wrapper-product')}>
-            <ModelFilter columns={columnsModelFilter}>
+            <ModelFilter columns={columnsModelFilter} handleSubmitFilter={handleSearch} handleResetFilters={handleResetFilterProduct}>
                 <Button primary onClick={handleOpenModalCreateCategory}>
                     <span>Thêm nhóm sản phẩm</span>
                 </Button>
             </ModelFilter>
-            <CategoryList/>
             <h1>Danh sách sản phẩm</h1>
             <MyTable
                 className={cx('my-table')}
                 columns={tableColumns}
-                data={dataSource}
+                data={productList}
                 pageSize={15}
                 pagination
                 onChangePage={handleOnChange}
@@ -216,7 +311,6 @@ const ProductPage = () => {
             {action.productId && action.actionName === 'edit' && (
                 <ProductEdit data={productData} onClose={() => setAction({ productId: null, actionName: null })} />
             )}
-            {showModalCreateCategory && <ModalCreateCategory handleCreate={handleCreateCategory} onClose={handleOpenModalCreateCategory}/>}
         </div>
     );
 };

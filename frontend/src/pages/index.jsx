@@ -14,6 +14,10 @@ import Login from './Login';
 import Register from './Register';
 import Customer from './CustomerPage';
 import ProfilePage from './ProfilePage';
+import ProposalPage from "./ProposalPage"
+import BatchPage from './BatchPage';
+import ZonePage from './ZonePage';
+import CategoryPage from './CategoryPage'
 
 export {
     Dashboard,
@@ -31,5 +35,9 @@ export {
     Login,
     Register,
     Customer,
-    ProfilePage
+    ProfilePage,
+    ProposalPage,
+    BatchPage,
+    ZonePage,
+    CategoryPage
 };

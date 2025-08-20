@@ -11,12 +11,13 @@ import { ModelFilter } from '../../components';
 import { get, post } from '@/utils/httpRequest';
 import { del } from '@/utils/httpRequest';
 import axios from 'axios';
-import { put } from '../../utils/httpRequest';
+import request, { put } from '../../utils/httpRequest';
 import { set } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { styleMessage } from '../../constants';
+import { styleMessage, formatStatusProduct } from '../../constants';
 import { message } from 'antd';
 import PopupMessage from '../../components/PopupMessage';
+import parseToken from "../../utils/parseToken"
 const cxGlobal = classNames.bind(globalStyle);
 
 const cx = classNames.bind(styles);
@@ -25,12 +26,13 @@ const SupplierPage = () => {
     const [page, setPage] = useState(1);
     const [data, setData] = useState([]);
     const [total, setTotal] = useState(0);
-    const pageSize = 3;
+    const pageSize = 9;
     const [supplierId, setSupplierId] = useState(null);
     const [supplierName, setSupplierName] = useState('');
     const [supplierPhone, setSupplierPhone] = useState('');
     const [supplierAddress, setSupplierAddress] = useState('');
     const [supplierEmail, setSupplierEmail] = useState('');
+    const [supplierStatus, setSupplierStatus] = useState('Đang hoạt động')
     //const [updateError, setUpdateError] = useState('');
     const [isOpenInfo, setIsOpenInfo] = useState(false);
     const [isOpenCreate, setIsOpenCreate] = useState(false);
@@ -52,25 +54,32 @@ const SupplierPage = () => {
     };
 
     // fetch product by supplier id
-    const openProductTableBySupplier = async () => {
+    const openProductTableBySupplier = async (supplierId) => {
         try{
+            const tokenUser = parseToken('tokenUser')
             // call api 
-            const response = await new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    resolve([{
-                        key: 1,
-                        productID: 'SP01',
-                        productName: 'Sữa Vina Milk',
-                        productDes: 'Sản phẩm tuyệt trùng phù hợp cho mọi lứa tuổi',
-                        statusProduct: 'Đang kinh doanh',
-                    }])
-                }, 2000)
+            const response = await request.get(`/api/supplier/provided-products/${supplierId}`, {
+                headers: {
+                    token: `Beare ${tokenUser.accessToken}`,
+                    employeeid: tokenUser.employeeID
+                }
             })
-            if(response) {
-                console.log(response)
-                setProductData(response)
-                setShowProductTable(true)
-            }   
+            console.log(response)
+            const formatProductsData = response.data.products.map(item => {
+                return {
+                        key: item.productID,
+                        productID: item.productID,
+                        productName: item.productName,
+                        productDes: item.description,
+                        statusProduct: formatStatusProduct[item.status],
+                        categoryID: item.categoryID,
+                        price: new Intl.NumberFormat("vi-VN").format(Number(item.price))
+                }
+            })
+            
+            setProductData(formatProductsData)
+            setShowProductTable(true)
+
         }catch(err) {
             console.log(err)
             setShowProductTable(false)
@@ -110,6 +119,7 @@ const SupplierPage = () => {
                     address: data.supplierAddress,
                     phoneNumber: data.supplierPhone,
                     email: data.supplierEmail,
+                    status: 'ACTIVE'
                 },
                 tokenUser.accessToken,
                 tokenUser.employeeID,
@@ -187,7 +197,7 @@ const SupplierPage = () => {
                                 className={cxGlobal('action-table-icon')}
                                 onClick={() => {
                                     setSupplierId(record.supplierId);
-                                    openProductTableBySupplier()
+                                    openProductTableBySupplier(record.supplierId)
                                 }}
                             >
                                 <CakeSlice size={20} />
@@ -202,6 +212,7 @@ const SupplierPage = () => {
                                     setSupplierPhone(record.phone);
                                     setSupplierAddress(record.address);
                                     setSupplierEmail(record.email);
+                                    setSupplierStatus(record.statusWork)
                                     setIsOpenInfo(true);
                                 }}
                             >
@@ -252,7 +263,7 @@ const SupplierPage = () => {
                     address: item.address || '',
                     email: item.email || '',
                     key: item.supplierId,
-                    statusWork: 'active' ? "Đang hoạt động" : 'Ngừng hoạt động',
+                    statusWork: item.status == "ACTIVE" ? "Đang hoạt động" : 'Ngừng hoạt động',
                     transactionHistory: (
                         <Button onClick={() => setIsOpenInfo(true)} small leftIcon={<Eye size={20} />} />
                     ),
@@ -378,6 +389,23 @@ const SupplierPage = () => {
             message: 'Email không hợp lệ',
             readOnly: false,
         },
+        {
+            id: 6,
+            label: 'Trạng thái',
+            name: 'supplierStatus',
+            pattern: null,
+            message: '',
+            option: [
+                {
+                    name:'Đang hoạt động',
+                    value: 'ACTIVE'
+                },
+                {
+                    name: 'Ngừng hoạt động',
+                    value: 'INACTIVE'
+                }
+            ]
+        }
     ];
 
     const columnCreate = [
@@ -426,7 +454,7 @@ const SupplierPage = () => {
     const handleUpdateSupplier = async (data) => {
         console.log(data)
         //setUpdateError('');
-        const { supplierId, supplierName, supplierAddress, supplierEmail } = data;
+        const { supplierId, supplierName, supplierAddress, supplierEmail, supplierStatus } = data;
         console.log('supplierId', supplierId);
         const tokenUser = JSON.parse(localStorage.getItem('tokenUser'));
         const employeeId = tokenUser.employeeID;
@@ -439,6 +467,7 @@ const SupplierPage = () => {
                     address: supplierAddress,
                     phoneNumber: supplierPhone,
                     email: supplierEmail,
+                    status: supplierStatus
                 },
                 tokenUser.accessToken,
                 employeeId,
@@ -447,6 +476,7 @@ const SupplierPage = () => {
             if (res.status === 'ERR') {
                 toast.error(res.message, styleMessage);
             } else {
+                toast.success('Cập nhật nhà cung cấp thành công', styleMessage)
                 setIsOpenInfo(false);
                 fetchSuppliers(page);
             }
@@ -480,6 +510,11 @@ const SupplierPage = () => {
     // columns product table
     const columnsProduct = [
         {
+            title: 'Mã nhóm sản phẩm',
+            dataIndex: 'categoryID',
+            key: 'categoryID',
+        },
+        {
             title: 'Mã sản phẩm',
             dataIndex: 'productID',
             key: 'productID',
@@ -493,6 +528,11 @@ const SupplierPage = () => {
             title: 'Mô tả',
             dataIndex: 'productDes',
             key: 'productDes',
+        },
+        {
+            title: 'Đơn giá (VND)',
+            dataIndex: 'price',
+            key: 'price',
         },
         {
             title: 'Trạng thái',
@@ -578,6 +618,7 @@ const SupplierPage = () => {
                         supplierAddress,
                         supplierPhone,
                         supplierName,
+                        supplierStatus: supplierStatus == "Đang hoạt động" ? 'ACTIVE' : 'INACTIVE'
                     }}
                     type={'update'}
                 />

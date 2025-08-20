@@ -5,7 +5,7 @@ import { MyTable, Button, Popper, Modal, ModalOrder } from '@/components';
 
 const cx = classNames.bind(styles);
 
-const ModelFilter = ({handleSubmitFilter, handleResetFilters, columns, children}) => {
+const ModelFilter = ({handleSubmitFilter, handleResetFilters, columns, children, selectInput=[]}) => {
     const [lastScrollY, setLastScrollY] = useState(0);
     const contentRef = useRef();
 
@@ -46,6 +46,17 @@ const ModelFilter = ({handleSubmitFilter, handleResetFilters, columns, children}
                         <input type="text" id={item.id} className={cx('form-input')} placeholder={`Nhâp ${item.label}`} value={item.value} onChange={(e) => item.setValue(e.target.value)} />
                     </div>
                 ))}
+                {
+                    selectInput.length > 0 && selectInput.map((item, index) => (
+                        <div className={cx('form-group')}>
+                            <label htmlFor={index}>{item.label}</label>
+                            <select value={item.value} onChange={(e) => item.setValue(e.target.value)}>
+                                <option disabled></option>
+                                {item.option.map((item) => <option key={item.name}>{item.name}</option>) }
+                            </select>
+                        </div> 
+                    ))
+                }
             </div>
             <div className={cx('wrapper-action')}>
                 {children}

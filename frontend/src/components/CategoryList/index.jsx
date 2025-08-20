@@ -12,18 +12,13 @@ const cxGlobal = classNames.bind(globalStyle)
 const columns = [
     {
         title: 'Mã nhóm sản phẩm',
-        dataIndex: 'categoryId',
-        key: 'categoryId',
+        dataIndex: 'categoryID',
+        key: 'categoryID',
     },
      {
         title: 'Tên nhóm sản phẩm',
         dataIndex: 'categoryName',
         key: 'categoryName',
-    },
-    {
-        title: 'Mã khu vực',
-        dataIndex: 'locationId',
-        key: 'locationId',
     },
     {
         title: 'Thao tác',
@@ -51,7 +46,7 @@ const data = [
     }
 ]
 
-const CategoryList = () => {
+const CategoryList = ({data}) => {
     return (
         <div className={cx('wrapper-categories')}>
             <h1 className={cx('title')}>Danh sách nhóm sản phẩm</h1>

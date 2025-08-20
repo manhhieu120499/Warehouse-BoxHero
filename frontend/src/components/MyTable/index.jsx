@@ -41,11 +41,14 @@ export default function MyTable({
                         <th
                             {...props}
                             style={{
-                                background: '#333',
-                                color: '#fff',
+                                background: `var(--color-header-table)`,
+                                color: '#333',
                                 textAlign: 'center',
                                 ...props.style,
                                 padding: '8px',
+                                border: `1px solid rgba(0,0,0,.05)`,
+                                borderRightColor:'transparent',
+                                borderLeftColor:'transparent',
                             }}
                         >
                             {props.children}

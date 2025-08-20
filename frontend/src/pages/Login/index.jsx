@@ -48,9 +48,9 @@ const Login = () => {
                 const responseUser = await post('/api/employee/employee-detail', 
                     {
                         email: data.email,
-                        employeeID,
                     },
-                    accessToken
+                    accessToken,
+                    employeeID
                 );
                 const { employee } = responseUser;
                

@@ -19,7 +19,11 @@ const ModalUpdate = ({ onClose, columns, label, onSubmit, defaultValue, type }) 
                     columns.map((item) => (
                         <div className={cx('form-group')} key={item.id}>
                             <label htmlFor={item.id}>{item.label}</label>
-                            <input
+                            {item.option && item.option.length > 0 ? <select {...register(item.name, {
+                                required: `${item.label} không được để trống`
+                            })}>
+                                {item.option.map((op, idx) => <option key={idx} value={op.value}>{op.name}</option>)}
+                            </select> :  <input
                                 {...register(item.name, {
                                     required: `${item.label} không được để trống`,
                                     pattern: {
@@ -32,7 +36,8 @@ const ModalUpdate = ({ onClose, columns, label, onSubmit, defaultValue, type }) 
                                 className={cx('form-input')}
                                 placeholder={`Nhập ${item.label}`} 
                                 readOnly={item.readOnly} 
-                            />
+                            />}
+                           
                             {errors[item.name] && <p className={cx('message-error')}>{errors[item.name].message}</p>}
                         </div>
                     ))
