@@ -58,7 +58,7 @@ module.exports = (sequelize, Sequelize) => {
 
         // Quan hệ với Box
         Batch.belongsToMany(models.Box, {
-            through: 'BatchBoxes',
+            through: 'batch_boxes',
             foreignKey: 'batchID',
             otherKey: 'boxID',
             as: 'boxes',
