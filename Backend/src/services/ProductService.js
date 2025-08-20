@@ -6,6 +6,7 @@ const Box = db.Box;
 const Floor = db.Floor;
 const Shelf = db.Shelf;
 const Zone = db.Zone;
+const Unit = db.Unit;
 dotenv.config();
 
 const HTTP_OK = process.env.HTTP_OK;
@@ -63,6 +64,10 @@ class ProductService {
                                         },
                                     ],
                                 },
+                                {
+                                    model: Unit,
+                                    attributes: ["unitID", "unitName", "conversationQuantity"]
+                                }
                             ],
                         }),
                     ),
@@ -77,6 +82,8 @@ class ProductService {
                 if (listBatch) {
                     const formatBatchResponse = listBatch.map((item) => {
                         const { boxes, ...restBatch } = item.toJSON();
+                        const {units, remainAmount, ...rest} = restBatch
+                        const totalProductRemain = Number.parseInt(units.conversationQuantity) * Number.parseInt(remainAmount)
                         const locationBatch = boxes.map((boxItem) => {
                             const { boxID, boxName } = boxItem;
                             const { floorName, } = boxItem.Floor;
@@ -89,7 +96,10 @@ class ProductService {
                             };
                         });
                         return {
-                            ...restBatch,
+                            ...rest,
+                            unitName: units.unitName,
+                            remainAmount,
+                            totalProductRemain,
                             locationBatch,
                         };
                     });
@@ -134,7 +144,7 @@ class ProductService {
             }
         });
     }
-    searchProduct(productID, productName, categoryID, minStock) {
+    searchProduct(productID, productName, categoryID, minStock, supplierID) {
         return new Promise(async (resolve, reject) => {
             try{
                 //console.log(minStock)
@@ -142,6 +152,8 @@ class ProductService {
                 if(productID) where.productID = {[Op.like]: `%${productID}%`}
                 if(productName) where.productName = {[Op.like]: `%${productName}%`}
                 if(minStock) where.minStock = minStock
+                if(categoryID) where.categoryID = categoryID
+                if(supplierID) where.supplierID = supplierID
                 const resultSearch = await Product.findAll({
                     where
                 })

@@ -73,7 +73,7 @@ const authUserIsManager = async (req, res, next) => {
                             status: 'ERR',
                             message: 'Bạn không có quyền truy cập tài nguyên này',
                         });
-                    } else if (hasWareManagerRole && user.payload.warehouseID !== warehouseID) {
+                    } else if (hasWareManagerRole && user.payload.warehouseID !== warehouseID && !hasWareManagerRole) {
                         return res.status(HTTP_FORBIDDEN).json({
                             status: 'ERR',
                             message: 'Bạn không có quyền truy cập kho này',
