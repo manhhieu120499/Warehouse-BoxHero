@@ -45,7 +45,7 @@ module.exports = (sequelize, Sequelize) => {
     Box.associate = (models) => {
         Box.belongsTo(models.Floor, { foreignKey: 'floorID' });
         Box.belongsToMany(models.Batch, {
-            through: 'BatchBoxes',
+            through: 'batch_boxes',
             foreignKey: 'boxID',
             otherKey: 'batchID',
             as: 'batches',
