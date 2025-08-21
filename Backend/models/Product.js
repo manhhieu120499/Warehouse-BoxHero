@@ -48,6 +48,8 @@ module.exports = (sequelize, Sequelize) => {
 
     Product.associate = (models) => {
         Product.hasMany(models.Batch, { foreignKey: 'productID', as: 'batches' });
+        // Thêm belongsTo để join ngược lại Category
+        Product.belongsTo(models.Category, { foreignKey: 'categoryID', as: 'category' });
     };
 
     return Product;
