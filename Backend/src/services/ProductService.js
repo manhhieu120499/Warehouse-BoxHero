@@ -7,6 +7,7 @@ const Floor = db.Floor;
 const Shelf = db.Shelf;
 const Zone = db.Zone;
 const Unit = db.Unit;
+const Category = db.Category;
 dotenv.config();
 
 const HTTP_OK = process.env.HTTP_OK;
@@ -86,7 +87,7 @@ class ProductService {
                         const totalProductRemain = Number.parseInt(units.conversationQuantity) * Number.parseInt(remainAmount)
                         const locationBatch = boxes.map((boxItem) => {
                             const { boxID, boxName } = boxItem;
-                            const { floorName, } = boxItem.Floor;
+                            const { floorName } = boxItem.Floor;
                             const { shelfName } = boxItem.Floor.Shelf;
                             const { zoneName } = boxItem.Floor.Shelf.Zone;
                             return {
@@ -113,9 +114,9 @@ class ProductService {
                             batches: formatBatchResponse,
                         },
                     });
-                    console.log("3")
+                    console.log('3');
                 }
-                console.log(4)
+                console.log(4);
             } catch (err) {
                 reject({
                     status: 'ERR',
@@ -128,7 +129,15 @@ class ProductService {
     findAllProduct() {
         return new Promise(async (resolve, reject) => {
             try {
-                const products = await Product.findAll();
+                const products = await Product.findAll({
+                    include: [
+                        {
+                            model: Category,
+                            as: 'category',
+                            attributes: ['categoryID', 'categoryName'],
+                        },
+                    ],
+                });
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
@@ -141,12 +150,13 @@ class ProductService {
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
                     message: err,
                 });
+                console.log(err);
             }
         });
     }
     searchProduct(productID, productName, categoryID, minStock, supplierID) {
         return new Promise(async (resolve, reject) => {
-            try{
+            try {
                 //console.log(minStock)
                 let where = {}
                 if(productID) where.productID = {[Op.like]: `%${productID}%`}
@@ -155,22 +165,22 @@ class ProductService {
                 if(categoryID) where.categoryID = categoryID
                 if(supplierID) where.supplierID = supplierID
                 const resultSearch = await Product.findAll({
-                    where
-                })
+                    where,
+                });
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Tìm kiếm thành công',
-                    products: resultSearch
-                })
-            }catch(err) {
+                    products: resultSearch,
+                });
+            } catch (err) {
                 reject({
-                    status: "ERR",
+                    status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    message: err
-                })
+                    message: err,
+                });
             }
-        })
+        });
     }
 }
 
