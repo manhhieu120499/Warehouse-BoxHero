@@ -1,5 +1,6 @@
 const dotenv = require('dotenv');
 const db = require('../../models');
+const { Op } = require('sequelize');
 const Product = db.Product;
 const Batch = db.Batch;
 const Box = db.Box;
@@ -19,7 +20,7 @@ const HTTP_INTERNAL_SERVER_ERROR = process.env.HTTP_INTERNAL_SERVER_ERROR;
 class ProductService {
     findProductById(productID, warehouseID) {
         return new Promise(async (resolve, reject) => {
-            console.log('----', warehouseID);
+            //console.log('----', warehouseID);
             try {
                 // tìm sản phẩm kèm tất cả các lô của sản phẩm
                 const product = await Product.findOne({
@@ -67,7 +68,8 @@ class ProductService {
                                 },
                                 {
                                     model: Unit,
-                                    attributes: ["unitID", "unitName", "conversationQuantity"]
+                                    attributes: ["unitID", "unitName", "conversionQuantity"],
+                                    as: 'unit'
                                 }
                             ],
                         }),
@@ -83,8 +85,8 @@ class ProductService {
                 if (listBatch) {
                     const formatBatchResponse = listBatch.map((item) => {
                         const { boxes, ...restBatch } = item.toJSON();
-                        const {units, remainAmount, ...rest} = restBatch
-                        const totalProductRemain = Number.parseInt(units.conversationQuantity) * Number.parseInt(remainAmount)
+                        const {unit, remainAmount, ...rest} = restBatch
+                        const totalProductRemain = Number.parseInt(unit.conversionQuantity) * Number.parseInt(remainAmount)
                         const locationBatch = boxes.map((boxItem) => {
                             const { boxID, boxName } = boxItem;
                             const { floorName } = boxItem.Floor;
@@ -98,7 +100,7 @@ class ProductService {
                         });
                         return {
                             ...rest,
-                            unitName: units.unitName,
+                            unitName: unit.unitName,
                             remainAmount,
                             totalProductRemain,
                             locationBatch,
@@ -114,10 +116,11 @@ class ProductService {
                             batches: formatBatchResponse,
                         },
                     });
-                    console.log('3');
+                    //console.log('3');
                 }
-                console.log(4);
+                //console.log(4);
             } catch (err) {
+                console.log(err)
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
@@ -166,6 +169,13 @@ class ProductService {
                 if(supplierID) where.supplierID = supplierID
                 const resultSearch = await Product.findAll({
                     where,
+                    include: [
+                        {
+                            model: Category,
+                            attributes: ["categoryID", "categoryName"],
+                            as: 'category'
+                        }
+                    ]
                 });
                 resolve({
                     status: 'OK',
@@ -174,6 +184,7 @@ class ProductService {
                     products: resultSearch,
                 });
             } catch (err) {
+                console.error(err)
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
@@ -181,6 +192,38 @@ class ProductService {
                 });
             }
         });
+    }
+    updateProduct(data) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction()
+            try{
+                let updateData = {}
+                if(data.productName) updateData.productName = data.productName
+                if(data.minStock) updateData.minStock = data.minStock
+                if(data.status) updateData.status = data.status
+                const updateResult = await Product.update(updateData, 
+                    {
+                        where: {productID: data.productID}
+                    },
+                    {
+                        transaction
+                    }
+                )
+                await transaction.commit()
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Cập nhật sản phẩm thành công',
+                })
+            }catch(err) {
+                console.error(err)
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err
+                })
+            }
+        })
     }
 }
 
