@@ -1,4 +1,5 @@
 .wrapper-link {
+    margin: 0 auto;
     width: 90%;
     height: 35px;
     display: flex;
@@ -26,12 +27,14 @@
         width: 85%;
         justify-content: flex-end;
         margin: auto;
-        margin-top: 5px;
+        margin: 5px auto;
+        column-gap: 0;
 
         .title {
             font-size: 1.4rem;
             text-align: left;
-            width: 70%;
+            width: 75%;
+            margin-left: 8px;
         }
 
     }
@@ -44,6 +47,7 @@
 }
 
 .wrapper-menu-route {
+    margin: 5px auto;
     width: 90%;
     height: 35px;
     cursor: pointer;
@@ -63,7 +67,7 @@
         .title {
             font-size: 1.4rem;
             text-align: left;
-            width: 60%;
+            width: 61%;
             display: inline-block;
         }
 

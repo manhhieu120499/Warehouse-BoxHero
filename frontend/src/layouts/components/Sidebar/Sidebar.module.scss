@@ -7,7 +7,6 @@
     bottom: 0;
     border: none;
     outline: none;
-    overflow: hidden;
 }
 
 .sidebar-content {
@@ -19,6 +18,10 @@
     outline: none;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     margin: 10px 0 10px 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .info-user {
@@ -56,9 +59,17 @@
 }
 
 .sidebar-list {
+    text-align: center;
     padding-top: 10px;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    row-gap: 5px;
+    //display: flex;
+    // align-items: center;
+    // flex-direction: column;
+    // row-gap: 5px;
+    height: 73vh;
+    overflow-y: scroll;
+    scrollbar-width: none;
+}
+
+.sidebar-list::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari */
 }
