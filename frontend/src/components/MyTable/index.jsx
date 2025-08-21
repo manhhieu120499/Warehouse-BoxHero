@@ -42,7 +42,7 @@ export default function MyTable({
                             {...props}
                             style={{
                                 background: `var(--color-header-table)`,
-                                color: '#333',
+                                color: '#fff',
                                 textAlign: 'center',
                                 ...props.style,
                                 padding: '8px',
@@ -71,6 +71,7 @@ export default function MyTable({
                     ),
                 },
             }}
+            showSorterTooltip={false}
         />
     );
 }

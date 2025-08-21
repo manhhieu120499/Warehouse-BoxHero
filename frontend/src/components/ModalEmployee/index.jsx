@@ -8,6 +8,7 @@ import md5 from 'md5';
 import { formatRole, mapperRole } from '../../constants';
 import request from "@/utils/httpRequest"
 import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 
 const cx = classNames.bind(styles);
 const roleEmployee = ['Quản lý kho', 'Nhân viên nhận hàng', 'Nhân viên xuất hàng', 'Kế toán'];
@@ -107,7 +108,6 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
     }, []);
 
     const handleAddNewRole = (e) => {
-        console.log(listRoleUser)
         const checkRole = listRoleUser.find(item => item.roleName == mapperRole[e.target.value].roleName)
         if (e.target.checked) {
             if (!checkRole)
@@ -118,18 +118,20 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                     empRole: updateListRole
                 })});
         } else {
-            if (checkRole) {
+            if (checkRole && listRoleUser.length > 1) {
                 setData((prev) => ({
                     ...prev,
                     empRole: listRoleUser.filter((item) => item.roleName != mapperRole[e.target.value].roleName)
                 }));
+            }else {
+                toast.error("Nhân viên phải có ít nhất một vai trò")
+                return;
             }
         }
     };
 
     const handleUpdateRoleEmployee = () => {
         if (action == 'add') {
-            //console.log(listRoleUser);
             setData((prev) => ({ ...prev, empRole: listRoleUser, empStatus: 'Đang làm'}));
             handleShowViewDetailRole();
         } else {

@@ -24,7 +24,6 @@ const ModalCreateAccount = ({ isOpen, onClose, setAccount, setStatusCreateAccoun
 
     const onSubmitForm = (data) => {
         const { email, password } = data;
-        console.log('Vào');
 
         if (email && password) {
             // call api

@@ -6,6 +6,8 @@ import Image from '../Image';
 import MyTable from '../MyTable';
 import Button from '../Button';
 import { QrCode } from 'lucide-react';
+import { Tooltip } from 'antd';
+import TooltipTable from '../TooltipTable';
 
 const cx = classNames.bind(styles);
 
@@ -35,25 +37,41 @@ const tableColumns = [
         key: 'sbu',
     },
     {
-        title: 'Ngày sản xuất',
+        title: () => <TooltipTable text={"Ngày nhập"} textHover={"Click để sắp xếp ngày nhập"}/>,    
+        dataIndex: 'importDate',
+        key: 'importDate',
+        defaultSortOrder: 'descend',
+        sorter: (a, b) => new Date(a.importDate) - new Date(b.importDate)
+    },
+    {
+        title: () => <TooltipTable text={"Ngày sản xuất"} textHover={"Click để sắp xếp ngày sản xuất"}/>,
         dataIndex: 'macDate',
         key: 'macDate',
+        defaultSortOrder: 'descend',
+        sorter: (a, b) => new Date(a.macDate) - new Date(b.macDate)
     },
     {
-        title: 'Hạn sử dụng',
+        title: () => <TooltipTable text={"Hạn sử dụng"} textHover={"Click để sắp xếp hạn sử dụng"}/>,  
         dataIndex: 'expiredDate',
         key: 'expiredDate',
+        defaultSortOrder: 'descend',
+        sorter: (a, b) => new Date(a.expiredDate) - new Date(b.expiredDate)
     },
     {
-        title: 'Số lượng nhập',
+        title: () => <TooltipTable text={"Số lượng nhập"} textHover={"Click để sắp xếp số lượng nhập"}/>,  
         dataIndex: 'receive',
         key: 'receive',
+        defaultSortOrder: 'descend',
+        sorter: (a, b) => a.receive - b.receive,
         render: (text) => <p className={cx('number')}>{text}</p>,
+        
     },
     {
-        title: 'Số lượng tồn',
+        title: () => <TooltipTable text={"Số lượng tồn"} textHover={"Click để sắp xếp số lượng tồn"}/>,
         dataIndex: 'available',
         key: 'available',
+        defaultSortOrder: 'descend',
+        sorter: (a, b) => a.available - b.available,
         render: (text) => <p className={cx('number')}>{text}</p>,
     },
     {
@@ -61,6 +79,14 @@ const tableColumns = [
         dataIndex: 'unit',
         key: 'unit',
         render: (text, record) => <p className={cx('number')}>{record.unit}</p>,
+    },
+    {
+        title: () => <TooltipTable text={"Tổng sản phẩm"} textHover={"Click để sắp xếp tổng sản phẩm"}/>,  
+        dataIndex: 'totalProductRemain',
+        key: 'totalProductRemain',
+        defaultSortOrder: 'descend',
+        sorter: (a, b) => a.totalProductRemain - b.totalProductRemain,
+        render: (text, record) => <p className={cx('number')}>{record.totalProductRemain}</p>,
     },
     {
         title: 'Vị trí',
@@ -233,11 +259,10 @@ const ProductDetail = ({ data, classname, onClose }) => {
                             <RowItem
                                 firstTitle="Mã sản phẩm"
                                 firstValue={data.sku}
-                                secondTitle="Đơn vị tính"
-                                secondValue={data.unit}
+                                secondTitle="Tổng số lượng tồn"
+                                secondValue={data.total}
                             />
                             <RowItem firstTitle="Mô tả" firstValue={data.des} />
-                            <RowItem firstTitle="Đơn giá" firstValue={data.price} />
                             <RowItem firstTitle="Mã nhà cung cấp" firstValue={data.supplierId} />
                         </div>
                     </div>
