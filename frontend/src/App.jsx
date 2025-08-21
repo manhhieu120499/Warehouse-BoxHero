@@ -3,13 +3,14 @@ import { Routes, Route, Outlet, useNavigate, Navigate } from "react-router-dom";
 import { publicRoute } from "./routes";
 import DefaultLayout from "./layouts/DefaultLayout";
 import {Toaster} from "react-hot-toast";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { jwtDecode } from "jwt-decode";
 import { post } from "./utils/httpRequest";
 import EmployeeDTO from "./dtos/EmployeeDTO";
 import { login } from "./lib/redux/auth/authSlice";
 import { setGlobalLoadingHandler } from "../src/utils/httpRequest";
 import { Loading } from "./components";
+import { changDropItem } from "./lib/redux/dropSidebar/dropSidebarSlice";
 
 const RootLayout = () => {
     const dispatch = useDispatch();
@@ -29,7 +30,13 @@ const RootLayout = () => {
                 );
                 const {employee} = responseUser
                 dispatch(login({ ...new EmployeeDTO({ ...employee, roles }) }));
+
+                const itemDropActiveSidebar = JSON.parse(localStorage.getItem('indexItemDropActive')) || []
+                dispatch(changDropItem(itemDropActiveSidebar))
             } catch (err) {
+                navigate('/login')
+                localStorage.setItem('tokenUser', null)
+                localStorage.setItem('indexItemDropActive', [])
                 console.log(err);
             }
         };
@@ -45,11 +52,7 @@ const RootLayout = () => {
 }
 
 function App() {
-  const [loading, setLoading] = useState(true);
-
-  // useEffect(() =>{
-  //   console.log(loading)
-  // }, [loading])
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setGlobalLoadingHandler(setLoading);

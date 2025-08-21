@@ -6,10 +6,10 @@ class ProductDetailDTO {
         this.image = data.image;
         this.des = data.description;
         this.price = new Intl.NumberFormat('vi-VN').format(data.price);
-        this.unit = 'Thùng';
         this.minStock = data.minStock;
         this.qrcode = data.qrcode;
         this.listBatch = data.listBatch;
+        this.total = data.listBatch.reduce((s, item) => s + item.totalProductRemain, 0)
     }
 }
 

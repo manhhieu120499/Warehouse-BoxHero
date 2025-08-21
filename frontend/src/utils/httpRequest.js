@@ -49,13 +49,14 @@ export const post = async (path, options = {}, token, employeeID) => {
     return response.data;
 };
 
-export const put = async (path, options = {}, token, employeeID) => {
+export const put = async (path, options = {}, token, employeeID, warehouseID) => {
     try {
         console.log(`Making PUT request to ${path} with options:`, options);
         const response = await request.put(path, options, {
             headers: {
                 token: `Bearer ${token}`,
-                employeeID: employeeID,
+                employeeid: employeeID,
+                warehouseid: warehouseID ? warehouseID : null
             },
         });
         return response.data;

@@ -20,10 +20,15 @@ import PopupMessage from '../../components/PopupMessage';
 import parseToken from '../../utils/parseToken';
 const cxGlobal = classNames.bind(globalStyle);
 import { useNavigate } from 'react-router-dom';
+import ProductDetailDTO from '../../dtos/ProductDetailDTO';
+import { useDispatch, useSelector } from 'react-redux';
+import BatchDTO from '../../dtos/BatchDTO';
+import { removeItemDrop } from '../../lib/redux/dropSidebar/dropSidebarSlice';
 
 const cx = classNames.bind(styles);
 
 const SupplierPage = () => {
+    const currentUser = useSelector((state) => state.AuthSlice.user);
     const [page, setPage] = useState(1);
     const [data, setData] = useState([]);
     const [total, setTotal] = useState(0);
@@ -44,6 +49,7 @@ const SupplierPage = () => {
         phoneNumber: '',
         email: '',
     });
+    const dispatch = useDispatch()
 
     // product state
     const productPageSize = 10;
@@ -66,7 +72,7 @@ const SupplierPage = () => {
                     employeeid: tokenUser.employeeID,
                 },
             });
-            console.log(response);
+         
             const formatProductsData = response.data.products.map((item) => {
                 return {
                     key: item.productID,
@@ -530,11 +536,6 @@ const SupplierPage = () => {
             key: 'productDes',
         },
         {
-            title: 'Đơn giá (VND)',
-            dataIndex: 'price',
-            key: 'price',
-        },
-        {
             title: 'Trạng thái',
             dataIndex: 'statusProduct',
             key: 'statusProduct',
@@ -549,8 +550,31 @@ const SupplierPage = () => {
                         <Tippy content={'Xem chi tiết sản phẩm'} placement="bottom-end">
                             <button
                                 className={cxGlobal('action-table-icon')}
-                                onClick={() => {
-                                    navigate(`/products?productID=${record.productID}`);
+                                onClick={async () => {
+                                    try {
+                                        const tokenUser = parseToken('tokenUser');
+                                        //useDispatch(startLoading());
+                                        // call api lấy thông tin product
+                                        const res = await request.get(`/api/product?productID=${record.productID}`, {
+                                            headers: {
+                                                token: `Beare ${tokenUser.accessToken}`,
+                                                employeeid: tokenUser.employeeID,
+                                                warehouseid: currentUser.warehouseId ? currentUser.warehouseId : null,
+                                            },
+                                        });
+                                        console.log(res.data);
+                                        const { batches, ...rest } = res.data.product;
+                                        const formatBatch = batches.map((item) => {
+                                            const batch = new BatchDTO(item);
+                                            return { ...batch };
+                                        });
+                                        const productDetail = new ProductDetailDTO({ ...rest, listBatch: formatBatch });
+                                        //navigate(`/products?productID=${record.productID}`);
+                                        navigate('/products', { state: productDetail });
+                                        dispatch(removeItemDrop(2))
+                                    } catch (err) {
+                                        console.log(err);
+                                    }
                                 }}
                             >
                                 <Eye size={20} />

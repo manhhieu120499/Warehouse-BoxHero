@@ -289,7 +289,6 @@ const AuthPage = () => {
     };
 
     const handleAddEmployee = async () => {
-        console.log(empData);
         if (!statusCreateAccount) {
             toast.error('Vui lòng tạo tài khoản cho nhân viên trước khi thêm nhân viên', {
                 ...styleMessage,
@@ -357,7 +356,7 @@ const AuthPage = () => {
         setAction((prev) => ({ ...prev, [key]: value }));
         setTimeout(() => {
             setEmpData(resetData);
-        }, 200)
+        }, 1000)
     };
 
     useEffect(() => {
@@ -368,7 +367,6 @@ const AuthPage = () => {
     }, [selectedRowKeys]);
 
     const handleUpdateEmployee = async () => {
-        console.log(empData)
         const validValue = validateEmployeeData(empData, 'update');
         if (!validValue) return;
         try {
@@ -419,8 +417,9 @@ const AuthPage = () => {
             fetchEmployeeList();
             handleCloseModal('update', false);
         } catch (err) {
+            console.log(err)
             // throw err
-            toast.error(err.response.data.message, styleMessage);
+            toast.error(err.response.data.messages[0], styleMessage);
             return;
         }
     };
@@ -445,12 +444,12 @@ const AuthPage = () => {
                 accessToken,
                 employeeID,
             );
-            console.log(response);
+
             const formatEmployee = response.employees.map((item) => {
                 const emp = new EmployeeDTO(item);
                 return { ...emp };
             });
-            console.log(formatEmployee);
+
             setEmployeeList(formatEmployee);
         } catch (err) {
             console.log('fetch employee list err', err.response.data.message);
@@ -468,10 +467,9 @@ const AuthPage = () => {
     }
 
     const handleSearch = async () => {
+        if(!Object.keys(filterSearchEmployee).some(key => filterSearchEmployee[key])) return;
         try{
             const tokenUser = JSON.parse(localStorage.getItem('tokenUser'))
-            console.log(tokenUser.accessToken
-            )
             const params = {...filterSearchEmployee, status: filterSearchEmployee.status == "Đang làm" ? 'ACTIVE' : 'INACTIVE'}
             const resultSearch = await request.get('/api/employee/filter', {
                 params,
@@ -480,7 +478,6 @@ const AuthPage = () => {
                     employeeid: tokenUser.employeeID
                 }
             })
-            console.log(resultSearch)
             const formatEmployee = resultSearch.data.employeeFilter.map((item) => {
                 const emp = new EmployeeDTO(item);
                 return { ...emp };

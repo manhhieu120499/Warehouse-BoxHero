@@ -9,12 +9,13 @@ import { ProductDetail, ProductEdit, ModelFilter, Button } from '@/components';
 import { useDispatch, useSelector } from 'react-redux';
 import { startLoading, stopLoading } from '../../lib/redux/loading/slice';
 import toast from 'react-hot-toast';
-import request from '../../utils/httpRequest';
+import request, { put } from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
 import ProductDTO from '../../dtos/ProductDTO';
 import BatchDTO from '../../dtos/BatchDTO';
 import ProductDetailDTO from '../../dtos/ProductDetailDTO';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { formatStatusProduct, styleMessage } from '../../constants';
 
 const cx = classNames.bind(styles);
 
@@ -36,42 +37,9 @@ const cx = classNames.bind(styles);
 //     { sku: 'SP015', productName: 'Bột giặt OMO', minStock: 13 },
 // ];
 
-// mockdata
-const api = () => {
-    return new Promise((resolve, reject) => {
-        const isResult = true;
-        if (isResult) {
-            setTimeout(() => {
-                resolve({
-                    skug: 'SPG001',
-                    sku: 'SP001',
-                    productName: 'Gạo thơm',
-                    image: 'https://marketplace.canva.com/EAFALM0AfOs/1/0/900w/canva-m%C3%A0u-n%C3%A2u-be-h%C3%ACnh-n%E1%BB%81n-%C4%91i%E1%BB%87n-tho%E1%BA%A1i-d%E1%BB%85-th%C6%B0%C6%A1ng-y%C3%AAu-%C4%91%E1%BB%9Di-iSucd-62myg.jpg',
-                    des: 'Haha',
-                    price: 10,
-                    minStock: 20,
-                    supplierId: 'NCC20',
-                    listBatch: [
-                        {
-                            sbu: 'SPG001',
-                            macDate: '12-03-2025',
-                            expiredDate: '12-3-2026',
-                            receive: 20,
-                            available: 15,
-                            location: 'Khu A',
-                            wareId: 'WH123',
-                            unit: 'Thùng 12',
-                        },
-                    ],
-                });
-            }, 2000);
-        } else {
-            reject(null);
-        }
-    });
-};
-
 const ProductPage = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
     const currentUser = useSelector((state) => state.AuthSlice.user);
     const [currentPage, setCurrentPage] = useState(1);
     const [action, setAction] = useState({
@@ -131,22 +99,14 @@ const ProductPage = () => {
         }
     };
 
-    const handleShowEditProduct = async (productId) => {
-        try {
-            dispatch(startLoading());
-            // call api lấy thông tin product
-            const res = await api();
-            setProductData(res);
-        } catch (err) {
-            throw new Error(err);
-        } finally {
+    const handleShowEditProduct = (productId) => {
+            const productSelected = productList.find(item => item.sku == productId)
+            setProductData(productSelected)
             setAction({
                 productId,
                 actionName: 'edit',
             });
-            dispatch(stopLoading());
-        }
-    };
+        };
 
     const columnsModelFilter = [
         {
@@ -194,7 +154,7 @@ const ProductPage = () => {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            render: (text) => <p className={cx('status-product')}>{text}</p>,
+            render: (text) => <p className={cx('status-product')}>{formatStatusProduct[text]}</p>,
         },
         {
             title: 'Thao tác',
@@ -212,7 +172,7 @@ const ProductPage = () => {
                             </button>
                         </Tippy>
                         <Tippy content={'Chỉnh sửa'} placement="bottom-end">
-                            <button className={cx('action-table-icon')} onClick={handleShowEditProduct}>
+                            <button className={cx('action-table-icon')} onClick={()=> handleShowEditProduct(record.sku)}>
                                 <PencilIcon size={20} />
                             </button>
                         </Tippy>
@@ -222,9 +182,9 @@ const ProductPage = () => {
         },
     ];
 
-    const handleOpenModalCreateCategory = () => {
-        setShowModalCreateCategory((prev) => !prev);
-    };
+    // const handleOpenModalCreateCategory = () => {
+    //     setShowModalCreateCategory((prev) => !prev);
+    // };
 
     const handleCreateCategory = async (category) => {
         try {
@@ -269,8 +229,12 @@ const ProductPage = () => {
                     warehouseid: currentUser.warehouseId ? currentUser.warehouseId : null,
                 },
             });
-            //console.log(res.data)
-            setProductList(res.data.products || []);
+
+            const formatProduct = res.data.products.map(item => {
+                const product = new ProductDTO(item)
+                return {...product}
+            })
+            setProductList(formatProduct || []);
         } catch (err) {
             console.log(err);
             fetchProducts();
@@ -287,8 +251,38 @@ const ProductPage = () => {
     };
 
     useEffect(() => {
+        if(location.state) {
+            console.log(location.state)
+            setProductData(location.state)
+            setAction({
+                productId: location.state.sku,
+                actionName: 'view'
+            })
+
+        }
         fetchProducts();
     }, []);
+
+    const handleUpdateProduct = async (dataUpdate) => {
+        try{
+            // call api
+            const token = parseToken('tokenUser')
+            const result = await put(`/api/product/update/${productData.sku}`, {
+                productName: dataUpdate.productName,
+                minStock: dataUpdate.productMinStock,
+                status: dataUpdate.productStatus
+            }, token.accessToken, token.employeeID, currentUser.warehouseId)
+            //console.log(result)
+            setAction({ productId: null, actionName: null })
+            setProductData(null)
+            toast.success(result.message, styleMessage)
+            fetchProducts()
+        }catch(err) {
+            console.error(err)
+            toast.error(err.response.data.message, styleMessage)
+        }
+    }
+
 
     return (
         <div className={cx('wrapper-product')}>
@@ -310,12 +304,15 @@ const ProductPage = () => {
             {action.productId && action.actionName === 'view' && (
                 <ProductDetail
                     data={productData}
-                    onClose={() => setAction({ productId: null, actionName: null })}
+                    onClose={() => {
+                        setAction({ productId: null, actionName: null })
+                        navigate(location.pathname, {replace: true})
+                    }}
                     classname={cx('modal-product-detail')}
                 />
             )}
             {action.productId && action.actionName === 'edit' && (
-                <ProductEdit data={productData} onClose={() => setAction({ productId: null, actionName: null })} />
+                <ProductEdit data={productData} onClose={() => setAction({ productId: null, actionName: null })} handleUpdateProduct={handleUpdateProduct}/>
             )}
         </div>
     );

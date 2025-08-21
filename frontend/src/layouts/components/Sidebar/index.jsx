@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Sidebar.module.scss';
 import SidebarItem from './SidebarItem';
@@ -20,11 +20,18 @@ import {
     Users,
     ShoppingCart,
     BookMinus,
+    Milk,
+    Package,
+    FileClock,
+    UserCog,
+    Columns3,
 } from 'lucide-react';
 import logo from '../../../assets/logo_v2.jpg';
 import { useLocation } from 'react-router-dom';
 import { Modal } from '@/components';
 import { InfoWare } from '@/components';
+import { useDispatch, useSelector } from 'react-redux';
+import { changDropItem } from '../../../lib/redux/dropSidebar/dropSidebarSlice';
 
 const shopName = import.meta.env.VITE_SOFTWARE_NAME;
 const cx = classNames.bind(styles);
@@ -44,16 +51,17 @@ const Sidebar = () => {
             subMenu: [
                 {
                     title: 'Nhóm sản phẩm',
+                    iconName: ShoppingBasket,
                     path: '/categories',
                 },
                 {
                     title: 'Sản phẩm',
-                    iconName: ShoppingBasket,
+                    iconName: Milk,
                     path: '/products',
                 },
                 {
                     title: 'Quản lý lô hàng',
-                    iconName: ShoppingBasket,
+                    iconName: Package,
                     path: '/batch',
                 },
             ],
@@ -66,7 +74,7 @@ const Sidebar = () => {
             subMenu: [
                 {
                     title: 'Tạo phiếu đề xuất',
-                    iconName: CircleArrowRight,
+                    iconName: FileClock,
                     path: '/proposal',
                 },
                 {
@@ -89,7 +97,7 @@ const Sidebar = () => {
         {
             id: 4,
             title: 'Quản lý đối tác',
-            iconName: BookMinus,
+            iconName: UserCog,
             subMenu: [
                 {
                     title: 'Khách hàng',
@@ -126,7 +134,7 @@ const Sidebar = () => {
                 },
                 {
                     title: 'Quản lý khu vực',
-                    iconName: Warehouse,
+                    iconName: Columns3,
                     path: '/zone',
                 },
             ],
@@ -135,14 +143,15 @@ const Sidebar = () => {
 
     let location = useLocation();
     const [isOpenInfo, setIsOpenInfo] = useState(false);
-    const [itemDrop, setItemDrop] = useState([]);
+    const itemDrop = useSelector(state => state.DropSideBarSlice.itemDrop)
+    const dispatch = useDispatch();
 
     const closeInfoWarehouse = () => {
         setIsOpenInfo(false);
     };
 
     const changeDropItem = (ids) => {
-        setItemDrop([...ids]);
+        dispatch(changDropItem([...ids]))
     };
 
     return (

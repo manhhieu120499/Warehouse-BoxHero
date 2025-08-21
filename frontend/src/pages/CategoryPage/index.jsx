@@ -48,9 +48,6 @@ const CategoryPage = () => {
             const result = await post('/api/category-product/create-category', {
                 ...data
             }, token.accessToken, token.employeeID)
-            //console.log(result)
-            //console.log(result.data)
-            //setCategoryList(result.data.data)
             toast.success(result.message, styleMessage)
             setCategoryList(prev => [data,...prev])
             handleOpenModalCreateCategory()

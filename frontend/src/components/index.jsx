@@ -24,6 +24,7 @@ import ModalCreateCategory from './ModalCreateCategory';
 import ModalReadEmployee from './ModalReadEmployee';
 import ViewAccountProfile from './ViewAccountProfile';
 import Loading from './Loading';
+import TooltipTable from './TooltipTable';
 
 export {
     GlobalStyle,
@@ -51,5 +52,6 @@ export {
     ModalCreateCategory,
     ModalReadEmployee,
     ViewAccountProfile,
-    Loading
+    Loading,
+    TooltipTable
 };

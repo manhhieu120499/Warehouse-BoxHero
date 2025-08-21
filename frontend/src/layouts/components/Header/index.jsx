@@ -7,6 +7,7 @@ import { Menu, Notification } from '@/components';
 import { Search } from '@/components';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../../lib/redux/auth/authSlice';
+import { resetActiveItemDrop } from '../../../lib/redux/dropSidebar/dropSidebarSlice';
 
 const cx = classNames.bind(styles);
 
@@ -47,7 +48,9 @@ const Header = ({ children }) => {
             path: '/login',
             onClick: () => {
                 dispatch(logout())
+                dispatch(resetActiveItemDrop())
                 localStorage.setItem('tokenUser', null)
+                localStorage.setItem('indexItemDropActive', JSON.stringify([]))
                 navigate('/login')
             }
         },

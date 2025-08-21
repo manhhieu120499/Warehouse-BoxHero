@@ -4,6 +4,7 @@ class ProductDTO {
         this.sku = data.productID;
         this.productName = data.productName;
         this.minStock = data.minStock;
+        this.status = data.status;
     }
 }
 

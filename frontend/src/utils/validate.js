@@ -81,7 +81,7 @@ function isOver18(birthDateStr) {
             toast.error(message['warehouseId'], styleMessage);
             return false;
         }
-        if (empRole.length < 0) {
+        if (empRole.length == 0) {
             toast.error(message['empRole'], styleMessage);
             return false;
         }
