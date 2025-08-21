@@ -31,6 +31,17 @@ class ProductController {
             return res.status(err.statusHttp).json(err.message)
         }
     }
+    async updateProduct(req, res) {
+        try{
+            const productID = req.params.id
+            const {statusHttp, ...response} = await ProductService.updateProduct({
+                productID, ...req.body
+            })
+            return res.status(statusHttp).json(response)
+        }catch(err) {
+            return res.status(err.statusHttp).json(err)
+        }
+    }
 }
 
 module.exports = new ProductController();

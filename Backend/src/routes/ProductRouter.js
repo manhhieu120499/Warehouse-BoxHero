@@ -9,5 +9,6 @@ const router = express.Router();
 router.get("/list", authUserIsManager, ProductController.getAllProduct)
 router.get("/", authUserIsManager, ProductController.getProductById)
 router.get("/filter", authUserIsManager, ProductController.searchProduct)
+router.put('/update/:id', authUserIsManager, ProductController.updateProduct)
 
 module.exports = router;
