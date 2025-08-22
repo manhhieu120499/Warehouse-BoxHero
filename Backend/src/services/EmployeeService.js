@@ -65,8 +65,8 @@ class EmployeeService {
             try {
                 const employees = await Employee.findAll({
                     where: {
-                        employeeID: {[Op.ne]: adminId}
-                    },
+                        employeeID: {[Op.ne]: adminId},
+                        status: 'ACTIVE'                    },
                     include: [
                         {
                             model: Account,
@@ -95,6 +95,7 @@ class EmployeeService {
                     employees: responseEmployee,
                 });
             } catch (err) {
+                console.log(err)
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,

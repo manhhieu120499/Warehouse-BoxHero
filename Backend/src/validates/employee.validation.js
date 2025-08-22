@@ -92,15 +92,17 @@ const checkUpdateEmployee = [
             .withMessage('Ngày bắt đầu không hợp lệ')
             .bail(),
         body('roles')
-            .isArray({ min: 1 })
-            .withMessage('Danh sách vai trò là bắt buộc và phải là mảng')
-            .bail()
+            // .isArray({ min: 1 })
+            // .withMessage('Danh sách vai trò là bắt buộc và phải là mảng')
+            // .bail()
             .custom((roles) => {
                 console.log(roles);
     
                 const invalidRoles = roles.filter((role) => !ALLOWED_ROLES.includes(role.roleName));
                 if (invalidRoles.length > 0) {
                     throw new Error(`Các vai trò không hợp lệ: ${invalidRoles.join(', ')}`);
+                }else if(roles.length == 0){
+                    throw new Error(`Nhân viên phải có ít nhất một vai trò`);
                 }
                 return true;
             }),
