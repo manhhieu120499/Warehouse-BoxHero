@@ -1,4 +1,4 @@
-module.exports = (Sequelize, sequelize) => {
+module.exports = (sequelize, Sequelize) => {
     const Proposal = sequelize.define('Proposal', {
         proposalID: {
             type: Sequelize.STRING,
