@@ -59,6 +59,9 @@ module.exports = (sequelize, Sequelize) => {
 
     Employee.associate = (models) => {
         Employee.hasOne(models.Account, { foreignKey: 'employeeID', as: 'account' });
+        Employee.hasMany(models.Proposal, { foreignKey: "employeeIDCreate", as: "proposalsCreated" })
+        Employee.hasMany(models.Proposal, { foreignKey: "approverID", as: "proposalsApproved" })
+
     };
 
     return Employee;
