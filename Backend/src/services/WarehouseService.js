@@ -30,6 +30,33 @@ class WarehouseService {
             }
         });
     }
+
+    findById(id) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const response = await Warehouse.findByPk(id);
+                if (!response) {
+                    return resolve({
+                        status: 'ERR',
+                        statusHttp: HTTP_NOT_FOUND,
+                        message: 'Kho không tồn tại',
+                    });
+                }
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy thông tin kho thành công',
+                    warehouse: response,
+                });
+            } catch (err) {
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
 }
 
 module.exports = new WarehouseService();

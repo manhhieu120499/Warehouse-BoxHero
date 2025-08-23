@@ -20,8 +20,9 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: false,
             },
             status: {
-                type: Sequelize.STRING,
+                type: Sequelize.ENUM('ACTIVE', 'INACTIVE'),
                 allowNull: false,
+                defaultValue: 'ACTIVE',
             },
         },
         {
