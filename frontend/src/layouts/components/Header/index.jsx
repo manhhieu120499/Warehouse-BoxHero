@@ -51,6 +51,7 @@ const Header = ({ children }) => {
                 dispatch(resetActiveItemDrop())
                 localStorage.setItem('tokenUser', null)
                 localStorage.setItem('indexItemDropActive', JSON.stringify([]))
+                localStorage.setItem('warehouse', null)
                 navigate('/login')
             }
         },

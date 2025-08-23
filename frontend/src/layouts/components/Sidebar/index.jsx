@@ -145,6 +145,7 @@ const Sidebar = () => {
     const [isOpenInfo, setIsOpenInfo] = useState(false);
     const itemDrop = useSelector(state => state.DropSideBarSlice.itemDrop)
     const dispatch = useDispatch();
+    const warehouse = useSelector(state => state.WareHouseSlice.warehouse)
 
     const closeInfoWarehouse = () => {
         setIsOpenInfo(false);
@@ -184,11 +185,11 @@ const Sidebar = () => {
             </div>
             <Modal isOpenInfo={isOpenInfo} onClose={closeInfoWarehouse}>
                 <InfoWare
-                    warehouseId="WH001"
-                    warehouseName="Kho A"
-                    faxNumber="123456789"
-                    address="123 Đường ABC, Quận 1, TP.HCM"
-                    status="ACTIVE"
+                    warehouseId={warehouse.warehouseID}
+                    warehouseName={warehouse.warehouseName}
+                    faxNumber={warehouse.faxNumber}
+                    address={warehouse.address}
+                    status={warehouse.status}
                 />
             </Modal>
         </>
