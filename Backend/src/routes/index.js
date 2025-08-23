@@ -15,6 +15,7 @@ const OrderTransferRouter = require('./OrderTransferRouter');
 const EmployeeRouter = require('./EmployeeRouter');
 const UploadRouter = require('./UploadRouter');
 const CategoryProductRouter = require('./CategoryProductRouter');
+const ProposalRouter = require('./ProposalRouter');
 
 const router = (app) => {
     app.use('/api/account', AccountRouter);
@@ -34,6 +35,7 @@ const router = (app) => {
     app.use('/api/employee', EmployeeRouter);
     app.use('/api/image', UploadRouter);
     app.use('/api/category-product', CategoryProductRouter);
+    app.use('/api/proposal', ProposalRouter);
 };
 
 module.exports = router;
