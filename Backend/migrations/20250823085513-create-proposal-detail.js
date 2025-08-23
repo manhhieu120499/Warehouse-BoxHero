@@ -4,43 +4,49 @@
 module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.createTable(
-            'proposals',
+            'proposal_details',
             {
-                proposalID: {
+                proposalDetailID: {
                     type: Sequelize.STRING,
                     primaryKey: true,
                 },
-                employeeIDCreate: {
+                proposalID: {
                     type: Sequelize.STRING,
                     allowNull: false,
                     references: {
-                        model: 'employees',
-                        key: 'employeeID',
+                        model: 'proposals',
+                        key: 'proposalID',
                     },
+                    onUpdate: 'CASCADE',
+                    onDelete: 'CASCADE',
                 },
-                approverID: {
-                    type: Sequelize.STRING,
-                    allowNull: true,
-                    references: {
-                        model: 'employees',
-                        key: 'employeeID',
-                    },
-                },
-                warehouseID: {
+                productID: {
                     type: Sequelize.STRING,
                     allowNull: false,
                     references: {
-                        model: 'warehouses',
-                        key: 'warehouseID',
+                        model: 'products',
+                        key: 'productID',
                     },
+                    onUpdate: 'CASCADE',
+                    onDelete: 'RESTRICT',
+                },
+                unitID: {
+                    type: Sequelize.STRING,
+                    allowNull: false,
+                    references: {
+                        model: 'units',
+                        key: 'unitID',
+                    },
+                    onUpdate: 'CASCADE',
+                    onDelete: 'RESTRICT',
+                },
+                quantity: {
+                    type: Sequelize.INTEGER,
+                    allowNull: false,
                 },
                 note: {
                     type: Sequelize.STRING,
-                    allowNull: false,
-                },
-                status: {
-                    type: Sequelize.ENUM('PENDING', 'COMPLETED', 'REFUSE'),
-                    allowNull: false,
+                    allowNull: true,
                 },
                 createdAt: {
                     type: Sequelize.DATE,
@@ -61,6 +67,6 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable('proposals');
+        await queryInterface.dropTable('proposal_details');
     },
 };
