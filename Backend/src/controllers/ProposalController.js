@@ -9,6 +9,15 @@ class ProposalController {
             return res.status(err.statusHttp).json(err);
         }
     }
+
+    async approveProposal(req, res) {
+        try {
+            const { statusHttp, ...response } = await ProposalService.approveProposal(req.body);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
 }
 
 module.exports = new ProposalController();

@@ -45,6 +45,45 @@ class ProposalService {
             }
         });
     }
+
+    // approval proposal
+    approveProposal(data) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                const proposal = await Proposal.findOne({
+                    where: { proposalID: data.proposalID },
+                });
+                if (!proposal) {
+                    return reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_NOT_FOUND,
+                        message: 'Không tìm thấy đề xuất',
+                    });
+                }
+                // update proposal
+                proposal.status = data.status;
+                proposal.approverID = data.employeeIDApproval;
+                await proposal.save({ transaction });
+
+                await transaction.commit();
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Phê duyệt đề xuất thành công',
+                    proposal,
+                });
+            } catch (err) {
+                await transaction.rollback();
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
 }
 
 module.exports = new ProposalService();
