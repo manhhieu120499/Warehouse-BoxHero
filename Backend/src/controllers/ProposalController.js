@@ -31,7 +31,8 @@ class ProposalController {
     async getProposalByWarehouse(req, res) {
         try {
             const warehouseID = req.headers['warehouseid'];
-            const { statusHttp, ...response } = await ProposalService.getProposalByWarehouse(warehouseID);
+            const page = req.body.page;
+            const { statusHttp, ...response } = await ProposalService.getProposalByWarehouse(warehouseID, page);
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp).json(err);
