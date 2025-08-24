@@ -38,6 +38,17 @@ class ProposalController {
             return res.status(err.statusHttp).json(err);
         }
     }
+
+    async getProposalByEmployee(req, res) {
+        try {
+            const employeeID = req.headers['employeeid'];
+            const page = req.body.page;
+            const { statusHttp, ...response } = await ProposalService.getProposalByEmployee(employeeID, page);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
 }
 
 module.exports = new ProposalController();

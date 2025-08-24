@@ -220,6 +220,52 @@ class ProposalService {
             }
         });
     }
+
+    getProposalByEmployee(employeeID, page) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let options = {
+                    where: { employeeIDCreate: employeeID },
+                    include: [
+                        {
+                            model: ProposalDetail,
+                            as: 'proposalDetails',
+                            include: [
+                                { model: Product, as: 'product' },
+                                { model: Unit, as: 'unit' },
+                            ],
+                        },
+                        { model: Employee, as: 'employeeCreate' },
+                        { model: Employee, as: 'approver' },
+                        { model: Warehouse, as: 'warehouse' },
+                    ],
+                    order: [['createdAt', 'DESC']], // để bản mới nhất lên trước
+                };
+
+                if (page) {
+                    const offset = (page - 1) * LIMIT_PAGE;
+
+                    options.limit = LIMIT_PAGE;
+                    options.offset = offset;
+                }
+
+                const proposals = await Proposal.findAll(options);
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy danh sách đề xuất theo nhân viên thành công',
+                    proposals,
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
 }
 
 module.exports = new ProposalService();
