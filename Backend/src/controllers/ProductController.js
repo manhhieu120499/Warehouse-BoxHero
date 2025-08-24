@@ -8,7 +8,7 @@ class ProductController {
             const {statusHttp, ...response} = await ProductService.findProductById(productID, warehouseID)
             return res.status(statusHttp).json(response)
         }catch(err) {
-            return res.status(err.statusHttp).json(err.message)
+            return res.status(err.statusHttp).json(err)
         }
     }
     async getAllProduct(req, res) {
@@ -16,7 +16,7 @@ class ProductController {
             const {statusHttp, ...response} = await ProductService.findAllProduct()
             return res.status(statusHttp).json(response)
         }catch(err) {
-            return res.status(err.statusHttp).json(err.message)
+            return res.status(err.statusHttp).json(err)
         }
     }
     async searchProduct(req, res) {
@@ -28,7 +28,7 @@ class ProductController {
             )
             return res.status(statusHttp).json(response)
         }catch(err) {
-            return res.status(err.statusHttp).json(err.message)
+            return res.status(err.statusHttp).json(err)
         }
     }
     async updateProduct(req, res) {
