@@ -24,5 +24,6 @@ router.post(
     authUser,
     ProposalController.updateProposalDetail,
 );
+router.get('/get-proposal/warehouse', authUserIsManager, ProposalController.getProposalByWarehouse);
 
 module.exports = router;
