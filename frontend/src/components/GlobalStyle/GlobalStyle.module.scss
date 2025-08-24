@@ -39,6 +39,11 @@
     // table
     --color-header-table: #333;
 }
+
+* {
+    box-sizing: border-box;
+}
+
 html {
     font-size: 62.5%;
     scrollbar-gutter: stable; // giữ slot

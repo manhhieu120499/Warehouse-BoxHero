@@ -145,7 +145,14 @@ const Sidebar = () => {
     const [isOpenInfo, setIsOpenInfo] = useState(false);
     const itemDrop = useSelector(state => state.DropSideBarSlice.itemDrop)
     const dispatch = useDispatch();
-    const warehouse = useSelector(state => state.WareHouseSlice.warehouse)
+    const warehouseRedux = useSelector(state => state.WareHouseSlice.warehouse)
+    const [warehouse, setWarehouse] = useState({
+        warehouseID: "",
+        warehouseName: '',
+        faxNumber: '',
+        address: '',
+        status: ''
+    })
 
     const closeInfoWarehouse = () => {
         setIsOpenInfo(false);
@@ -154,6 +161,10 @@ const Sidebar = () => {
     const changeDropItem = (ids) => {
         dispatch(changDropItem([...ids]))
     };
+
+    useEffect(()=> {
+        if(warehouseRedux) setWarehouse(warehouseRedux)
+    }, [])
 
     return (
         <>

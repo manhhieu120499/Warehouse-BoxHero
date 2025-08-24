@@ -44,10 +44,11 @@ const SidebarItem = ({ id, title, iconName, path, location, subMenu = [], change
                         {iconName && <Icon size={18} />}
                         <span className={cx('title')}>{title}</span>
                     </div>
-                    {subMenu.map((subItem) => {
+                    {subMenu.map((subItem, index) => {
                         const SubIcon = subItem.iconName ? subItem.iconName : Fragment;
                         return (
                             <Link
+                                key={index}
                                 to={`${subItem.path}`}
                                 className={cx('wrapper-link', {
                                     active: subItem.path == location,
