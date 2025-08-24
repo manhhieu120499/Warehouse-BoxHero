@@ -38,6 +38,11 @@ module.exports = (sequelize, Sequelize) => {
         Proposal.belongsTo(models.Employee, { foreignKey: 'employeeIDCreate', as: 'employeeCreate' });
         Proposal.belongsTo(models.Employee, { foreignKey: 'approverID', as: 'approver' });
         Proposal.belongsTo(models.Warehouse, { foreignKey: 'warehouseID', as: 'warehouse' });
+
+        Proposal.hasMany(models.ProposalDetail, {
+            foreignKey: 'proposalID',
+            as: 'proposalDetails', // alias
+        });
     };
 
     return Proposal;
