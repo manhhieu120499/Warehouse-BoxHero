@@ -40,3 +40,9 @@ export const formatStatusProduct = {
     'OUT_OF_STOCK': 'Hàng trong kho đã hết',
     'DISCONTINUED': 'Ngừng kinh doanh'
 }
+
+export const formatStatusProposal = {
+    "PENDING": 'Chờ phê duyệt',
+    "COMPLETED": "Đã phê duyệt",
+    "REFUSE": 'Từ chối'
+}

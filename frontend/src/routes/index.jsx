@@ -18,7 +18,8 @@ import {
     ProposalPage,
     BatchPage,
     ZonePage,
-    CategoryPage
+    CategoryPage,
+    ApprovePage
 } from '../pages';
 import DefaultLayout from '../layouts/DefaultLayout';
 
@@ -121,6 +122,11 @@ const publicRoute = [
     {
         page: CategoryPage,
         path: '/categories',
+        layout: DefaultLayout
+    },
+    {
+        page: ApprovePage,
+        path: '/approve',
         layout: DefaultLayout
     }
 ];

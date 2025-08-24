@@ -64,6 +64,11 @@
     }
 }
 
+.error {
+    background-color: var(--error);
+    color: var(--white)
+}
+
 .text {
     &:hover {
         text-decoration: underline;

@@ -31,7 +31,8 @@ const Header = ({ children }) => {
         "/proposal": 'Tạo phiếu đề xuất',
         "/batch": 'Quản lý lô hàng',
         "/zone": 'Quản lý khu vực',
-        "/categories": 'Nhóm sản phẩm'
+        "/categories": 'Nhóm sản phẩm',
+        "/approve": 'Phê duyệt'
     };
     
     const navigate = useNavigate();

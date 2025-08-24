@@ -25,6 +25,7 @@ import ModalReadEmployee from './ModalReadEmployee';
 import ViewAccountProfile from './ViewAccountProfile';
 import Loading from './Loading';
 import TooltipTable from './TooltipTable';
+import PaginationUI from './PaginationUI';
 
 export {
     GlobalStyle,
@@ -53,5 +54,6 @@ export {
     ModalReadEmployee,
     ViewAccountProfile,
     Loading,
-    TooltipTable
+    TooltipTable,
+    PaginationUI
 };

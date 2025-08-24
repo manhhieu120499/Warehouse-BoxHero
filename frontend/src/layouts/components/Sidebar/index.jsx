@@ -92,6 +92,11 @@ const Sidebar = () => {
                     iconName: Truck,
                     path: '/ware-transfer',
                 },
+                {
+                    title: 'Phê duyệt',
+                    iconName: Truck,
+                    path: '/approve',
+                },
             ],
         },
         {
