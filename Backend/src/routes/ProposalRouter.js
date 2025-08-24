@@ -1,7 +1,11 @@
 const express = require('express');
-const { authUserIsManager } = require('../middleware/AuthMiddleware');
+const { authUserIsManager, authUser } = require('../middleware/AuthMiddleware');
 const ProposalController = require('../controllers/ProposalController');
-const { checkCreateProposal, checkUpdateStatusProposal } = require('../validates/proposal.validation');
+const {
+    checkCreateProposal,
+    checkUpdateStatusProposal,
+    checkUpdateProposalDetail,
+} = require('../validates/proposal.validation');
 const validate = require('../validates/validate');
 const router = express.Router();
 
@@ -12,6 +16,13 @@ router.post(
     validate,
     authUserIsManager,
     ProposalController.approveProposal,
+);
+router.post(
+    '/update-proposal-detail',
+    checkUpdateProposalDetail,
+    validate,
+    authUser,
+    ProposalController.updateProposalDetail,
 );
 
 module.exports = router;
