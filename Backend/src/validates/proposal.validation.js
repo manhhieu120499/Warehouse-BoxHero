@@ -61,6 +61,29 @@ const checkCreateProposal = [
     body('proposalDetails.*.note').optional().isString().withMessage('Ghi chú chi tiết không hợp lệ'),
 ];
 
+// check update status proposal
+const checkUpdateStatusProposal = [
+    body('proposalID')
+        .notEmpty()
+        .withMessage('Proposal ID là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Proposal ID không hợp lệ'),
+    body('employeeIDApproval')
+        .notEmpty()
+        .withMessage('Employee ID Approval là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Employee ID Approval không hợp lệ'),
+    body('status')
+        .notEmpty()
+        .withMessage('Status là bắt buộc')
+        .bail()
+        .isIn(['PENDING', 'COMPLETED', 'REFUSE'])
+        .withMessage('Status không nằm trong danh sách cho phép (PENDING, COMPLETED, REFUSE)'),
+];
+
 module.exports = {
     checkCreateProposal,
+    checkUpdateStatusProposal,
 };
