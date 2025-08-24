@@ -33,6 +33,12 @@ class ProductService {
                     ],
                 });
 
+                if(!product) reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_NOT_FOUND,
+                    message: 'Sản phẩm không tồn tại'
+                })
+
                 const { batches, ...restProduct } = product.toJSON();
                 const filterBatch = batches.filter((item) => item.warehouseID == warehouseID);
 
