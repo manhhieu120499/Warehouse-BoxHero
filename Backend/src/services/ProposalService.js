@@ -16,6 +16,7 @@ const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
 const HTTP_UNAUTHORIZED = process.env.HTTP_UNAUTHORIZED;
 const HTTP_INTERNAL_SERVER_ERROR = process.env.HTTP_INTERNAL_SERVER_ERROR;
 const HTTP_FORBIDDEN = process.env.HTTP_FORBIDDEN;
+const LIMIT_PAGE = parseInt(process.env.LIMIT_PAGE, 10);
 
 class ProposalService {
     // create proposal
@@ -174,10 +175,10 @@ class ProposalService {
     }
 
     // get proposal by warehouseID
-    getProposalByWarehouse(warehouseID) {
+    getProposalByWarehouse(warehouseID, page) {
         return new Promise(async (resolve, reject) => {
             try {
-                const proposals = await Proposal.findAll({
+                let options = {
                     where: { warehouseID: warehouseID },
                     include: [
                         {
@@ -192,7 +193,17 @@ class ProposalService {
                         { model: Employee, as: 'approver' },
                         { model: Warehouse, as: 'warehouse' },
                     ],
-                });
+                    order: [['createdAt', 'DESC']], // để bản mới nhất lên trước
+                };
+
+                if (page) {
+                    const offset = (page - 1) * LIMIT_PAGE;
+
+                    options.limit = LIMIT_PAGE;
+                    options.offset = offset;
+                }
+
+                const proposals = await Proposal.findAll(options);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
