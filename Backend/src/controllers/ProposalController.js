@@ -27,6 +27,16 @@ class ProposalController {
             return res.status(err.statusHttp).json(err);
         }
     }
+
+    async getProposalByWarehouse(req, res) {
+        try {
+            const warehouseID = req.headers['warehouseid'];
+            const { statusHttp, ...response } = await ProposalService.getProposalByWarehouse(warehouseID);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
 }
 
 module.exports = new ProposalController();

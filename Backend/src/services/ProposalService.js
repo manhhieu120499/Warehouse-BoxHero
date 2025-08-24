@@ -172,6 +172,43 @@ class ProposalService {
             }
         });
     }
+
+    // get proposal by warehouseID
+    getProposalByWarehouse(warehouseID) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const proposals = await Proposal.findAll({
+                    where: { warehouseID: warehouseID },
+                    include: [
+                        {
+                            model: ProposalDetail,
+                            as: 'proposalDetails',
+                            include: [
+                                { model: Product, as: 'product' },
+                                { model: Unit, as: 'unit' },
+                            ],
+                        },
+                        { model: Employee, as: 'employeeCreate' },
+                        { model: Employee, as: 'approver' },
+                        { model: Warehouse, as: 'warehouse' },
+                    ],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy danh sách đề xuất theo kho thành công',
+                    proposals,
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
 }
 
 module.exports = new ProposalService();
