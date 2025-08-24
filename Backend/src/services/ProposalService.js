@@ -266,6 +266,92 @@ class ProposalService {
             }
         });
     }
+
+    // filter proposal
+    filterProposal(data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const {
+                    proposalID,
+                    warehouseID,
+                    status,
+                    page,
+                    employeeIDCreate,
+                    employeeIDApproval,
+                    updateAt,
+                    createAt,
+                } = data;
+
+                let options = {
+                    where: {},
+                    include: [
+                        {
+                            model: ProposalDetail,
+                            as: 'proposalDetails',
+                            include: [
+                                { model: Product, as: 'product' },
+                                { model: Unit, as: 'unit' },
+                            ],
+                        },
+                        { model: Employee, as: 'employeeCreate' },
+                        { model: Employee, as: 'approver' },
+                        { model: Warehouse, as: 'warehouse' },
+                    ],
+                    order: [['createdAt', 'DESC']], // để bản mới nhất lên trước
+                };
+
+                if (proposalID) {
+                    options.where.proposalID = proposalID;
+                }
+
+                if (warehouseID) {
+                    options.where.warehouseID = warehouseID;
+                }
+
+                if (employeeIDCreate) {
+                    options.where.employeeIDCreate = employeeIDCreate;
+                }
+
+                if (status) {
+                    options.where.status = status;
+                }
+
+                if (employeeIDApproval) {
+                    options.where.employeeIDApproval = employeeIDApproval;
+                }
+
+                if (updateAt) {
+                    options.where.updateAt = updateAt;
+                }
+
+                if (createAt) {
+                    options.where.createAt = createAt;
+                }
+
+                if (page) {
+                    const offset = (page - 1) * LIMIT_PAGE;
+
+                    options.limit = LIMIT_PAGE;
+                    options.offset = offset;
+                }
+
+                const proposals = await Proposal.findAll(options);
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy danh sách đề xuất theo bộ lọc thành công',
+                    proposals,
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
 }
 
 module.exports = new ProposalService();

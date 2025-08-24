@@ -1,5 +1,5 @@
 const express = require('express');
-const { authUserIsManager, authUser } = require('../middleware/AuthMiddleware');
+const { authUserIsManager, authUser, authUserIsManagerOrStockReceiver } = require('../middleware/AuthMiddleware');
 const ProposalController = require('../controllers/ProposalController');
 const {
     checkCreateProposal,
@@ -27,4 +27,5 @@ router.post(
 router.get('/get-proposal/warehouse', authUserIsManager, ProposalController.getProposalByWarehouse);
 router.get('/get-proposal/employee', authUser, ProposalController.getProposalByEmployee);
 
+router.post('/filter-proposal', authUserIsManagerOrStockReceiver, ProposalController.filterProposal);
 module.exports = router;
