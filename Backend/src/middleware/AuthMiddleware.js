@@ -48,6 +48,8 @@ const authUserIsManager = async (req, res, next) => {
         const employeeID = req.headers['employeeid'];
         const warehouseID = req.headers['warehouseid'];
 
+        console.log(warehouseID);
+
         const token = req.headers.token;
         if (token) {
             const accessToken = token.split(' ')[1];
@@ -73,14 +75,14 @@ const authUserIsManager = async (req, res, next) => {
                             status: 'ERR',
                             message: 'Bạn không có quyền truy cập tài nguyên này',
                         });
-                    } else if (hasWareManagerRole && user.payload.warehouseID !== warehouseID && !hasWareManagerRole) {
+                    }
+                    if (hasWareManagerRole && user.payload.warehouseID !== warehouseID && !hasSysAdminRole) {
                         return res.status(HTTP_FORBIDDEN).json({
                             status: 'ERR',
                             message: 'Bạn không có quyền truy cập kho này',
                         });
-                    } else {
-                        next();
                     }
+                    next();
                 }
             });
         } else {
