@@ -250,10 +250,12 @@ const AuthPage = () => {
             value: filterSearchEmployee.status,
             option: [
                 {
-                    name: "Đang làm"
+                    name: "Đang làm",
+                    value: 'ACTIVE'
                 },
                 {
-                    name: 'Nghỉ việc'
+                    name: 'Nghỉ việc',
+                    value: 'INACTIVE'
                 }
             ],
             setValue: (value) => setFilterSearchEmployee(prev => ({...prev, status: value}))
@@ -470,7 +472,8 @@ const AuthPage = () => {
         if(!Object.keys(filterSearchEmployee).some(key => filterSearchEmployee[key])) return;
         try{
             const tokenUser = JSON.parse(localStorage.getItem('tokenUser'))
-            const params = {...filterSearchEmployee, status: filterSearchEmployee.status == "Đang làm" ? 'ACTIVE' : 'INACTIVE'}
+            const params = {...filterSearchEmployee}
+            console.log(tokenUser)
             const resultSearch = await request.get('/api/employee/filter', {
                 params,
                 headers: {
