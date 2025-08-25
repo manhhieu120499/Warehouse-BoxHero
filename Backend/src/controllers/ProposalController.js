@@ -31,7 +31,7 @@ class ProposalController {
     async getProposalByWarehouse(req, res) {
         try {
             const warehouseID = req.headers['warehouseid'];
-            const page = req.body.page;
+            const page = req.query.page;
             const { statusHttp, ...response } = await ProposalService.getProposalByWarehouse(warehouseID, page);
             return res.status(statusHttp).json(response);
         } catch (err) {
@@ -42,7 +42,7 @@ class ProposalController {
     async getProposalByEmployee(req, res) {
         try {
             const employeeID = req.headers['employeeid'];
-            const page = req.body.page;
+            const page = req.query.page;
             const { statusHttp, ...response } = await ProposalService.getProposalByEmployee(employeeID, page);
             return res.status(statusHttp).json(response);
         } catch (err) {
