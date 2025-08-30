@@ -75,6 +75,11 @@
     }
 }
 
+.active{
+    background-color: var(--active-tab);
+    color: var(--white)
+}
+
 //Button size
 .small {
     min-width: 60px;

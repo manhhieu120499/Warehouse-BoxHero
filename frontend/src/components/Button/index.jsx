@@ -25,6 +25,7 @@ export default function Button({
     borderRadiusLarge = false,
     success=false,
     error = false,
+    active=false,
     ...pass
 }) {
     let Comp = 'button';
@@ -63,7 +64,8 @@ export default function Button({
         borderRadiusMedium,
         borderRadiusLarge,
         success,
-        error
+        error,
+        active
     });
     return (
         <Comp styles={{}} className={classes} {...props}>
