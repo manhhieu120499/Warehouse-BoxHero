@@ -1,6 +1,7 @@
 .wrapper-content {
     width: 100%;
 }
+
 .header-receive-product {
     width: 100%;
     height: 60px;
@@ -32,9 +33,8 @@
         justify-content: flex-end;
         border-bottom: 1px solid #d9d9d9;
 
-        h2 {
+        h2{
             flex: 1;
-
         }
     }
 
@@ -55,6 +55,41 @@
             flex: 1;
             font-size: 1.5rem;
             margin-left: 5px;
+        }
+    }
+
+    .table-header {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 15px 0;
+
+        & > .group-input-search {
+            width: 230px;
+            height: 35px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+
+            & > input {
+                flex: 1;
+                font-size: 1.3rem;
+                padding: 0 8px;
+                border: none;
+
+                &:focus {
+                    outline: none;
+                }
+            }
+
+            & > .icon {
+                width: 15%;
+                cursor: pointer;
+            }
         }
     }
 }

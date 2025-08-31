@@ -6,6 +6,8 @@ import request from '../../../utils/httpRequest';
 import { formatStatusProposal } from '../../../constants';
 import { useSelector } from 'react-redux';
 import { Button, MyTable } from '../../../components';
+import { Search } from 'lucide-react';
+import { useDebounce } from '../../../hooks';
 
 const cx = classNames.bind(styles);
 const emptyItem = () => ({
@@ -34,7 +36,8 @@ const CreateImportReceiptPage = ({currentUser, currentWarehouse}) => {
         suggest: false,
     });
     const [proposalSelected, setProposalSelected] = useState(null);
-    
+    const [searchProposal, setSearchProposal] = useState("")
+    const deboundValue = useDebounce(searchProposal, 200)
 
     const columnsProposal = [
         {
@@ -94,6 +97,11 @@ const CreateImportReceiptPage = ({currentUser, currentWarehouse}) => {
         },
     };
 
+
+    const handleSearchProposal = (e) => {
+        setSearchProposal(e.target.value)
+    }
+
     useEffect(() => {
         if (currentWarehouse) setWarehouse(currentWarehouse);
     }, [currentWarehouse]);
@@ -151,6 +159,15 @@ const CreateImportReceiptPage = ({currentUser, currentWarehouse}) => {
             setSelectedRowKeys((prev) => []);
         }
     }, [option]);
+
+    useEffect(() => {
+        if(deboundValue === "") {
+            // call all proposal
+        }else {
+            // find proposal
+            console.log('call api')
+        }
+    }, [deboundValue])
     return (
         <div className={cx('wrapper-content')}>
             <section
@@ -193,7 +210,15 @@ const CreateImportReceiptPage = ({currentUser, currentWarehouse}) => {
                 </div>
 
                 {/** table phiếu nhập */}
-                <h2>Danh sách phiếu đề xuất nhập</h2>
+                <div className={cx('table-header')}>
+                    <h2>Danh sách phiếu đề xuất nhập</h2>
+                    <div className={cx('group-input-search')}>
+                        <input placeholder='Nhập mã phiếu' value={searchProposal} onChange={handleSearchProposal}/>
+                        <Search className={cx('icon')} size={20}/>
+                    </div>
+                    
+                </div>
+                
                 <MyTable
                     className={cx('table-proposal')}
                     columns={columnsProposal}
