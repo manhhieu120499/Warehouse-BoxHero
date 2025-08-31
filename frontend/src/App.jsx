@@ -17,43 +17,43 @@ const RootLayout = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // useEffect(() => {
-    //     const fetchUser = async (accessToken, email, employeeID) => {
-    //         try {
-    //             const { roles } = jwtDecode(accessToken).payload;
-    //             const responseUser = await post(
-    //                 '/api/employee/employee-detail',
-    //                 {
-    //                     email: email,
-    //                 },
-    //                 accessToken,
-    //                 employeeID
-    //             );
-    //             const {employee} = responseUser
-    //             dispatch(login({ ...new EmployeeDTO({ ...employee, roles }) }));
+    useEffect(() => {
+        const fetchUser = async (accessToken, email, employeeID) => {
+            try {
+                const { roles } = jwtDecode(accessToken).payload;
+                const responseUser = await post(
+                    '/api/employee/employee-detail',
+                    {
+                        email: email,
+                    },
+                    accessToken,
+                    employeeID
+                );
+                const {employee} = responseUser
+                dispatch(login({ ...new EmployeeDTO({ ...employee, roles }) }));
 
-    //             const itemDropActiveSidebar = JSON.parse(localStorage.getItem('indexItemDropActive')) || []
-    //             dispatch(changDropItem(itemDropActiveSidebar))
-    //         } catch (err) {
-    //             navigate('/login')
-    //             localStorage.setItem('tokenUser', null)
-    //             localStorage.setItem('indexItemDropActive', [])
-    //             localStorage.setItem('warehouse', null)
-    //             console.log(err);
-    //         }
-    //     };
-    //     const warehouse = localStorage.getItem('warehouse')
-    //     if(warehouse && warehouse != 'null') {
-    //         dispatch(addInfo(JSON.parse(warehouse)))
-    //     }
-    //     const tokenUser = localStorage.getItem('tokenUser');
-    //     if (tokenUser && tokenUser != 'null') {
-    //         const { employeeID, email, accessToken, refreshToken } = JSON.parse(localStorage.getItem('tokenUser'));
-    //         fetchUser(accessToken, email, employeeID);
-    //     }else {
-    //         navigate('/login')
-    //     }
-    // }, [])
+                const itemDropActiveSidebar = JSON.parse(localStorage.getItem('indexItemDropActive')) || []
+                dispatch(changDropItem(itemDropActiveSidebar))
+            } catch (err) {
+                navigate('/login')
+                localStorage.setItem('tokenUser', null)
+                localStorage.setItem('indexItemDropActive', [])
+                localStorage.setItem('warehouse', null)
+                console.log(err);
+            }
+        };
+        const warehouse = localStorage.getItem('warehouse')
+        if(warehouse && warehouse != 'null') {
+            dispatch(addInfo(JSON.parse(warehouse)))
+        }
+        const tokenUser = localStorage.getItem('tokenUser');
+        if (tokenUser && tokenUser != 'null') {
+            const { employeeID, email, accessToken, refreshToken } = JSON.parse(localStorage.getItem('tokenUser'));
+            fetchUser(accessToken, email, employeeID);
+        }else {
+            navigate('/login')
+        }
+    }, [])
   return <Outlet/>
 }
 
