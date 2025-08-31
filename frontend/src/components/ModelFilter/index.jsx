@@ -43,7 +43,7 @@ const ModelFilter = ({handleSubmitFilter, handleResetFilters, columns, children,
                 {columns.map(item => (
                     <div className={cx('form-group')} key={item.id}>
                         <label htmlFor={item.id}>{item.label}</label>
-                        <input type="text" id={item.id} className={cx('form-input')} placeholder={`Nhâp ${item.label}`} value={item.value} onChange={(e) => item.setValue(e.target.value)} />
+                        <input type="text" id={item.id} className={cx('form-input')} placeholder={`Nhập ${item.label}`} value={item.value} onChange={(e) => item.setValue(e.target.value)} />
                     </div>
                 ))}
                 {

@@ -7,6 +7,7 @@ import request, { post } from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
 import { formatStatusProposal, styleMessage } from '../../constants';
 import toast from 'react-hot-toast';
+import Select from '../../components/Select';
 
 const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle)
@@ -14,7 +15,8 @@ const cxGlobal = classNames.bind(globalStyle)
 const ApprovePage = () => {
     const pageSize = 5
     const [page, setPage] = useState(1);
-    const [proposalList, setProposalList] = useState([])
+    const [proposalPurchaseList, setProposalPurchaseList] = useState([])
+    const [proposalReleaseList, setProposalReleaseList] = useState([])
     const [filterProposal, setFilterProposal] = useState({
         proposalID: "",
         createdAt: "",
@@ -22,18 +24,23 @@ const ApprovePage = () => {
         employeeIDCreate: ''
     })
 
+    const [filterTabProposal, setFilterTabProposal] = useState({
+        PURCHASE_PROPOSAL: true,
+        RELEASE_PROPOSAL: false,
+    })
+
     const handleApproveProposal = async (proposalID, status = "COMPLETED") => {
-        try{
+        try {
             const token = parseToken("tokenUser")
             const res = await post("/api/proposal/update-status-proposal", {
                 proposalID,
                 employeeIDApproval: token.employeeID,
                 status
             }, token.accessToken, token.employeeID)
-           // console.log(res)
+            // console.log(res)
             toast.success(res.message, styleMessage)
             fetchProposals(1)
-        }catch(err) {
+        } catch (err) {
             console.log(err)
             toast.error(err.response.data.message, styleMessage)
             return;
@@ -42,35 +49,35 @@ const ApprovePage = () => {
     const columnsFilter = [
         {
             id: 1,
-            label: 'Mã phiếu xuất',
+            label: 'Mã phiếu đề xuất',
             value: filterProposal.proposalID,
             name: 'proposalID',
-            setValue: (value) => setFilterProposal(prev => ({...prev, proposalID: value}))
+            setValue: (value) => setFilterProposal(prev => ({ ...prev, proposalID: value }))
         },
         {
             id: 2,
             label: 'Ngày lập',
             value: filterProposal.createdAt,
             name: 'createdAt',
-            setValue: (value) => setFilterProposal(prev => ({...prev, createdAt: value}))
+            setValue: (value) => setFilterProposal(prev => ({ ...prev, createdAt: value }))
         },
         {
-            id: 3, 
+            id: 3,
             label: 'Mã người tạo',
             value: filterProposal.employeeIDCreate,
             name: 'employeeIDCreate',
-            setValue: (value) => setFilterProposal(prev => ({...prev, employeeIDCreate: value}))
+            setValue: (value) => setFilterProposal(prev => ({ ...prev, employeeIDCreate: value }))
         }
-        
+
     ]
 
     const selectFilter = [
-         {
+        {
             id: 3,
             label: 'Trạng thái',
             value: filterProposal.status,
             name: 'status',
-            setValue: (value) => setFilterProposal(prev => ({...prev, status: value})),
+            setValue: (value) => setFilterProposal(prev => ({ ...prev, status: value })),
             option: [
                 {
                     name: "Chờ phê duyệt",
@@ -90,12 +97,12 @@ const ApprovePage = () => {
 
     const columnsTable = [
         {
-            title: 'Mã phiếu nhập',
+            title: filterTabProposal.PURCHASE_PROPOSAL ? 'Mã phiếu đề xuất nhập' : 'Mã phiếu đề xuất xuất',
             dataIndex: 'proposalID',
             key: 'proposalID'
         },
         {
-            title: 'Ngày lâp',
+            title: 'Ngày lập',
             dataIndex: 'createdAt',
             key: 'createAt',
             render: (text) => <p>{text.slice(0, 10)}</p>
@@ -126,11 +133,22 @@ const ApprovePage = () => {
                     <Button disabled={record.status == 'COMPLETED'} success onClick={() => handleApproveProposal(record.proposalID, 'COMPLETED')}>
                         <span>Chấp nhận</span>
                     </Button>
-                    <Button disabled={record.status == 'REFUSE'} error onClick={()=> handleApproveProposal(record.proposalID, 'REFUSE')}>
+                    <Button disabled={record.status == 'REFUSE'} error onClick={() => handleApproveProposal(record.proposalID, 'REFUSE')}>
                         <span>Từ chối</span>
                     </Button>
                 </div>
             }
+        }
+    ]
+
+    const optionsSelect = [
+        {
+            name: 'Phiếu đề xuất nhập',
+            value: 'PURCHASE_PROPOSAL'
+        },
+        {
+            name: 'Phiếu đề xuất xuất',
+            value: 'RELEASE_PROPOSAL'
         }
     ]
 
@@ -144,8 +162,8 @@ const ApprovePage = () => {
         }
     ]
 
-    const fetchProposals = async (page = 1) => {
-        try{
+    const fetchProposals = async (page = 1, type="PURCHASE_PROPOSAL") => {
+        try {
             console.log(page)
             const token = parseToken("tokenUser")
             const warehouse = parseToken('warehouse')
@@ -160,9 +178,11 @@ const ApprovePage = () => {
                 }
             })
             //console.log(res.data.proposals)
-            setProposalList(res.data.proposals.length > 0 ? res.data.proposals : [])
+            if(type === 'PURCHASE_PROPOSAL')
+                setProposalPurchaseList(res.data.proposals.length > 0 ? res.data.proposals : [])
+            else setProposalReleaseList(res.data.proposals.length > 0 ? res.data.proposals : [])
             setPage(page)
-        }catch(err) {
+        } catch (err) {
             console.log(err)
         }
     }
@@ -179,8 +199,8 @@ const ApprovePage = () => {
     }
 
     const handleSearch = async () => {
-        if(!Object.keys(filterProposal).some(key => filterProposal[key])) return;
-        try{
+        if (!Object.keys(filterProposal).some(key => filterProposal[key])) return;
+        try {
             const token = parseToken('tokenUser')
             const res = await post('/api/proposal/filter-proposal', {
                 proposalID: filterProposal?.proposalID,
@@ -189,7 +209,7 @@ const ApprovePage = () => {
                 employeeIDCreate: filterProposal?.employeeIDCreate
             }, token.accessToken, token.employeeID)
             setProposalList(res.proposals || [])
-        }catch(err) {
+        } catch (err) {
             console.log(err)
         }
     }
@@ -199,8 +219,14 @@ const ApprovePage = () => {
     }
 
     const handlePrevPage = async () => {
-        if(page - 1 <= 0) return;
+        if (page - 1 <= 0) return;
         fetchProposals(page - 1)
+    }
+
+    const handleOnChangeSelectProposal = (e) => {
+        console.log(e.target.value)
+        if (e.target.value === 'PURCHASE_PROPOSAL') setFilterTabProposal(prev => ({ PURCHASE_PROPOSAL: true, RELEASE_PROPOSAL: false }))
+        else setFilterTabProposal(prev => ({ PURCHASE_PROPOSAL: false, RELEASE_PROPOSAL: true }))
     }
 
     useEffect(() => {
@@ -208,13 +234,18 @@ const ApprovePage = () => {
     }, [page])
     return (
         <div className={cx('wrapper-approve')}>
-            <ModelFilter columns={columnsFilter} handleResetFilters={handleResetFilter} selectInput={selectFilter} handleSubmitFilter={handleSearch}/>
-            <h1 className={cx('title-approve')}>Danh sách phiếu đề xuất chờ duyệt</h1>
-            <div className={cx('table-container')}>
-                <MyTable className={cx("my-table")} columns={columnsTable} data={proposalList} pageSize={pageSize}/>
-                 <PaginationUI currentPage={page} handleNextPage={handleNextPage} handlePrevPage={handlePrevPage}/>
+            <ModelFilter columns={columnsFilter} handleResetFilters={handleResetFilter} selectInput={selectFilter} handleSubmitFilter={handleSearch} />
+            <div className={cx('table-container-header')}>
+                <h1 className={cx('title-approve')}>Danh sách phiếu đề xuất chờ duyệt</h1>
+                <Select options={optionsSelect} onChange={handleOnChangeSelectProposal}/>
             </div>
-            
+            <div className={cx('table-container')}>
+                {filterTabProposal.PURCHASE_PROPOSAL
+                    && <MyTable className={cx("my-table")} columns={columnsTable} data={proposalPurchaseList} pageSize={pageSize} />}
+                {filterTabProposal.RELEASE_PROPOSAL && <MyTable className={cx("my-table")} columns={columnsTable} data={proposalReleaseList} pageSize={pageSize} />}
+                <PaginationUI currentPage={page} handleNextPage={handleNextPage} handlePrevPage={handlePrevPage} />
+            </div>
+
         </div>
     );
 }
