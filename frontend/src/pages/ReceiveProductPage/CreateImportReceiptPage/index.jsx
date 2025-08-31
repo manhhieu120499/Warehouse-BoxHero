@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { Button, MyTable } from '../../../components';
 import { Search } from 'lucide-react';
 import { useDebounce } from '../../../hooks';
+import InputBase from '../../../components/InputBase';
 
 const cx = classNames.bind(styles);
 const emptyItem = () => ({
@@ -212,11 +213,7 @@ const CreateImportReceiptPage = ({currentUser, currentWarehouse}) => {
                 {/** table phiếu nhập */}
                 <div className={cx('table-header')}>
                     <h2>Danh sách phiếu đề xuất nhập</h2>
-                    <div className={cx('group-input-search')}>
-                        <input placeholder='Nhập mã phiếu' value={searchProposal} onChange={handleSearchProposal}/>
-                        <Search className={cx('icon')} size={20}/>
-                    </div>
-                    
+                    <InputBase placeholder={'Nhập mã phiếu'} value={searchProposal} onChange={handleSearchProposal}/>
                 </div>
                 
                 <MyTable

@@ -64,33 +64,6 @@
         align-items: center;
         justify-content: space-between;
         margin: 15px 0;
-
-        & > .group-input-search {
-            width: 230px;
-            height: 35px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 1px solid #d9d9d9;
-            border-radius: 8px;
-
-            & > input {
-                flex: 1;
-                font-size: 1.3rem;
-                padding: 0 8px;
-                border: none;
-
-                &:focus {
-                    outline: none;
-                }
-            }
-
-            & > .icon {
-                width: 15%;
-                cursor: pointer;
-            }
-        }
     }
 }
 
