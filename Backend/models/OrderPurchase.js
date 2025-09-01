@@ -1,0 +1,52 @@
+// models/OrderPurchase.js
+module.exports = (sequelize, Sequelize) => {
+    const OrderPurchase = sequelize.define(
+        'OrderPurchase',
+        {
+            orderPurchaseID: {
+                type: Sequelize.STRING,
+                primaryKey: true,
+                allowNull: false,
+            },
+            employeeID: {
+                type: Sequelize.STRING,
+                allowNull: false,
+            },
+            note: {
+                type: Sequelize.TEXT,
+                allowNull: true,
+            },
+            warehouseID: {
+                type: Sequelize.STRING,
+                allowNull: false,
+            },
+            orderReturnID: {
+                type: Sequelize.STRING,
+                allowNull: true,
+            },
+            proposalID: {
+                type: Sequelize.STRING,
+                allowNull: true,
+            },
+        },
+        {
+            tableName: 'order_purchase',
+            timestamps: true, // tự động thêm createdAt & updatedAt
+        },
+        {
+            charset: 'utf8mb4',
+            collate: 'utf8mb4_unicode_ci',
+        },
+    );
+
+    OrderPurchase.associate = (models) => {
+        OrderPurchase.belongsTo(models.Employee, { foreignKey: 'employeeID' });
+        OrderPurchase.belongsTo(models.Warehouse, { foreignKey: 'warehouseID' });
+        // OrderPurchase.belongsTo(models.OrderReturn, { foreignKey: 'orderReturnID' });
+        OrderPurchase.belongsTo(models.Proposal, { foreignKey: 'proposalID' });
+
+        OrderPurchase.hasMany(models.OrderPurchaseDetail, { foreignKey: 'orderPurchaseID' });
+    };
+
+    return OrderPurchase;
+};

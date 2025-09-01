@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
-router.get("/", (req, res) => {
-    return res.send("OrderPurchaseRouter Router is working!");
-});
+const OrderPurchaseController = require('../controllers/OrderPurchaseController');
+const { checkCreateOrderPurchase } = require('../validates/orderPurchase.validation');
+const validate = require('../validates/validate');
+const { authUserIsManager, authUser } = require('../middleware/AuthMiddleware');
+
+router.post(
+    '/create-order-purchase',
+    authUserIsManager,
+    checkCreateOrderPurchase,
+    validate,
+    OrderPurchaseController.createOrderPurchase,
+);
 
 module.exports = router;
