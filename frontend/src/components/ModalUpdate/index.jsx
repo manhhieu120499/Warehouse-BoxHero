@@ -5,7 +5,7 @@ import { Modal, Button } from '@/components';
 import { useForm } from 'react-hook-form';
 const cx = classNames.bind(styles);
 
-const ModalUpdate = ({ onClose, columns, label, onSubmit, defaultValue, type }) => {
+const ModalUpdate = ({ onClose, columns, label, onSubmit, defaultValue, type, showCancel=true }) => {
     const {register, formState: {errors}, handleSubmit } = useForm({
         defaultValues: {
             ...defaultValue
@@ -46,9 +46,9 @@ const ModalUpdate = ({ onClose, columns, label, onSubmit, defaultValue, type }) 
                     <Button primary type="submit" className={cx('btn-submit')}>
                         {type == 'update' ? 'Cập nhật' : 'Tạo mới'}
                     </Button>
-                    <Button primary type="button" className={cx('btn-cancel')} onClick={onClose}>
+                    {showCancel && <Button primary type="button" className={cx('btn-cancel')} onClick={onClose}>
                         Hủy
-                    </Button>
+                    </Button>}
                 </div>
             </form>
         </div>

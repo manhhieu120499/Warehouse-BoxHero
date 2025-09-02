@@ -26,6 +26,7 @@ import ViewAccountProfile from './ViewAccountProfile';
 import Loading from './Loading';
 import TooltipTable from './TooltipTable';
 import PaginationUI from './PaginationUI';
+import TableProductImport from './TableProductImport';
 
 export {
     GlobalStyle,
@@ -55,5 +56,6 @@ export {
     ViewAccountProfile,
     Loading,
     TooltipTable,
-    PaginationUI
+    PaginationUI,
+    TableProductImport
 };

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ReceiveProductPage.module.scss';
 import { MyTable, Button, Modal } from '../../components';
-import { generateCode } from '../../utils/generate';
 import { useSelector } from 'react-redux';
 import request from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
@@ -88,10 +87,11 @@ const ReceiveProductPage = () => {
     useEffect(() => {
         if(deboundValueSearch === "") {
             // call all
-            console.log("vào get all")
+            //console.log("vào get all")
         }else {
             //find receipt
-            console.log("vào find")
+            //console.log("vào find")
+            setListProductReceive([])
         }
     }, [deboundValueSearch])
 

@@ -208,7 +208,7 @@ const ApprovePage = () => {
                 status: filterProposal?.status,
                 employeeIDCreate: filterProposal?.employeeIDCreate
             }, token.accessToken, token.employeeID)
-            setProposalList(res.proposals || [])
+            setProposalPurchaseList(res.proposals || [])
         } catch (err) {
             console.log(err)
         }
