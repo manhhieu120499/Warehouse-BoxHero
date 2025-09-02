@@ -34,7 +34,10 @@ module.exports = (sequelize, Sequelize) => {
 
     OrderPurchaseMissingDetail.associate = (models) => {
         OrderPurchaseMissingDetail.belongsTo(models.OrderPurchaseMissing, { foreignKey: 'orderPurchaseMissingID' });
-        OrderPurchaseMissingDetail.belongsTo(models.OrderPurchaseDetail, { foreignKey: 'orderPurchaseDetailID' });
+        OrderPurchaseMissingDetail.belongsTo(models.OrderPurchaseDetail, {
+            foreignKey: 'orderPurchaseDetailID',
+            as: 'orderPurchaseDetail',
+        });
     };
 
     return OrderPurchaseMissingDetail;

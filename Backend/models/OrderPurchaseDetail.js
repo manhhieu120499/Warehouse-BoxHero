@@ -38,7 +38,7 @@ module.exports = (sequelize, Sequelize) => {
 
     OrderPurchaseDetail.associate = (models) => {
         OrderPurchaseDetail.belongsTo(models.OrderPurchase, { foreignKey: 'orderPurchaseID' });
-        OrderPurchaseDetail.belongsTo(models.Batch, { foreignKey: 'batchID' });
+        OrderPurchaseDetail.belongsTo(models.Batch, { foreignKey: 'batchID', as: 'batch' });
     };
 
     return OrderPurchaseDetail;

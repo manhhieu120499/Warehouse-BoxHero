@@ -1,0 +1,103 @@
+const db = require('../../models/index');
+const OrderPurchaseMissing = db.OrderPurchaseMissing;
+const OrderPurchaseMissingDetail = db.OrderPurchaseMissingDetail;
+const Batch = db.Batch;
+const OrderPurchaseDetail = db.OrderPurchaseDetail;
+const Product = db.Product;
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+const HTTP_OK = process.env.HTTP_OK;
+const HTTP_NOT_FOUND = process.env.HTTP_NOT_FOUND;
+const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
+const HTTP_UNAUTHORIZED = process.env.HTTP_UNAUTHORIZED;
+
+class OrderPurchaseMissingService {
+    getAllOrderPurchaseMissing() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const orderPurchaseMissingFind = await OrderPurchaseMissing.findAll({
+                    include: [
+                        {
+                            model: OrderPurchaseMissingDetail,
+                            as: 'orderPurchaseMissingDetails',
+                            include: [
+                                {
+                                    model: OrderPurchaseDetail,
+                                    as: 'orderPurchaseDetail',
+                                    include: [
+                                        {
+                                            model: Batch,
+                                            as: 'batch',
+                                            include: [
+                                                {
+                                                    model: Product,
+                                                    as: 'product',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    data: orderPurchaseMissingFind,
+                });
+            } catch (e) {
+                console.log(e);
+                reject(e);
+            }
+        });
+    }
+
+    filterOrderPurchaseMissing(query) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const orderPurchaseMissingFind = await OrderPurchaseMissing.findAll({
+                    where: {
+                        ...query,
+                    },
+                    include: [
+                        {
+                            model: OrderPurchaseMissingDetail,
+                            as: 'orderPurchaseMissingDetails',
+                            include: [
+                                {
+                                    model: OrderPurchaseDetail,
+                                    as: 'orderPurchaseDetail',
+                                    include: [
+                                        {
+                                            model: Batch,
+                                            as: 'batch',
+                                            include: [
+                                                {
+                                                    model: Product,
+                                                    as: 'product',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    data: orderPurchaseMissingFind,
+                });
+            } catch (e) {
+                console.log(e);
+                reject(e);
+            }
+        });
+    }
+}
+
+module.exports = new OrderPurchaseMissingService();
