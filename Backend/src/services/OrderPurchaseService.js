@@ -2,6 +2,8 @@ const db = require('../../models/index');
 const Batch = db.Batch;
 const OrderPurchaseDetail = db.OrderPurchaseDetail;
 const Product = db.Product;
+const OrderPurchaseMissing = db.OrderPurchaseMissing;
+const OrderPurchaseMissingDetail = db.OrderPurchaseMissingDetail;
 const BatchBox = db.BatchBox;
 const dotenv = require('dotenv');
 
@@ -22,7 +24,7 @@ class OrderPurchaseService {
                     employeeID,
                     note,
                     warehouseID,
-                    supplierID,
+                    status,
                     orderReturnID,
                     proposalID,
                     orderPurchaseDetails,
@@ -50,18 +52,39 @@ class OrderPurchaseService {
                     }
                 }
 
+                const objCreate = {
+                    orderPurchaseID,
+                    employeeID,
+                    note,
+                    warehouseID,
+                    orderReturnID,
+                    proposalID,
+                };
+
+                if (status) {
+                    objCreate.status = status;
+                }
+
                 // save orderPurchase
                 const newOrderPurchase = await db.OrderPurchase.create(
                     {
-                        orderPurchaseID,
-                        employeeID,
-                        note,
-                        warehouseID,
-                        orderReturnID,
-                        proposalID,
+                        ...objCreate,
                     },
                     { transaction },
                 );
+
+                // check and create orderPurchaseMissing
+                if (status === 'INCOMPLETE') {
+                    const orderPurchaseMissing = await OrderPurchaseMissing.create(
+                        {
+                            orderPurchaseMissingID: orderPurchaseID,
+                            orderPurchaseID: orderPurchaseID,
+                            note: note,
+                            status: 'PENDING',
+                        },
+                        { transaction },
+                    );
+                }
 
                 // loop orderPurchaseDetails
                 for (const orderPurchaseDetail of orderPurchaseDetails) {
@@ -143,7 +166,7 @@ class OrderPurchaseService {
                     );
 
                     // save order purchase detail
-                    await OrderPurchaseDetail.create(
+                    const orderPurchaseDetailItem = await OrderPurchaseDetail.create(
                         {
                             orderPurchaseID: orderPurchaseID,
                             batchID: batchID,
@@ -175,6 +198,22 @@ class OrderPurchaseService {
                         },
                         { where: { productID: orderPurchaseDetail.productID }, transaction },
                     );
+
+                    // check status and save orderPurchaseMissingDetail
+                    if (
+                        status === 'INCOMPLETE' &&
+                        orderPurchaseDetail.requestedQuantity > orderPurchaseDetail.actualQuantity
+                    ) {
+                        await OrderPurchaseMissingDetail.create(
+                            {
+                                orderPurchaseMissingID: orderPurchaseID,
+                                orderPurchaseDetailID: orderPurchaseDetailItem.orderPurchaseDetailID,
+                                missingQuantity:
+                                    orderPurchaseDetailItem.requestedQuantity - orderPurchaseDetailItem.actualQuantity,
+                            },
+                            { transaction },
+                        );
+                    }
                 }
 
                 await transaction.commit();
@@ -182,6 +221,44 @@ class OrderPurchaseService {
                     statusHttp: HTTP_OK,
                     status: 'OK',
                     message: 'Tạo đơn nhập hàng thành công',
+                });
+            } catch (e) {
+                await transaction.rollback();
+                console.log(e);
+                reject(e);
+            }
+        });
+    }
+    completeOrderPurchase(completeOrder) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                const { orderPurchaseID } = completeOrder;
+
+                // Check orderPurchase tồn tại
+                const orderPurchaseFind = await db.OrderPurchase.findOne({ where: { orderPurchaseID } });
+                if (!orderPurchaseFind) {
+                    return resolve({
+                        statusHttp: HTTP_OK,
+                        status: 'OK',
+                        message: 'Đơn nhập hàng không tồn tại',
+                    });
+                } else {
+                    // Update trạng thái đơn nhập hàng
+                    await orderPurchaseFind.update({ status: 'COMPLETED' }, { transaction });
+
+                    // update orderpurchasemissing
+                    await OrderPurchaseMissing.update(
+                        { status: 'RESOLVED' },
+                        { where: { orderPurchaseID }, transaction },
+                    );
+                }
+
+                await transaction.commit();
+                resolve({
+                    statusHttp: HTTP_OK,
+                    status: 'OK',
+                    message: 'Đơn nhập hàng đã hoàn thành',
                 });
             } catch (e) {
                 await transaction.rollback();
