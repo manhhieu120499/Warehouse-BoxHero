@@ -16,6 +16,12 @@ const checkCreateOrderPurchase = [
     body('warehouseID').notEmpty().withMessage('Mã kho bắt buộc').bail().isString().withMessage('Mã kho phải là chuỗi'),
     body('orderReturnID').optional().isString().withMessage('Mã đơn trả phải là chuỗi'),
     body('proposalID').optional().isString().withMessage('Mã đề xuất phải là chuỗi'),
+    body('status')
+        .optional()
+        .isString()
+        .withMessage('Trạng thái phải là chuỗi')
+        .isIn(['COMPLETED', 'INCOMPLETE', 'CANCELED'])
+        .withMessage('Trạng thái không phải là PENDING, COMPLETED hoặc CANCELLED'),
     body('orderPurchaseDetails')
         .isArray()
         .withMessage('Chi tiết đơn nhập hàng phải là một mảng')
@@ -110,4 +116,13 @@ const checkCreateOrderPurchase = [
         .withMessage('Ô phải là chuỗi'),
 ];
 
-module.exports = { checkCreateOrderPurchase };
+const checkCompleteOrderPurchase = [
+    body('orderPurchaseID')
+        .notEmpty()
+        .withMessage('Mã đơn nhập hàng là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã đơn nhập hàng không hợp lệ'),
+];
+
+module.exports = { checkCreateOrderPurchase, checkCompleteOrderPurchase };

@@ -28,12 +28,15 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 allowNull: true,
             },
+            status: {
+                type: Sequelize.ENUM('COMPLETED', 'INCOMPLETE', 'CANCELED'),
+                allowNull: false,
+                defaultValue: 'COMPLETED',
+            },
         },
         {
             tableName: 'order_purchase',
             timestamps: true, // tự động thêm createdAt & updatedAt
-        },
-        {
             charset: 'utf8mb4',
             collate: 'utf8mb4_unicode_ci',
         },
@@ -46,6 +49,9 @@ module.exports = (sequelize, Sequelize) => {
         OrderPurchase.belongsTo(models.Proposal, { foreignKey: 'proposalID' });
 
         OrderPurchase.hasMany(models.OrderPurchaseDetail, { foreignKey: 'orderPurchaseID' });
+
+        // 🔥 join với OrderPurchaseMissing
+        OrderPurchase.hasMany(models.OrderPurchaseMissing, { foreignKey: 'orderPurchaseID' });
     };
 
     return OrderPurchase;
