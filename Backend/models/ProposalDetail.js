@@ -3,7 +3,8 @@ module.exports = (sequelize, Sequelize) => {
         'ProposalDetail',
         {
             proposalDetailID: {
-                type: Sequelize.STRING,
+                type: Sequelize.INTEGER,
+                autoIncrement: true,
                 primaryKey: true,
             },
             proposalID: {
