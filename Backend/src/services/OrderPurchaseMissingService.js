@@ -3,7 +3,10 @@ const OrderPurchaseMissing = db.OrderPurchaseMissing;
 const OrderPurchaseMissingDetail = db.OrderPurchaseMissingDetail;
 const Batch = db.Batch;
 const OrderPurchaseDetail = db.OrderPurchaseDetail;
+const OrderPurchase = db.OrderPurchase;
 const Product = db.Product;
+const Employee = db.Employee;
+const Unit = db.Unit;
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -58,11 +61,24 @@ class OrderPurchaseMissingService {
     filterOrderPurchaseMissing(query) {
         return new Promise(async (resolve, reject) => {
             try {
+                const { warehouseID, ...rest } = query;
                 const orderPurchaseMissingFind = await OrderPurchaseMissing.findAll({
                     where: {
-                        ...query,
+                        ...rest,
                     },
                     include: [
+                        {
+                            model: OrderPurchase,
+                            attributes: ['orderPurchaseID', 'warehouseID'],
+                            as: 'orderPurchase',
+                            where: { warehouseID },
+                            include: [
+                                {
+                                    model: Employee,
+                                    as: 'employee',
+                                },
+                            ],
+                        },
                         {
                             model: OrderPurchaseMissingDetail,
                             as: 'orderPurchaseMissingDetails',
@@ -78,6 +94,10 @@ class OrderPurchaseMissingService {
                                                 {
                                                     model: Product,
                                                     as: 'product',
+                                                },
+                                                {
+                                                    model: Unit,
+                                                    as: 'unit',
                                                 },
                                             ],
                                         },

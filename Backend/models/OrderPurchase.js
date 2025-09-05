@@ -43,7 +43,7 @@ module.exports = (sequelize, Sequelize) => {
     );
 
     OrderPurchase.associate = (models) => {
-        OrderPurchase.belongsTo(models.Employee, { foreignKey: 'employeeID' });
+        OrderPurchase.belongsTo(models.Employee, { foreignKey: 'employeeID', as: 'employee' });
         OrderPurchase.belongsTo(models.Warehouse, { foreignKey: 'warehouseID' });
         // OrderPurchase.belongsTo(models.OrderReturn, { foreignKey: 'orderReturnID' });
         OrderPurchase.belongsTo(models.Proposal, { foreignKey: 'proposalID' });
