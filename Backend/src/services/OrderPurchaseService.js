@@ -4,6 +4,7 @@ const OrderPurchaseDetail = db.OrderPurchaseDetail;
 const Product = db.Product;
 const OrderPurchaseMissing = db.OrderPurchaseMissing;
 const OrderPurchaseMissingDetail = db.OrderPurchaseMissingDetail;
+const Unit = db.Unit;
 const BatchBox = db.BatchBox;
 const dotenv = require('dotenv');
 
@@ -229,29 +230,93 @@ class OrderPurchaseService {
             }
         });
     }
-    completeOrderPurchase(completeOrder) {
+    updateStatusOrderPurchase(completeOrder) {
         return new Promise(async (resolve, reject) => {
             const transaction = await db.sequelize.transaction();
             try {
-                const { orderPurchaseID } = completeOrder;
+                const { orderPurchaseID, status } = completeOrder;
 
                 // Check orderPurchase tồn tại
                 const orderPurchaseFind = await db.OrderPurchase.findOne({ where: { orderPurchaseID } });
+                const orderPurchaseMissingFind = await db.OrderPurchaseMissing.findOne({
+                    where: { orderPurchaseID },
+                    include: [{ model: OrderPurchaseMissingDetail, as: 'orderPurchaseMissingDetails' }],
+                });
                 if (!orderPurchaseFind) {
                     return resolve({
                         statusHttp: HTTP_OK,
                         status: 'OK',
                         message: 'Đơn nhập hàng không tồn tại',
                     });
+                } else if (!orderPurchaseMissingFind) {
+                    return resolve({
+                        statusHttp: HTTP_OK,
+                        status: 'OK',
+                        message: 'Đơn nhập hàng thiếu không tồn tại',
+                    });
+                } else if (orderPurchaseFind.status === 'CANCELED' || orderPurchaseFind.status === 'COMPLETED') {
+                    return resolve({
+                        statusHttp: HTTP_BAD_REQUEST,
+                        status: 'ERR',
+                        message: 'Đơn nhập hàng đã bị hủy hoặc đã hoàn thành',
+                    });
                 } else {
                     // Update trạng thái đơn nhập hàng
-                    await orderPurchaseFind.update({ status: 'COMPLETED' }, { transaction });
+                    await orderPurchaseFind.update({ status }, { transaction });
+                    if (orderPurchaseFind.status === 'CANCELED') {
+                        // update orderpurchasemissing
+                        await OrderPurchaseMissing.update(
+                            { status: 'CANCELED' },
+                            { where: { orderPurchaseID }, transaction },
+                        );
+                    } else if (orderPurchaseFind.status === 'COMPLETED') {
+                        // update orderpurchasemissing
+                        await OrderPurchaseMissing.update(
+                            { status: 'RESOLVED' },
+                            { where: { orderPurchaseID }, transaction },
+                        );
 
-                    // update orderpurchasemissing
-                    await OrderPurchaseMissing.update(
-                        { status: 'RESOLVED' },
-                        { where: { orderPurchaseID }, transaction },
-                    );
+                        // update amount batch
+                        const orderPurchaseDetails = await OrderPurchaseDetail.findAll({
+                            where: { orderPurchaseID },
+                        });
+
+                        for (const orderPurchaseMissingDetail of orderPurchaseMissingFind.orderPurchaseMissingDetails) {
+                            const orderPurchaseDetail = orderPurchaseDetails.find(
+                                (item) =>
+                                    item.orderPurchaseDetailID === orderPurchaseMissingDetail.orderPurchaseDetailID,
+                            );
+                            const batchFind = await Batch.findOne({
+                                where: { batchID: orderPurchaseDetail.batchID },
+                                include: [
+                                    { model: Product, as: 'product' },
+                                    { model: Unit, as: 'unit' },
+                                ],
+                            });
+                            if (batchFind) {
+                                await batchFind.update(
+                                    {
+                                        importAmount:
+                                            batchFind.importAmount + orderPurchaseMissingDetail.missingQuantity,
+                                        remainAmount:
+                                            batchFind.remainAmount + orderPurchaseMissingDetail.missingQuantity,
+                                    },
+                                    { transaction },
+                                );
+
+                                // update amount product
+                                const amountConvert =
+                                    batchFind.unit.conversionQuantity * orderPurchaseMissingDetail.missingQuantity;
+
+                                await Product.update(
+                                    {
+                                        amount: batchFind.product.amount + amountConvert,
+                                    },
+                                    { where: { productID: batchFind.product.productID }, transaction },
+                                );
+                            }
+                        }
+                    }
                 }
 
                 await transaction.commit();

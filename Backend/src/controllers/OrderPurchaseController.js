@@ -20,10 +20,10 @@ class OrderPurchaseController {
             });
         }
     }
-    // post /complete-order-purchase
-    async completeOrderPurchase(req, res) {
+    // post /update-status-order-purchase
+    async updateStatusOrderPurchase(req, res) {
         try {
-            const { statusHttp, ...response } = await OrderPurchaseService.completeOrderPurchase(req.body);
+            const { statusHttp, ...response } = await OrderPurchaseService.updateStatusOrderPurchase(req.body);
             return res.status(statusHttp).json(response);
         } catch (e) {
             console.log(e);

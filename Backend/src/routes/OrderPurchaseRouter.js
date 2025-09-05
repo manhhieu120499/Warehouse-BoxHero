@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const OrderPurchaseController = require('../controllers/OrderPurchaseController');
-const { checkCreateOrderPurchase, checkCompleteOrderPurchase } = require('../validates/orderPurchase.validation');
+const { checkCreateOrderPurchase, checkUpdateStatusOrderPurchase } = require('../validates/orderPurchase.validation');
 const validate = require('../validates/validate');
 const { authUserIsManager, authUser } = require('../middleware/AuthMiddleware');
 
@@ -14,11 +14,11 @@ router.post(
 );
 
 router.post(
-    '/complete-order-purchase',
+    '/update-status-order-purchase',
     authUserIsManager,
-    checkCompleteOrderPurchase,
+    checkUpdateStatusOrderPurchase,
     validate,
-    OrderPurchaseController.completeOrderPurchase,
+    OrderPurchaseController.updateStatusOrderPurchase,
 );
 
 module.exports = router;
