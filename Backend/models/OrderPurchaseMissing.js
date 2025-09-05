@@ -28,7 +28,7 @@ module.exports = (sequelize, Sequelize) => {
     );
 
     OrderPurchaseMissing.associate = (models) => {
-        OrderPurchaseMissing.belongsTo(models.OrderPurchase, { foreignKey: 'orderPurchaseID' });
+        OrderPurchaseMissing.belongsTo(models.OrderPurchase, { foreignKey: 'orderPurchaseID', as: 'orderPurchase' });
         OrderPurchaseMissing.hasMany(models.OrderPurchaseMissingDetail, {
             foreignKey: 'orderPurchaseMissingID',
             as: 'orderPurchaseMissingDetails',
