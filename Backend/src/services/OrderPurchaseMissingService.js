@@ -61,7 +61,11 @@ class OrderPurchaseMissingService {
     filterOrderPurchaseMissing(query) {
         return new Promise(async (resolve, reject) => {
             try {
-                const { warehouseID, ...rest } = query;
+                const { warehouseID, employeeID, ...rest } = query;
+                const queryEmployee = {};
+                if (employeeID) {
+                    queryEmployee.employeeID = employeeID;
+                }
                 const orderPurchaseMissingFind = await OrderPurchaseMissing.findAll({
                     where: {
                         ...rest,
@@ -76,6 +80,7 @@ class OrderPurchaseMissingService {
                                 {
                                     model: Employee,
                                     as: 'employee',
+                                    where: queryEmployee,
                                 },
                             ],
                         },
