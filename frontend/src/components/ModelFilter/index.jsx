@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ModelFilter.module.scss';
 import { MyTable, Button, Popper, Modal, ModalOrder } from '@/components';
 
 const cx = classNames.bind(styles);
 
-const ModelFilter = ({handleSubmitFilter, handleResetFilters, columns, children, selectInput=[]}) => {
+const ModelFilter = ({ handleSubmitFilter, handleResetFilters, columns, children, selectInput = [], className }) => {
     const [lastScrollY, setLastScrollY] = useState(0);
     const contentRef = useRef();
 
@@ -18,7 +18,7 @@ const ModelFilter = ({handleSubmitFilter, handleResetFilters, columns, children,
                 const height = contentRef.current.clientHeight;
                 const heightCurrent = height - currentScrollY;
 
-                if(heightCurrent > 0) {
+                if (heightCurrent > 0) {
                     contentRef.current.style.transform = `translateY(-${currentScrollY}px)`;
                     contentRef.current.style.transition = `transform 0.1s linear`;
                 } else {
@@ -38,25 +38,35 @@ const ModelFilter = ({handleSubmitFilter, handleResetFilters, columns, children,
         return () => window.removeEventListener('scroll', handleScroll);
     }, [lastScrollY]);
     return (
-        <Popper className={cx('popper')} ref={contentRef}>
-            <div className={cx("wrapper-filter")}>
-                {columns.map(item => (
+        <Popper className={cx('popper', className)} ref={contentRef}>
+            <div className={cx('wrapper-filter')}>
+                {columns.map((item) => (
                     <div className={cx('form-group')} key={item.id}>
                         <label htmlFor={item.id}>{item.label}</label>
-                        <input type="text" id={item.id} className={cx('form-input')} placeholder={`Nhập ${item.label}`} value={item.value} onChange={(e) => item.setValue(e.target.value)} />
+                        <input
+                            type="text"
+                            id={item.id}
+                            className={cx('form-input')}
+                            placeholder={`Nhập ${item.label}`}
+                            value={item.value}
+                            onChange={(e) => item.setValue(e.target.value)}
+                        />
                     </div>
                 ))}
-                {
-                    selectInput.length > 0 && selectInput.map((item, index) => (
+                {selectInput.length > 0 &&
+                    selectInput.map((item, index) => (
                         <div className={cx('form-group')}>
                             <label htmlFor={index}>{item.label}</label>
                             <select value={item.value} onChange={(e) => item.setValue(e.target.value)}>
                                 <option disabled></option>
-                                {item.option.map((item) => <option key={item.name} value={item.value}>{item.name}</option>) }
+                                {item.option.map((item) => (
+                                    <option key={item.name} value={item.value}>
+                                        {item.name}
+                                    </option>
+                                ))}
                             </select>
-                        </div> 
-                    ))
-                }
+                        </div>
+                    ))}
             </div>
             <div className={cx('wrapper-action')}>
                 {children}
@@ -69,6 +79,6 @@ const ModelFilter = ({handleSubmitFilter, handleResetFilters, columns, children,
             </div>
         </Popper>
     );
-}
+};
 
 export default ModelFilter;

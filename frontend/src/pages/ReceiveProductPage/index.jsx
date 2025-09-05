@@ -6,57 +6,58 @@ import { useSelector } from 'react-redux';
 import request from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
 import { formatStatusProposal } from '../../constants';
-import { ClipboardClock, Eye, PlusCircle, Trash } from 'lucide-react';
+import { ClipboardClock, Eye, PlusCircle, Trash, FileMinus } from 'lucide-react';
 import CreateImportReceiptPage from './CreateImportReceiptPage';
 import HistoryReceiveAndReleasePage from '../HistoryReceiveAndReleasePage';
-import globalStyle from "@/components/GlobalStyle/GlobalStyle.module.scss"
+import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import Tippy from '@tippyjs/react';
 import InputBase from '../../components/InputBase';
 import { useDebounce } from '../../hooks';
+import ReceiveProductMissingPage from '../ReceiveProductMissingPage';
 const cx = classNames.bind(styles);
-const cxGlb = classNames.bind(globalStyle)
+const cxGlb = classNames.bind(globalStyle);
 
 const ReceiveProductPage = () => {
     const currentWarehouse = useSelector((state) => state.WareHouseSlice.warehouse);
     const currentUser = useSelector((state) => state.AuthSlice.user);
-    const [tabActive, setTabActive] = useState(1)
-    const [open, setOpen] = useState(false)
-    const [searchTerm, setSearchTerm] = useState("")
-    const deboundValueSearch = useDebounce(searchTerm, 200)
-    const [receiptID, setReceiptID] = useState(null)
-    const [listProductReceive, setListProductReceive] = useState([])
+    const [tabActive, setTabActive] = useState(1);
+    const [open, setOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const deboundValueSearch = useDebounce(searchTerm, 200);
+    const [receiptID, setReceiptID] = useState(null);
+    const [listProductReceive, setListProductReceive] = useState([]);
 
-    const handleActiveTab = (index) => setTabActive(index)
+    const handleActiveTab = (index) => setTabActive(index);
     const handleOnChangeValue = (e) => {
-        setSearchTerm(e.target.value)
-    }
+        setSearchTerm(e.target.value);
+    };
 
     const columnTable = [
         {
             title: 'Mã phiếu nhập',
             dataIndex: 'receiveReceiptID',
             key: 'receiveReceiptID',
-        }, 
+        },
         {
-            title: "Ngày nhập",
+            title: 'Ngày nhập',
             dataIndex: 'createdAt',
-            key: 'createdAt'
+            key: 'createdAt',
         },
         {
             title: 'Nhà cung cấp',
             dataIndex: 'supplierName',
-            key: 'supplierName'
-        }, 
+            key: 'supplierName',
+        },
         {
             title: 'Nhân viên lập phiếu',
             dataIndex: 'employeeID',
-            key: 'employeeID'
+            key: 'employeeID',
         },
         {
             title: 'Ghi chú',
             dataIndex: 'note',
             key: 'note',
-            width: "30%"
+            width: '30%',
         },
         {
             title: 'Xem danh sách nhập kho',
@@ -64,67 +65,93 @@ const ReceiveProductPage = () => {
             key: 'action',
             render: (_, record) => (
                 <div className={cxGlb('action-table')}>
-                    <Tippy content={"Xem chi tiết"} placement='bottom-end'>
+                    <Tippy content={'Xem chi tiết'} placement="bottom-end">
                         <div className={cx('action-table-icon')} onClick={() => setReceiptID(record.receiveReceiptID)}>
-                            <Eye size={22}/>
+                            <Eye size={22} />
                         </div>
                     </Tippy>
                 </div>
             ),
-            width: '15%'
-        }
-    ]
+            width: '15%',
+        },
+    ];
 
     const dataSource = [
         {
             receiveReceiptID: 1,
             createdAt: '2025/10/20',
-            supplierName: "Công ty TNHH VinaMilk",
+            supplierName: 'Công ty TNHH VinaMilk',
             employeeID: 'EP2',
-        }
-    ]
+        },
+    ];
 
     useEffect(() => {
-        if(deboundValueSearch === "") {
+        if (deboundValueSearch === '') {
             // call all
             //console.log("vào get all")
-        }else {
+        } else {
             //find receipt
             //console.log("vào find")
-            setListProductReceive([])
+            setListProductReceive([]);
         }
-    }, [deboundValueSearch])
+    }, [deboundValueSearch]);
 
     useEffect(() => {
-        if(!receiptID) return;
-        setOpen(true)
+        if (!receiptID) return;
+        setOpen(true);
         //fetch dữ liệu
-    }, [receiptID])
+    }, [receiptID]);
 
     return (
         <div className={cx('wrapper-receive-product')}>
             <section className={cx('header-tab-product')}>
-                <Button active={tabActive == 1 ? true : false} onClick={() => handleActiveTab(1)} leftIcon={<PlusCircle size={20}/>}>
+                <Button
+                    active={tabActive == 1 ? true : false}
+                    onClick={() => handleActiveTab(1)}
+                    leftIcon={<PlusCircle size={20} />}
+                >
                     <span>Nhập kho</span>
                 </Button>
-                <Button active={tabActive == 2 ? true : false} onClick={() => handleActiveTab(2)} leftIcon={<ClipboardClock size={20}/>}>
+                <Button
+                    active={tabActive == 2 ? true : false}
+                    onClick={() => handleActiveTab(2)}
+                    leftIcon={<ClipboardClock size={20} />}
+                >
                     <span>Lịch sử nhập kho</span>
                 </Button>
+                <Button
+                    active={tabActive == 3 ? true : false}
+                    onClick={() => handleActiveTab(3)}
+                    leftIcon={<FileMinus size={20} />}
+                >
+                    <span>Phiếu nhập thiếu</span>
+                </Button>
             </section>
-            {tabActive == 1 && <CreateImportReceiptPage currentUser={currentUser} currentWarehouse={currentWarehouse}/>}
-            {tabActive == 2 && <HistoryReceiveAndReleasePage title={"Danh sách lịch sử nhập kho"} columnTable={columnTable} dataTable={dataSource}>
-                <>
-                    <InputBase placeholder='Nhập mã phiếu' value={searchTerm} onChange={handleOnChangeValue}/>
-                    <Modal isOpenInfo={open} onClose={() => {
-                        setOpen(false)
-                        setReceiptID(null)
-                    }}>
-                        <div>Danh sách mặt hàng đã nhập</div>
-                        <div>{listProductReceive}</div>
-                    </Modal>
-                </>  
-                </HistoryReceiveAndReleasePage>}
-            
+            {tabActive == 1 && (
+                <CreateImportReceiptPage currentUser={currentUser} currentWarehouse={currentWarehouse} />
+            )}
+            {tabActive == 2 && (
+                <HistoryReceiveAndReleasePage
+                    title={'Danh sách lịch sử nhập kho'}
+                    columnTable={columnTable}
+                    dataTable={dataSource}
+                >
+                    <>
+                        <InputBase placeholder="Nhập mã phiếu" value={searchTerm} onChange={handleOnChangeValue} />
+                        <Modal
+                            isOpenInfo={open}
+                            onClose={() => {
+                                setOpen(false);
+                                setReceiptID(null);
+                            }}
+                        >
+                            <div>Danh sách mặt hàng đã nhập</div>
+                            <div>{listProductReceive}</div>
+                        </Modal>
+                    </>
+                </HistoryReceiveAndReleasePage>
+            )}
+            {tabActive == 3 && <ReceiveProductMissingPage />}
         </div>
     );
 };
