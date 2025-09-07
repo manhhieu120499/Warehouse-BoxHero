@@ -22,6 +22,13 @@ const checkCreateOrderPurchase = [
         .withMessage('Trạng thái phải là chuỗi')
         .isIn(['COMPLETED', 'INCOMPLETE', 'CANCELED'])
         .withMessage('Trạng thái không phải là PENDING, COMPLETED hoặc CANCELLED'),
+    body('type')
+        .optional()
+        .isString()
+        .withMessage('Loại phải là chuỗi')
+        .isIn(['NORMAL', 'SUPPLEMENT'])
+        .withMessage('Loại không phải là NORMAL hoặc SUPPLEMENT'),
+    body('originalOrderPurchaseID').optional().isString().withMessage('Mã đơn nhập gốc phải là chuỗi'),
     body('orderPurchaseDetails')
         .isArray()
         .withMessage('Chi tiết đơn nhập hàng phải là một mảng')
