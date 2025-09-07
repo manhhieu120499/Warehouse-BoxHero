@@ -33,6 +33,15 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: false,
                 defaultValue: 'COMPLETED',
             },
+            type: {
+                type: Sequelize.ENUM('NORMAL', 'SUPPLEMENT'),
+                allowNull: false,
+                defaultValue: 'NORMAL',
+            },
+            originalOrderPurchaseID: {
+                type: Sequelize.STRING,
+                allowNull: true,
+            },
         },
         {
             tableName: 'order_purchase',
@@ -52,6 +61,11 @@ module.exports = (sequelize, Sequelize) => {
 
         // 🔥 join với OrderPurchaseMissing
         OrderPurchase.hasMany(models.OrderPurchaseMissing, { foreignKey: 'orderPurchaseID' });
+        // 🔥 Quan hệ tự tham chiếu: phiếu nhập bổ sung tham chiếu phiếu nhập gốc
+        OrderPurchase.belongsTo(models.OrderPurchase, {
+            foreignKey: 'originalOrderPurchaseID',
+            as: 'originalOrderPurchase',
+        });
     };
 
     return OrderPurchase;
