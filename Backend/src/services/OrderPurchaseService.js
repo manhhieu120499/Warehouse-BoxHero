@@ -4,8 +4,12 @@ const OrderPurchaseDetail = db.OrderPurchaseDetail;
 const Product = db.Product;
 const OrderPurchaseMissing = db.OrderPurchaseMissing;
 const OrderPurchaseMissingDetail = db.OrderPurchaseMissingDetail;
+const Proposal = db.Proposal;
+const OrderPurchase = db.OrderPurchase;
 const Unit = db.Unit;
 const BatchBox = db.BatchBox;
+const Supplier = db.Supplier;
+const Warehouse = db.Warehouse;
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -29,10 +33,12 @@ class OrderPurchaseService {
                     orderReturnID,
                     proposalID,
                     orderPurchaseDetails,
+                    type,
+                    originalOrderPurchaseID,
                 } = newOrder;
 
                 // Check orderPurchase tồn tại
-                const orderPurchaseFind = await db.OrderPurchase.findOne({ where: { orderPurchaseID } });
+                const orderPurchaseFind = await OrderPurchase.findOne({ where: { orderPurchaseID } });
                 if (orderPurchaseFind) {
                     resolve({
                         statusHttp: HTTP_BAD_REQUEST,
@@ -43,7 +49,7 @@ class OrderPurchaseService {
 
                 // check proposal exists
                 if (proposalID) {
-                    const proposalFind = await db.Proposal.findOne({ where: { proposalID } });
+                    const proposalFind = await Proposal.findOne({ where: { proposalID } });
                     if (!proposalFind) {
                         return resolve({
                             statusHttp: HTTP_BAD_REQUEST,
@@ -67,7 +73,7 @@ class OrderPurchaseService {
                 }
 
                 // save orderPurchase
-                const newOrderPurchase = await db.OrderPurchase.create(
+                const newOrderPurchase = await OrderPurchase.create(
                     {
                         ...objCreate,
                     },
@@ -87,10 +93,54 @@ class OrderPurchaseService {
                     );
                 }
 
+                if (type == 'SUPPLEMENT') {
+                    // check originalOrderPurchaseID exists
+                    const originalOrderPurchaseFind = await OrderPurchase.findOne({
+                        where: { orderPurchaseID: originalOrderPurchaseID },
+                    });
+
+                    // check orderMissingPurchaseID exists
+                    const orderMissingPurchaseFind = await OrderPurchaseMissing.findOne({
+                        where: { orderPurchaseID: originalOrderPurchaseID },
+                    });
+                    if (!originalOrderPurchaseFind) {
+                        await transaction.rollback();
+                        return resolve({
+                            statusHttp: HTTP_BAD_REQUEST,
+                            status: 'ERR',
+                            message: 'Đơn nhập hàng gốc không tồn tại',
+                        });
+                    } else if (!orderMissingPurchaseFind) {
+                        await transaction.rollback();
+                        return resolve({
+                            statusHttp: HTTP_BAD_REQUEST,
+                            status: 'ERR',
+                            message: 'Đơn nhập hàng gốc không có đơn nhập hàng thiếu',
+                        });
+                    } else if (
+                        originalOrderPurchaseFind.status === 'COMPLETED' ||
+                        originalOrderPurchaseFind.status === 'CANCELED'
+                    ) {
+                        await transaction.rollback();
+                        return resolve({
+                            statusHttp: HTTP_BAD_REQUEST,
+                            status: 'ERR',
+                            message: 'Đơn nhập hàng gốc đã hoàn thành hoặc đã hủy, không thể tạo phiếu nhập bổ sung',
+                        });
+                    } else {
+                        // update type
+                        await newOrderPurchase.update({ type: 'SUPPLEMENT', originalOrderPurchaseID }, { transaction });
+                        // update original order purchase status to COMPLETED
+                        await originalOrderPurchaseFind.update({ status: 'COMPLETED' }, { transaction });
+                        // update orderPurchaseMissing status to RESOLVED
+                        await orderMissingPurchaseFind.update({ status: 'RESOLVED' }, { transaction });
+                    }
+                }
+
                 // loop orderPurchaseDetails
                 for (const orderPurchaseDetail of orderPurchaseDetails) {
                     const batchID = orderPurchaseDetail.batchID;
-                    const batchFind = await db.Batch.findOne({ where: { batchID } });
+                    const batchFind = await Batch.findOne({ where: { batchID } });
 
                     if (batchFind) {
                         await transaction.rollback();
@@ -103,7 +153,7 @@ class OrderPurchaseService {
 
                     // check product exists
                     const productID = orderPurchaseDetail.productID;
-                    const productFind = await db.Product.findOne({ where: { productID } });
+                    const productFind = await Product.findOne({ where: { productID } });
 
                     if (!productFind) {
                         return resolve({
@@ -114,7 +164,7 @@ class OrderPurchaseService {
                     }
 
                     // check supplier exists
-                    const supplierFind = await db.Supplier.findOne({
+                    const supplierFind = await Supplier.findOne({
                         where: { supplierID: orderPurchaseDetail.supplierID },
                     });
 
@@ -127,7 +177,7 @@ class OrderPurchaseService {
                     }
 
                     // check unit exists
-                    const unitFind = await db.Unit.findOne({ where: { unitID: orderPurchaseDetail.unitID } });
+                    const unitFind = await Unit.findOne({ where: { unitID: orderPurchaseDetail.unitID } });
 
                     if (!unitFind) {
                         return resolve({
@@ -138,7 +188,7 @@ class OrderPurchaseService {
                     }
 
                     // check warehouse exists
-                    const warehouseFind = await db.Warehouse.findOne({
+                    const warehouseFind = await Warehouse.findOne({
                         where: { warehouseID: warehouseID },
                     });
 
@@ -237,8 +287,8 @@ class OrderPurchaseService {
                 const { orderPurchaseID, status } = completeOrder;
 
                 // Check orderPurchase tồn tại
-                const orderPurchaseFind = await db.OrderPurchase.findOne({ where: { orderPurchaseID } });
-                const orderPurchaseMissingFind = await db.OrderPurchaseMissing.findOne({
+                const orderPurchaseFind = await OrderPurchase.findOne({ where: { orderPurchaseID } });
+                const orderPurchaseMissingFind = await OrderPurchaseMissing.findOne({
                     where: { orderPurchaseID },
                     include: [{ model: OrderPurchaseMissingDetail, as: 'orderPurchaseMissingDetails' }],
                 });
