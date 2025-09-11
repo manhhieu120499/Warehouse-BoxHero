@@ -6,11 +6,43 @@ import toast from 'react-hot-toast';
 import Button from '../Button';
 import MyTable from '../MyTable';
 import { convertDateVN } from '../../common';
+import { formatStatusOrderPurchaseMissing, styleMessage } from '../../constants';
+import parseToken from '../../utils/parseToken';
+import request from '../../utils/httpRequest';
 
 const cx = classNames.bind(styles);
 
-const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose }) => {
+const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
     console.log(data);
+
+    const handleUpdateStatus = async (status) => {
+        try {
+            const token = parseToken('tokenUser');
+            const warehouse = parseToken('warehouse');
+            const res = await request.post(
+                '/api/order-purchase/update-status-order-purchase',
+                {
+                    orderPurchaseID: data.orderPurchaseID,
+                    status,
+                },
+                {
+                    headers: {
+                        token: `Bearer ${token.accessToken}`,
+                        employeeid: token.employeeID,
+                        warehouseid: warehouse.warehouseID,
+                    },
+                },
+            );
+            console.log(res.data);
+            toast.success('Cập nhật trạng thái thành công', styleMessage);
+            reset();
+            onClose(false);
+        } catch (err) {
+            toast.error('Cập nhật trạng thái thất bại', styleMessage);
+            console.log(err);
+            return;
+        }
+    };
 
     const columns = [
         {
@@ -75,14 +107,76 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose }) => {
                             <label>Mã kho</label>
                             <input type="text" disabled value={data?.orderPurchase?.warehouseID} />
                         </div>
-                        <div className={cx('form-group')}>
-                            <label>Ngày tạo</label>
-                            <input
-                                value={data?.createdAt ? convertDateVN(data.createdAt) : ''}
-                                disabled
-                                type="datetime-local"
-                            />
-                        </div>
+                        {data?.status === 'PENDING' && (
+                            <div className={cx('form-group')}>
+                                <label>Ngày tạo</label>
+                                <input
+                                    value={data?.createdAt ? convertDateVN(data.createdAt) : ''}
+                                    disabled
+                                    type="datetime-local"
+                                />
+                            </div>
+                        )}
+                        {data?.status === 'CANCELED' && (
+                            <div className={cx('form-status')}>
+                                <div className={cx('form-group')}>
+                                    <label>Trạng thái</label>
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={formatStatusOrderPurchaseMissing[data?.status]}
+                                    />
+                                </div>
+                                <div className={cx('row')}>
+                                    <div className={cx('form-group')}>
+                                        <label>Ngày tạo</label>
+                                        <input
+                                            value={data?.createdAt ? convertDateVN(data.createdAt) : ''}
+                                            disabled
+                                            type="datetime-local"
+                                        />
+                                    </div>
+                                    <div className={cx('form-group')}>
+                                        <label>Ngày huỷ</label>
+                                        <input
+                                            value={data?.createdAt ? convertDateVN(data.createdAt) : ''}
+                                            disabled
+                                            type="datetime-local"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {data?.status === 'RESOLVED' && (
+                            <div className={cx('form-status')}>
+                                <div className={cx('form-group')}>
+                                    <label>Trạng thái</label>
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={formatStatusOrderPurchaseMissing[data?.status]}
+                                    />
+                                </div>
+                                <div className={cx('row')}>
+                                    <div className={cx('form-group')}>
+                                        <label>Ngày tạo</label>
+                                        <input
+                                            value={data?.createdAt ? convertDateVN(data.createdAt) : ''}
+                                            disabled
+                                            type="datetime-local"
+                                        />
+                                    </div>
+                                    <div className={cx('form-group')}>
+                                        <label>Ngày giải quyết</label>
+                                        <input
+                                            value={data?.createdAt ? convertDateVN(data.updatedAt) : ''}
+                                            disabled
+                                            type="datetime-local"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -91,12 +185,11 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose }) => {
                     <MyTable columns={columns} data={data?.orderPurchaseMissingDetails} />
                 </div>
                 <div className={cx('action-modal')}>
-                    <Button success onClick={() => {}}>
-                        <span>Đã giải quyết</span>
-                    </Button>
-                    <Button error onClick={() => {}}>
-                        <span>Đã hủy</span>
-                    </Button>
+                    {data?.status === 'PENDING' && (
+                        <Button error onClick={() => handleUpdateStatus('CANCELED')}>
+                            <span>Đã hủy</span>
+                        </Button>
+                    )}
                     <Button primary onClick={onClose}>
                         <span>Đóng</span>
                     </Button>

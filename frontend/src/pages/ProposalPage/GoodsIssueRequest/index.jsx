@@ -15,7 +15,7 @@ const cx = classNames.bind(styles);
 
 const currency = (n) => (isNaN(n) ? '0' : new Intl.NumberFormat('vi-VN').format(Number(n)));
 const todayISO = () => new Date().toISOString().slice(0, 10);
-const emptyItem = () => ({ sku: '', name: '', uom: '', qty: 0, note: '', listUom: [] });
+const emptyItem = () => ({ sku: '', name: '', uom: '', qty: 1, note: '', listUom: [] });
 
 export default function GoodsIssueRequest() {
     const currentUser = useSelector((state) => state.AuthSlice.user);
@@ -33,6 +33,7 @@ export default function GoodsIssueRequest() {
     const [openModal, setOpenModal] = useState(false);
     const [qrCode, setQrCode] = useState(null);
     const [productIDSearch, setProductIDSearch] = useState("")
+    const [listUnitUOM, setListUnitUOM] = useState([])
 
     const totals = useMemo(() => {
         const totalQty = items.reduce((s, i) => s + (Number(i.qty) * Number(i.listUom.find(ix => ix.unitID == Number.parseInt(i.uom))?.unitName.slice(-2)) || 0), 0);
@@ -143,7 +144,7 @@ export default function GoodsIssueRequest() {
                 const newProduct = emptyItem();
                 newProduct.sku = product.productID;
                 newProduct.name = product.productName;
-                newProduct.listUom = resBatchUnit.data.units;
+                newProduct.listUom = listUnitUOM;
                 
                 setItems((prev) => [...prev, newProduct]);
             } catch (err) {
@@ -155,17 +156,35 @@ export default function GoodsIssueRequest() {
 
     const handleSearchProduct = async (productID) => {
       if(productID) {
+        const checkProductExist = items.find(it => it.sku == productID)
+        if(checkProductExist) {
+            toast.error("Sản phẩm này đã tồn tại trong danh sách đề xuất", styleMessage)
+            return;
+        }
         await fetchProduct(productID)
         setProductIDSearch("")
       }  
+      return;
     }
+
+    useEffect(() => {
+        const fetchUnitUOM = async () => {
+            try{
+                const res = await request.get("/api/unit/get-all")
+                const formatUnitUOM = res.data.data.map(it => ({unitID: it.unitID, unitName: it.unitName}))
+                setListUnitUOM(formatUnitUOM)
+            }catch(err) {   
+                console.log(err)
+            }
+        }
+        fetchUnitUOM();
+    }, [])
 
     useEffect(() => {
         if (currentUser) setCreator(currentUser);
     }, [currentUser]);
 
     useEffect(() => {
-        console.log(warehouseCurrent)
         if (warehouseCurrent) setWarehouse(warehouseCurrent);
     }, [warehouseCurrent]);
 
@@ -224,7 +243,7 @@ export default function GoodsIssueRequest() {
                             <input placeholder="Nguyễn Văn A" value={creator.empName} readOnly />
                         </div>
                         <div className={cx('field', 'colSpan3')}>
-                            <label>Lý do nhập</label>
+                            <label>Ghi chú</label>
                             <textarea
                                 rows={3}
                                 placeholder="Nhập bổ sung, trả hàng NCC, nhập khuyến mãi..."
@@ -285,6 +304,7 @@ export default function GoodsIssueRequest() {
                                                 <input
                                                     value={it.name}
                                                     onChange={(e) => updateCell(idx, 'name', e.target.value)}
+                                                    readOnly
                                                     placeholder="Tên sản phẩm"
                                                 />
                                             </td>
@@ -302,9 +322,12 @@ export default function GoodsIssueRequest() {
                                             <td className={cx('num')}>
                                                 <input
                                                     type="number"
-                                                    min={0}
+                                                    min={1}
                                                     value={it.qty}
                                                     onChange={(e) => updateCell(idx, 'qty', e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if(e.key == "-") e.preventDefault()
+                                                    }}
                                                 />
                                             </td>
                                             <td>

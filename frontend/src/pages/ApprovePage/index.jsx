@@ -20,7 +20,7 @@ const ApprovePage = () => {
     const [filterProposal, setFilterProposal] = useState({
         proposalID: "",
         createdAt: "",
-        status: "",
+        status: "PENDING",
         employeeIDCreate: ''
     })
 
@@ -39,7 +39,8 @@ const ApprovePage = () => {
             }, token.accessToken, token.employeeID)
             // console.log(res)
             toast.success(res.message, styleMessage)
-            fetchProposals(1)
+            //fetchProposals(1)\
+            handleSearch()
         } catch (err) {
             console.log(err)
             toast.error(err.response.data.message, styleMessage)
@@ -130,12 +131,14 @@ const ApprovePage = () => {
             width: '20%',
             render: (_, record) => {
                 return <div className={cxGlobal('action-table')}>
-                    <Button disabled={record.status == 'COMPLETED'} success onClick={() => handleApproveProposal(record.proposalID, 'COMPLETED')}>
+                    {record.status == "PENDING"&& <>
+                         <Button disabled={record.status == 'COMPLETED'} success onClick={() => handleApproveProposal(record.proposalID, 'COMPLETED')}>
                         <span>Chấp nhận</span>
-                    </Button>
-                    <Button disabled={record.status == 'REFUSE'} error onClick={() => handleApproveProposal(record.proposalID, 'REFUSE')}>
-                        <span>Từ chối</span>
-                    </Button>
+                        </Button>
+                        <Button disabled={record.status == 'REFUSE'} error onClick={() => handleApproveProposal(record.proposalID, 'REFUSE')}>
+                            <span>Từ chối</span>
+                        </Button>
+                    </>}
                 </div>
             }
         }
@@ -162,30 +165,31 @@ const ApprovePage = () => {
         }
     ]
 
-    const fetchProposals = async (page = 1, type="PURCHASE_PROPOSAL") => {
-        try {
-            console.log(page)
-            const token = parseToken("tokenUser")
-            const warehouse = parseToken('warehouse')
-            const res = await request.get('/api/proposal/get-proposal/employee', {
-                params: {
-                    page
-                },
-                headers: {
-                    token: `Beare ${token.accessToken}`,
-                    employeeid: token.employeeID,
-                    warehouseID: warehouse.warehouseID
-                }
-            })
-            //console.log(res.data.proposals)
-            if(type === 'PURCHASE_PROPOSAL')
-                setProposalPurchaseList(res.data.proposals.length > 0 ? res.data.proposals : [])
-            else setProposalReleaseList(res.data.proposals.length > 0 ? res.data.proposals : [])
-            setPage(page)
-        } catch (err) {
-            console.log(err)
-        }
-    }
+    // const fetchProposals = async (page = 1, type="PURCHASE_PROPOSAL") => {
+    //     try {
+    //         console.log(page)
+    //         const token = parseToken("tokenUser")
+    //         const warehouse = parseToken('warehouse')
+    //         const res = await request.post('/api/proposal/filter-proposal', {
+    //             params: {
+    //                 page,
+    //                 status: filterProposal.status,
+    //             },
+    //             headers: {
+    //                 token: `Beare ${token.accessToken}`,
+    //                 employeeid: token.employeeID,
+    //                 warehouseID: warehouse.warehouseID
+    //             }
+    //         })
+    //         //console.log(res.data.proposals)
+    //         if(type === 'PURCHASE_PROPOSAL')
+    //             setProposalPurchaseList(res.data.proposals.length > 0 ? res.data.proposals : [])
+    //         else setProposalReleaseList(res.data.proposals.length > 0 ? res.data.proposals : [])
+    //         setPage(page)
+    //     } catch (err) {
+    //         console.log(err)
+    //     }
+    // }
 
     const handleResetFilter = () => {
         setFilterProposal({
@@ -195,7 +199,7 @@ const ApprovePage = () => {
             employeeIDCreate: ""
         })
         setPage(prev => 1)
-        fetchProposals(1)
+        //fetchProposals(1)
     }
 
     const handleSearch = async () => {
@@ -215,12 +219,12 @@ const ApprovePage = () => {
     }
 
     const handleNextPage = () => {
-        fetchProposals(page + 1)
+        //fetchProposals(page + 1)
     }
 
     const handlePrevPage = async () => {
         if (page - 1 <= 0) return;
-        fetchProposals(page - 1)
+        //fetchProposals(page - 1)
     }
 
     const handleOnChangeSelectProposal = (e) => {
@@ -230,19 +234,21 @@ const ApprovePage = () => {
     }
 
     useEffect(() => {
-        fetchProposals(page)
-    }, [page])
+        //fetchProposals(page)
+        handleSearch()
+    }, [filterProposal.status])
     return (
         <div className={cx('wrapper-approve')}>
             <ModelFilter columns={columnsFilter} handleResetFilters={handleResetFilter} selectInput={selectFilter} handleSubmitFilter={handleSearch} />
             <div className={cx('table-container-header')}>
-                <h1 className={cx('title-approve')}>Danh sách phiếu đề xuất chờ duyệt</h1>
-                <Select options={optionsSelect} onChange={handleOnChangeSelectProposal}/>
+                <h1 className={cx('title-approve')}>{`Danh sách phiếu đề xuất ${formatStatusProposal[filterProposal.status].toLowerCase()}`}</h1>
+                {/* <Select options={optionsSelect} onChange={handleOnChangeSelectProposal}/> */}
             </div>
             <div className={cx('table-container')}>
-                {filterTabProposal.PURCHASE_PROPOSAL
+                {/* {filterTabProposal.PURCHASE_PROPOSAL
                     && <MyTable className={cx("my-table")} columns={columnsTable} data={proposalPurchaseList} pageSize={pageSize} />}
-                {filterTabProposal.RELEASE_PROPOSAL && <MyTable className={cx("my-table")} columns={columnsTable} data={proposalReleaseList} pageSize={pageSize} />}
+                {filterTabProposal.RELEASE_PROPOSAL && <MyTable className={cx("my-table")} columns={columnsTable} data={proposalReleaseList} pageSize={pageSize} />} */}
+                <MyTable className={cx("my-table")} columns={columnsTable} data={proposalPurchaseList} pageSize={pageSize} />
                 <PaginationUI currentPage={page} handleNextPage={handleNextPage} handlePrevPage={handlePrevPage} />
             </div>
 

@@ -11,6 +11,12 @@ const cx = classNames.bind(styles);
 const QrReader = ({ data, setData, isOpenInfo = false, onClose = () => {} }) => {
 
 const handleResult = (result) => {
+    const checkProductExist = data.find(item => item.sku === result.text)
+    if(checkProductExist) {
+      toast.error("Sản phẩm đã tồn tại trong danh sách đề xuất", styleMessage)
+      onClose();
+      return;
+    }
     setData(prev => result.text)
     onClose();
   }

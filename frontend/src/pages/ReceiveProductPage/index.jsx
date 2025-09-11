@@ -7,13 +7,13 @@ import request from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
 import { formatStatusProposal } from '../../constants';
 import { ClipboardClock, Eye, PlusCircle, Trash, FileMinus } from 'lucide-react';
-import CreateImportReceiptPage from './CreateImportReceiptPage';
 import HistoryReceiveAndReleasePage from '../HistoryReceiveAndReleasePage';
 import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import Tippy from '@tippyjs/react';
 import InputBase from '../../components/InputBase';
 import { useDebounce } from '../../hooks';
 import ReceiveProductMissingPage from '../ReceiveProductMissingPage';
+import ImportProduct from './ImportProduct';
 const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyle);
 
@@ -104,7 +104,7 @@ const ReceiveProductPage = () => {
 
     return (
         <div className={cx('wrapper-receive-product')}>
-            <section className={cx('header-tab-product')}>
+            <section className={cx('header-tab')}>
                 <Button
                     active={tabActive == 1 ? true : false}
                     onClick={() => handleActiveTab(1)}
@@ -127,8 +127,9 @@ const ReceiveProductPage = () => {
                     <span>Phiếu nhập thiếu</span>
                 </Button>
             </section>
+           
             {tabActive == 1 && (
-                <CreateImportReceiptPage currentUser={currentUser} currentWarehouse={currentWarehouse} />
+                 <ImportProduct/>
             )}
             {tabActive == 2 && (
                 <HistoryReceiveAndReleasePage

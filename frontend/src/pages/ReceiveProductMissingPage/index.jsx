@@ -147,6 +147,30 @@ const ReceiveProductMissingPage = () => {
         }
     };
 
+    const handleFilter = async () => {
+        try{
+            const token = parseToken('tokenUser');
+            const warehouse = parseToken('warehouse');
+            const filterParam = {};
+            if(filterReceiverPurchase.proposalID) filterParam.orderPurchaseMissingID = filterReceiverPurchase.proposalID;
+            if(filterReceiverPurchase.createdAt) filterParam.createdAt = filterReceiverPurchase.createdAt;
+            if(filterReceiverPurchase.status) filterParam.status = filterReceiverPurchase.status === "Đang xử lý" ? "PENDING" : filterReceiverPurchase.status;
+
+            const params = {...filterParam, warehouseID: warehouse.warehouseID} 
+            const res = await request.get(`/api/order-purchase-missing/filter`, {
+                params,
+                headers: {
+                    token: `Beare ${token.accessToken}`,
+                    employeeid: token.employeeID
+                }
+            })
+            setReceiverPurchaseList(res.data.data || [])
+        }catch(err) {   
+            console.log(err);
+            fetchProposals(1);
+        }
+    }
+
     const handleResetFilter = () => {
         setFilterReceiverPurchase({
             proposalID: '',
@@ -178,6 +202,7 @@ const ReceiveProductMissingPage = () => {
                 columns={columnsFilter}
                 handleResetFilters={handleResetFilter}
                 selectInput={selectFilter}
+                handleSubmitFilter={handleFilter}
             />
             <div className={cx('table-container-header')}>
                 <h1 className={cx('title-approve')}>Danh sách phiếu nhập thiếu</h1>
@@ -196,6 +221,7 @@ const ReceiveProductMissingPage = () => {
                 data={indexDetail}
                 isOpen={showDetail}
                 onClose={() => setShowDetail(false)}
+                reset={handleFilter}
             />
         </div>
     );
