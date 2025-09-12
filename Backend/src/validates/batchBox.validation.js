@@ -14,6 +14,41 @@ const suggestBoxes = [
         }),
 ];
 
+const updateLocationBatch = [
+    body('warehouseID').notEmpty().withMessage('Mã kho là bắt buộc').bail(),
+    body('locations')
+        .isArray()
+        .withMessage('Danh sách locations không hợp lệ')
+        .bail()
+        .custom((value) => {
+            if (value.length === 0) {
+                throw new Error('Danh sách locations không được để trống');
+            }
+            return true;
+        }),
+    body('locations.*.batchID')
+        .notEmpty()
+        .withMessage('Mã lô hàng là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã lô hàng không hợp lệ'),
+    body('locations.*.box').notEmpty().withMessage('Ô là bắt buộc').bail(),
+    body('locations.*.box.boxID')
+        .notEmpty()
+        .withMessage('Mã ô là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã ô không hợp lệ')
+        .bail(),
+    body('locations.*.quantity')
+        .notEmpty()
+        .withMessage('Số lượng đặt là bắt buộc')
+        .bail()
+        .isInt({ min: 1 })
+        .withMessage('Số lượng đặt phải là số nguyên lớn hơn 0'),
+];
+
 module.exports = {
     suggestBoxes,
+    updateLocationBatch,
 };
