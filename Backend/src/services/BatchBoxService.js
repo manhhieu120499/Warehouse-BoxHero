@@ -93,7 +93,7 @@ class BatchBoxService {
                 }
 
                 // 3. Lấy danh sách box khả dụng
-                const candidateBoxes = await Box.findAll({
+                let candidateBoxes = await Box.findAll({
                     where: {
                         status: { [Op.in]: ['AVAILABLE', 'RESERVED', 'OCCUPIED'] },
                         remainingAcreage: { [Op.gt]: 0 },
@@ -125,11 +125,10 @@ class BatchBoxService {
                 });
 
                 if (!candidateBoxes.length) {
-                    return resolve({
-                        status: 'OK',
-                        statusHttp: HTTP_OK,
+                    return reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_BAD_REQUEST,
                         message: 'Không tìm thấy box nào khả dụng',
-                        boxes: [],
                     });
                 }
 
@@ -137,7 +136,7 @@ class BatchBoxService {
                 const expiryScore = (batch) => {
                     const now = new Date();
                     const daysToExpiry = Math.max(0, Math.ceil((batch.expiryDate - now) / (1000 * 60 * 60 * 24)));
-                    return Math.max(0, 100 - daysToExpiry);
+                    return Math.max(0, 5000 / (daysToExpiry + 1));
                 };
 
                 // 5. Hàm tính điểm box
@@ -147,57 +146,76 @@ class BatchBoxService {
                     const unitVolume = unit.length * unit.width * unit.height;
                     const requiredVolume = unitVolume * batch.remainAmount;
 
-                    if (box.remainingAcreage >= requiredVolume) score += 200;
-                    if (box.batches.some((b) => b.productID === batch.productID)) score += 80;
-                    if (box.batches.some((b) => b.unitID === batch.unitID)) score += 60;
+                    if (box.remainingAcreage >= requiredVolume) {
+                        score += 60;
+                        score += 50 * (1 - (box.remainingAcreage - requiredVolume) / requiredVolume);
+                    }
+                    if (box.batches.some((b) => b.productID === batch.productID)) score += 30;
+                    if (box.batches.some((b) => b.unitID === batch.unitID)) score += 10;
                     if (box.floor && box.floor.floorName) {
                         const floorNum = parseInt(box.floor.floorName.replace(/\D/g, '')) || 99;
                         score += 10 - floorNum;
                     }
-                    score += 40 * (1 - Math.abs(box.remainingAcreage - requiredVolume) / requiredVolume);
 
                     return score;
                 };
 
-                // 6. Sắp xếp batches theo hạn sử dụng (FEFO)
-                batches = batches.sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
-
+                // 6. Phân bổ batch vào box theo global best match
                 let suggestions = [];
+                let remainingBatches = [...batches];
+                let availableBoxes = [...candidateBoxes];
 
-                // 7. Phân bổ từng batch
-                for (let batch of batches) {
-                    let remain = batch.remainAmount;
+                while (remainingBatches.length > 0 && availableBoxes.length > 0) {
+                    // Tạo toàn bộ batch-box pairs
+                    let scoredPairs = [];
+                    for (let batch of remainingBatches) {
+                        for (let box of availableBoxes) {
+                            const score = expiryScore(batch) + boxScore(batch, box);
+                            scoredPairs.push({ batch, box, score });
+                        }
+                    }
+
+                    if (scoredPairs.length === 0) break;
+
+                    // Chọn pair có score cao nhất
+                    scoredPairs.sort((a, b) => b.score - a.score);
+                    const { batch, box } = scoredPairs[0];
+
                     const unit = batch.unit;
                     const unitVolume = unit.length * unit.width * unit.height;
 
-                    while (remain > 0) {
-                        // chấm điểm cho các box
-                        let scored = candidateBoxes.map((box) => ({
-                            box,
-                            score: expiryScore(batch) + boxScore(batch, box),
-                        }));
+                    const maxCapacity = Math.floor(box.remainingAcreage / unitVolume);
+                    const isBatchLarger = batch.remainAmount > maxCapacity;
+                    let placed;
 
-                        scored.sort((a, b) => b.score - a.score);
-                        const best = scored[0];
-                        if (!best) break;
-
-                        const chosenBox = best.box;
-                        const maxCapacity = Math.floor(chosenBox.remainingAcreage / unitVolume);
-                        const placed = Math.min(remain, maxCapacity);
-
-                        if (placed <= 0) break;
-
-                        suggestions.push({
-                            batchID: batch.batchID,
-                            boxID: chosenBox.boxID,
-                            placed,
-                            score: best.score,
-                        });
-
-                        // cập nhật dữ liệu tạm
-                        chosenBox.remainingAcreage -= placed * unitVolume;
-                        remain -= placed;
+                    if (isBatchLarger) {
+                        placed = maxCapacity;
+                        availableBoxes = availableBoxes.filter((b) => b.boxID !== box.boxID);
+                        batch.remainAmount -= placed;
+                    } else {
+                        placed = batch.remainAmount;
+                        remainingBatches = remainingBatches.filter((b) => b.batchID !== batch.batchID);
+                        box.remainingAcreage -= placed * unitVolume;
                     }
+
+                    // Ghi kết quả
+                    suggestions.push({
+                        batchID: batch.batchID,
+                        box: { boxID: box.boxID, boxName: box.boxName },
+                        floor: { floorID: box.floor.floorID, floorName: box.floor.floorName },
+                        shelf: { shelfID: box.floor.shelf.shelfID, shelfName: box.floor.shelf.shelfName },
+                        zone: { zoneID: box.floor.shelf.zone.zoneID, zoneName: box.floor.shelf.zone.zoneName },
+                        placedAmount: placed,
+                    });
+                }
+
+                // Nếu hết box mà vẫn còn batch => lỗi
+                if (remainingBatches.length > 0 && availableBoxes.length === 0) {
+                    return reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Không đủ chỗ để chứa toàn bộ batch',
+                    });
                 }
 
                 resolve({
@@ -208,6 +226,116 @@ class BatchBoxService {
                 });
             } catch (err) {
                 console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err.message || err,
+                });
+            }
+        });
+    }
+    async updateLocationBatch(data) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                const { warehouseID, locations } = data;
+                // 1. Kiểm tra kho
+                const warehouseExist = await Warehouse.findOne({ where: { warehouseID } });
+                if (!warehouseExist) {
+                    reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_NOT_FOUND,
+                        message: 'Kho không tồn tại',
+                    });
+                }
+                // 2. Duyệt từng location để kiểm tra và cập nhật
+                for (const loc of locations) {
+                    const { batchID, box, quantity } = loc;
+                    const batch = await Batch.findOne({
+                        where: { batchID, warehouseID },
+                        include: [{ model: Unit, as: 'unit' }],
+                    });
+                    if (!batch) {
+                        reject({
+                            status: 'ERR',
+                            statusHttp: HTTP_NOT_FOUND,
+                            message: `Batch ${batchID} không tồn tại hoặc không hợp lệ`,
+                        });
+                    }
+                    if (quantity > batch.remainAmount) {
+                        reject({
+                            status: 'ERR',
+                            statusHttp: HTTP_BAD_REQUEST,
+                            message: `Số lượng đặt (${quantity}) vượt quá số lượng còn lại của batch ${batchID} (${batch.remainAmount})`,
+                        });
+                    }
+                    // box is one
+                    // join box with warehouse through floor, shelf, zone
+                    const boxExist = await Box.findOne({
+                        where: { boxID: box.boxID },
+                        include: [
+                            {
+                                model: Floor,
+                                as: 'floor',
+                                include: [
+                                    {
+                                        model: Shelf,
+                                        as: 'shelf',
+                                        include: [
+                                            {
+                                                model: Zone,
+                                                as: 'zone',
+                                                where: { warehouseID },
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    });
+                    if (!boxExist) {
+                        reject({
+                            status: 'ERR',
+                            statusHttp: HTTP_NOT_FOUND,
+                            message: `Box ${box.boxID} không tồn tại`,
+                        });
+                    }
+                    const unitVolume = batch.unit.length * batch.unit.width * batch.unit.height;
+                    const requiredVolume = unitVolume * quantity;
+                    if (boxExist.remainingAcreage < requiredVolume) {
+                        reject({
+                            status: 'ERR',
+                            statusHttp: HTTP_BAD_REQUEST,
+                            message: `Box ${box.boxID} không đủ diện tích (còn ${boxExist.remainingAcreage}, cần ${requiredVolume})`,
+                        });
+                    } else {
+                        // Cập nhật BatchBox
+                        await db.BatchBox.create(
+                            {
+                                batchID: batch.batchID,
+                                boxID: boxExist.boxID,
+                                quantity,
+                            },
+                            { transaction },
+                        );
+                        // Cập nhật remain của box
+                        boxExist.remainingAcreage -= requiredVolume;
+                        if (boxExist.remainingAcreage === 0) {
+                            boxExist.status = 'FULL';
+                        } else if (boxExist.status === 'AVAILABLE') {
+                            boxExist.status = 'OCCUPIED';
+                        }
+                        await boxExist.save({ transaction });
+                    }
+                }
+                await transaction.commit();
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Cập nhật vị trí batch thành công',
+                });
+            } catch (err) {
+                await transaction.rollback();
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,

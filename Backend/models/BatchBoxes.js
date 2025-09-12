@@ -10,6 +10,11 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 primaryKey: true,
             },
+            quantity: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+            },
         },
         {
             tableName: 'batch_boxes',
