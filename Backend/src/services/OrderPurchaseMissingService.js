@@ -66,6 +66,7 @@ class OrderPurchaseMissingService {
                 if (employeeID) {
                     queryEmployee.employeeID = employeeID;
                 }
+                // sort createdAt desc
                 const orderPurchaseMissingFind = await OrderPurchaseMissing.findAll({
                     where: {
                         ...rest,
@@ -111,6 +112,7 @@ class OrderPurchaseMissingService {
                             ],
                         },
                     ],
+                    order: [['createdAt', 'DESC']],
                 });
                 resolve({
                     status: 'OK',

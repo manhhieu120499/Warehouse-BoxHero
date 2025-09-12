@@ -16,7 +16,7 @@ class UnitController {
             console.log(e);
             return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
                 status: 'ERR',
-                message: e.message,
+                message: [e.message],
             });
         }
     }

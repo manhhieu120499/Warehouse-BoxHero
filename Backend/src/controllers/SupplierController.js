@@ -27,7 +27,7 @@ class SupplierController {
             }
         } catch (e) {
             console.log(e);
-            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: e.message });
+            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: [e.message] });
         }
     }
     // Cập nhật nhà cung cấp (check email trùng)
@@ -52,7 +52,7 @@ class SupplierController {
             }
         } catch (e) {
             console.log(e);
-            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: e.message });
+            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: [e.message] });
         }
     }
     // Xóa nhà cung cấp
@@ -63,7 +63,7 @@ class SupplierController {
             return res.status(HTTP_OK).json({ status, message });
         } catch (e) {
             console.log(e);
-            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: e.message });
+            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: [e.message] });
         }
     }
     // Lấy thông tin một nhà cung cấp
@@ -78,7 +78,7 @@ class SupplierController {
             }
         } catch (e) {
             console.log(e);
-            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: e.message });
+            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: [e.message] });
         }
     }
 
@@ -105,7 +105,7 @@ class SupplierController {
             return res.status(HTTP_OK).json({ status: 'OK', ...result });
         } catch (e) {
             console.log(e);
-            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: e.message });
+            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: [e.message] });
         }
     }
 
@@ -117,7 +117,7 @@ class SupplierController {
             return res.status(statusHttp).json(response);
         } catch (e) {
             console.log(e);
-            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: e.message });
+            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({ status: 'ERR', message: [e.message] });
         }
     }
 }

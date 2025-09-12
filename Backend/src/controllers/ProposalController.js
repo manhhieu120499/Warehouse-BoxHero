@@ -10,9 +10,9 @@ class ProposalController {
         }
     }
 
-    async approveProposal(req, res) {
+    async updateStatusProposal(req, res) {
         try {
-            const { statusHttp, ...response } = await ProposalService.approveProposal(req.body);
+            const { statusHttp, ...response } = await ProposalService.updateStatusProposal(req.body);
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp).json(err);
@@ -53,6 +53,15 @@ class ProposalController {
     async filterProposal(req, res) {
         try {
             const { statusHttp, ...response } = await ProposalService.filterProposal(req.body);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
+
+    async getProposalMissing(req, res) {
+        try {
+            const { statusHttp, ...response } = await ProposalService.getProposalMissing(req.query);
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp).json(err);

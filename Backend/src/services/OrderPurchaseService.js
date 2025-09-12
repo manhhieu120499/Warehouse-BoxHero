@@ -22,6 +22,8 @@ const HTTP_UNAUTHORIZED = process.env.HTTP_UNAUTHORIZED;
 class OrderPurchaseService {
     createOrderPurchase(newOrder) {
         return new Promise(async (resolve, reject) => {
+            console.log('newOrder', newOrder);
+
             const transaction = await db.sequelize.transaction();
             try {
                 const {
@@ -225,29 +227,6 @@ class OrderPurchaseService {
                             actualQuantity: orderPurchaseDetail.actualQuantity,
                         },
                         { transaction },
-                    );
-
-                    // save batch box
-                    for (const position of orderPurchaseDetail.positions) {
-                        console.log('position', position);
-
-                        await BatchBox.create(
-                            {
-                                batchID: batchID,
-                                boxID: position.boxID,
-                            },
-                            { transaction },
-                        );
-                    }
-
-                    // update amount product
-                    const amountConvert = unitFind.conversionQuantity * orderPurchaseDetail.actualQuantity;
-
-                    await Product.update(
-                        {
-                            amount: productFind.amount + amountConvert,
-                        },
-                        { where: { productID: orderPurchaseDetail.productID }, transaction },
                     );
 
                     // check status and save orderPurchaseMissingDetail

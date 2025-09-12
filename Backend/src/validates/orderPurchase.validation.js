@@ -87,40 +87,6 @@ const checkCreateOrderPurchase = [
         .bail()
         .isString()
         .withMessage('Mã nhà cung cấp không hợp lệ'),
-    body('orderPurchaseDetails.*.positions')
-        .isArray()
-        .withMessage('Danh sách vị trí phải là một mảng')
-        .bail()
-        .custom((value) => {
-            if (value.length === 0) {
-                throw new Error('Danh sách vị trí không được để trống');
-            }
-            return true;
-        }),
-    body('orderPurchaseDetails.*.positions.*.zoneID')
-        .notEmpty()
-        .withMessage('Khu vực là bắt buộc')
-        .bail()
-        .isString()
-        .withMessage('Khu vực phải là chuỗi'),
-    body('orderPurchaseDetails.*.positions.*.shelfID')
-        .notEmpty()
-        .withMessage('Kệ là bắt buộc')
-        .bail()
-        .isString()
-        .withMessage('Kệ phải là chuỗi'),
-    body('orderPurchaseDetails.*.positions.*.floorID')
-        .notEmpty()
-        .withMessage('Tầng là bắt buộc')
-        .bail()
-        .isString()
-        .withMessage('Tầng phải là chuỗi'),
-    body('orderPurchaseDetails.*.positions.*.boxID')
-        .notEmpty()
-        .withMessage('Ô là bắt buộc')
-        .bail()
-        .isString()
-        .withMessage('Ô phải là chuỗi'),
 ];
 
 const checkUpdateStatusOrderPurchase = [

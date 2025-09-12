@@ -229,7 +229,7 @@ class BatchBoxService {
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    message: err.message || err,
+                    message: [err.message] || err,
                 });
             }
         });
@@ -339,7 +339,7 @@ class BatchBoxService {
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    message: err.message || err,
+                    message: [err.message] || err,
                 });
             }
         });
