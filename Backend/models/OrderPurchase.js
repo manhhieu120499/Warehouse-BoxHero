@@ -55,7 +55,7 @@ module.exports = (sequelize, Sequelize) => {
         OrderPurchase.belongsTo(models.Employee, { foreignKey: 'employeeID', as: 'employee' });
         OrderPurchase.belongsTo(models.Warehouse, { foreignKey: 'warehouseID' });
         // OrderPurchase.belongsTo(models.OrderReturn, { foreignKey: 'orderReturnID' });
-        OrderPurchase.belongsTo(models.Proposal, { foreignKey: 'proposalID' });
+        OrderPurchase.belongsTo(models.Proposal, { foreignKey: 'proposalID', as: 'proposal' });
 
         OrderPurchase.hasMany(models.OrderPurchaseDetail, { foreignKey: 'orderPurchaseID' });
 

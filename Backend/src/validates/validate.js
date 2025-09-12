@@ -5,7 +5,7 @@ function validate(req, res, next) {
     if (!errors.isEmpty()) {
         return res.status(400).json({
             status: 'ERR',
-            messages: errors.array().map((err) => err.msg),
+            message: errors.array().map((err) => err.msg),
         });
     }
     next();

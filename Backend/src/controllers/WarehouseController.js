@@ -6,7 +6,7 @@ class WarehouseController {
             const { statusHttp, ...response } = await WarehouseService.findAll();
             return res.status(statusHttp).json(response);
         } catch (err) {
-            return res.status(err.statusHttp).json(err.message);
+            return res.status(err.statusHttp).json([err.message]);
         }
     }
 
@@ -16,7 +16,7 @@ class WarehouseController {
             const { statusHttp, ...response } = await WarehouseService.findById(id);
             return res.status(statusHttp).json(response);
         } catch (err) {
-            return res.status(err.statusHttp).json(err.message);
+            return res.status(err.statusHttp).json([err.message]);
         }
     }
 }

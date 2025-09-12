@@ -37,7 +37,7 @@ const authUser = async (req, res, next) => {
         console.log(e);
         return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
             status: 'ERR',
-            message: e.message,
+            message: [e.message],
         });
     }
 };
@@ -48,9 +48,8 @@ const authUserIsManager = async (req, res, next) => {
         const employeeID = req.headers['employeeid'];
         const warehouseID = req.headers['warehouseid'];
 
-        console.log(warehouseID);
-
         const token = req.headers.token;
+
         if (token) {
             const accessToken = token.split(' ')[1];
             jwt.verify(accessToken, process.env.ACCESS_TOKEN, (err, user) => {
@@ -95,7 +94,7 @@ const authUserIsManager = async (req, res, next) => {
         console.log(e);
         return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
             status: 'ERR',
-            message: e.message,
+            message: [e.message],
         });
     }
 };
@@ -145,7 +144,7 @@ const authUserIsManagerWithoutWarehouse = async (req, res, next) => {
         console.log(e);
         return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
             status: 'ERR',
-            message: e.message,
+            message: [e.message],
         });
     }
 };
@@ -209,7 +208,7 @@ const authUserIsManagerOrStockReceiver = async (req, res, next) => {
     } catch (e) {
         return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
             status: 'ERR',
-            message: e.message,
+            message: [e.message],
         });
     }
 };

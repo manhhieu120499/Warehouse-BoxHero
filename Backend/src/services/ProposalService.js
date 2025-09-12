@@ -1,12 +1,14 @@
 const dotenv = require('dotenv');
 const db = require('../../models');
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const Proposal = db.Proposal;
 const Employee = db.Employee;
 const Product = db.Product;
 const Warehouse = db.Warehouse;
 const Unit = db.Unit;
 const ProposalDetail = db.ProposalDetail;
+const OrderPurchase = db.OrderPurchase;
+const sequelize = db.sequelize;
 
 dotenv.config();
 
@@ -52,8 +54,8 @@ class ProposalService {
         });
     }
 
-    // approval proposal
-    approveProposal(data) {
+    // update proposal status
+    updateStatusProposal(data) {
         return new Promise(async (resolve, reject) => {
             const transaction = await db.sequelize.transaction();
             try {
@@ -71,12 +73,18 @@ class ProposalService {
                 proposal.status = data.status;
                 proposal.approverID = data.employeeIDApproval;
                 await proposal.save({ transaction });
-
+                let message = '';
+                if (data.status === 'COMPLETED') {
+                    message = 'Đề xuất đã được phê duyệt';
+                }
+                if (data.status === 'REFUSED') {
+                    message = 'Đề xuất đã bị từ chối';
+                }
                 await transaction.commit();
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
-                    message: 'Phê duyệt đề xuất thành công',
+                    message,
                     proposal,
                 });
             } catch (err) {
@@ -340,6 +348,52 @@ class ProposalService {
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách đề xuất theo bộ lọc thành công',
+                    proposals,
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+
+    // get proposal missing (status = APPROVED but not have stock receipt)
+    getProposalMissing({ warehouseID }) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const proposals = await Proposal.findAll({
+                    where: {
+                        status: 'COMPLETED',
+                        warehouseID,
+                        proposalID: {
+                            [Op.notIn]: sequelize.literal(
+                                '(SELECT proposalID FROM order_purchase WHERE proposalID IS NOT NULL)',
+                            ),
+                        },
+                    },
+                    include: [
+                        {
+                            model: ProposalDetail,
+                            as: 'proposalDetails',
+                            include: [
+                                { model: Product, as: 'product' },
+                                { model: Unit, as: 'unit' },
+                            ],
+                        },
+                        { model: Employee, as: 'employeeCreate' },
+                        { model: Employee, as: 'approver' },
+                        { model: Warehouse, as: 'warehouse' },
+                    ],
+                    order: [['createdAt', 'DESC']], // để bản mới nhất lên trước
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy danh sách đề xuất thiếu thành công',
                     proposals,
                 });
             } catch (err) {

@@ -19,7 +19,6 @@ const checkCreateProposal = [
         .bail()
         .isString()
         .withMessage('Warehouse ID không hợp lệ'),
-    body('note').notEmpty().withMessage('Ghi chú là bắt buộc').bail().isString().withMessage('Ghi chú không hợp lệ'),
     body('proposalDetails')
         .isArray()
         .withMessage('Chi tiết đề xuất phải là một mảng')
@@ -30,13 +29,6 @@ const checkCreateProposal = [
             }
             return true;
         }),
-    body('proposalDetails.*.proposalDetailID')
-        .notEmpty()
-        .withMessage('Mã chi tiết là bắt buộc')
-        .bail()
-        .isString()
-        .withMessage('Mã chi tiết không hợp lệ'),
-
     body('proposalDetails.*.productID')
         .notEmpty()
         .withMessage('Mã sản phẩm là bắt buộc')
