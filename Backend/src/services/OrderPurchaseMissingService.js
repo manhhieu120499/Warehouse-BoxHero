@@ -8,6 +8,7 @@ const Product = db.Product;
 const Employee = db.Employee;
 const Unit = db.Unit;
 const dotenv = require('dotenv');
+const { Op } = require('sequelize');
 
 dotenv.config();
 
@@ -61,10 +62,13 @@ class OrderPurchaseMissingService {
     filterOrderPurchaseMissing(query) {
         return new Promise(async (resolve, reject) => {
             try {
-                const { warehouseID, employeeID, ...rest } = query;
+                const { warehouseID, employeeID, employeeName, ...rest } = query;
                 const queryEmployee = {};
                 if (employeeID) {
                     queryEmployee.employeeID = employeeID;
+                }
+                if (employeeName) {
+                    queryEmployee.employeeName = { [Op.like]: `%${employeeName}%` };
                 }
                 // sort createdAt desc
                 const orderPurchaseMissingFind = await OrderPurchaseMissing.findAll({
