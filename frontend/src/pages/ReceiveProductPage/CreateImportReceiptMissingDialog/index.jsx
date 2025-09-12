@@ -25,7 +25,7 @@ const emptyItem = () => ({
     expiryDate: '',
 });
 
-const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClose }) => {
+const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClose, handleFetchOrderMissing }) => {
     console.log(orderPurchaseMissing);
     const currentUser = useSelector((state) => state.AuthSlice.user);
     const warehouse = useSelector((state) => state.WareHouseSlice.warehouse);
@@ -73,11 +73,12 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
                 supplierID: item.supplierID,
             })),
         };
-        if(!validatePayloadCreateReceiptMissing(payload)) return;
-         try {
+        if (!validatePayloadCreateReceiptMissing(payload)) return;
+        try {
             const res = await saveReceipt(payload);
             if (res) {
                 toast.success(res.data.message, styleMessage);
+                handleFetchOrderMissing();
                 onClose();
             }
         } catch (err) {

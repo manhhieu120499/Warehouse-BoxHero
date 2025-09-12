@@ -56,24 +56,38 @@ export const validatePayloadCreateReceipt = (payload) => {
 export const saveReceipt = async (payload) => {
     try {
         const token = parseToken('tokenUser');
-        const res = await request.post('/api/order-purchase/create-order-purchase', payload, {
-            headers: {
-                token: `Beare ${token.accessToken}`,
-                employeeID: payload.employeeID,
-                warehouseID: payload.warehouseID,
+        const res = await request.post(
+            '/api/order-purchase/create-order-purchase',
+            {
+                ...payload,
+                employeeID: token.employeeID,
             },
-        });
+            {
+                headers: {
+                    token: `Bearer ${token.accessToken}`,
+                    employeeID: token.employeeID,
+                    warehouseID: token.warehouseID,
+                },
+            },
+        );
         return res;
     } catch (err) {
-        throw new Error(err);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
     }
 };
 
-
 export const fetchOrderMissing = async (warehouseID, page = 1) => {
-    console.log(warehouseID)
+    console.log(warehouseID);
     try {
         const token = parseToken('tokenUser');
+        console.log(token);
+
         const res = await request.get(`/api/order-purchase-missing/filter`, {
             headers: {
                 token: `Bearer ${token.accessToken}`,
@@ -81,7 +95,8 @@ export const fetchOrderMissing = async (warehouseID, page = 1) => {
             },
             params: {
                 warehouseID: warehouseID,
-                employeeID: token.employeeID
+                employeeID: token.employeeID,
+                status: 'PENDING',
             },
         });
         return res;
@@ -114,4 +129,4 @@ export const validatePayloadCreateReceiptMissing = (payload) => {
         }
     }
     return true;
-}
+};

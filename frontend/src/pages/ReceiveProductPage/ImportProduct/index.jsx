@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ImportProduct.module.scss';
-import { formatStatusProposal } from '../../../constants';
+import { formatStatusProposal, formatStatusOrderPurchaseMissing } from '../../../constants';
 import { MyTable, PaginationUI } from '../../../components';
 import InputBase from '../../../components/InputBase';
-import { fetchProposal } from '../../../services/proposal.service';
+import { fetchProposalMissingOrderPurchase } from '../../../services/proposal.service';
 import parseToken from '../../../utils/parseToken';
 import CreateImportReceiptDialog from '../CreateImportReceiptDialog';
 import CreateImportReceiptMissingDialog from '../CreateImportReceiptMissingDialog';
@@ -59,11 +59,17 @@ const ImportProduct = () => {
             title: 'Nhân viên lập phiếu',
             dataIndex: 'employeeIDCreate',
             key: 'employeeIDCreate',
+            render: (_, record) => {
+                return <p>{record?.employeeCreate?.employeeName}</p>;
+            },
         },
         {
             title: 'Người phê duyệt',
             dataIndex: 'approverID',
             key: 'approverID',
+            render: (_, record) => {
+                return <p>{record?.approver?.employeeName}</p>;
+            },
         },
         {
             title: 'Trạng thái',
@@ -94,39 +100,52 @@ const ImportProduct = () => {
             title: 'Nhân viên lập phiếu',
             dataIndex: 'employeeIDCreate',
             key: 'employeeIDCreate',
-            render: (_, record) => <p>{record?.orderPurchase?.employee?.employeeID || 'N/A'}</p>,
+            render: (_, record) => {
+                console.log('record ', record);
+
+                return <p>{record?.orderPurchase?.employee?.employeeName}</p>;
+            },
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            render: (status) => formatStatusProposal[status],
+            render: (status) => {
+                if (option.missingProposal) return formatStatusOrderPurchaseMissing[status];
+                else return formatStatusProposal[status];
+            },
         },
     ];
 
-    useEffect(() => {
+    const handleFetchProposalMissingOrderPurchase = () => {
+        fetchProposalMissingOrderPurchase()
+            .then((res) => {
+                const formatData = res.proposals.map((it) => ({
+                    key: it.proposalID,
+                    ...it,
+                }));
+                setSuggestListProposal(formatData || []);
+            })
+            .catch((err) => console.log(err));
+    };
+
+    const handleFetchOrderMissing = () => {
         const warehouse = parseToken('warehouse');
-        if (option.suggestProposal)
-            fetchProposal('warehouse', warehouse.warehouseID, 'COMPLETED', currentPage)
-                .then((res) => {
-                    const formatData = res.proposals.map((it) => ({
-                        key: it.proposalID,
-                        ...it,
-                    }));
-                    setSuggestListProposal(formatData || []);
-                })
-                .catch((err) => console.log(err));
-        else
-            fetchOrderMissing(warehouse.warehouseID, currentPage)
-                .then((res) => {
-                    console.log(res);
-                    const formatData = res.data.data.map((it) => ({
-                        key: it.orderPurchaseMissingID,
-                        ...it,
-                    }));
-                    setMissingListProposal(formatData || []);
-                })
-                .catch((err) => console.log(err));
+        fetchOrderMissing(warehouse.warehouseID, currentPage)
+            .then((res) => {
+                console.log(res);
+                const formatData = res.data.data.map((it) => ({
+                    key: it.orderPurchaseMissingID,
+                    ...it,
+                }));
+                setMissingListProposal(formatData || []);
+            })
+            .catch((err) => console.log(err));
+    };
+
+    useEffect(() => {
+        if (option.suggestProposal) handleFetchProposalMissingOrderPurchase();
+        else handleFetchOrderMissing();
     }, [option, currentPage]);
 
     useEffect(() => {
@@ -138,16 +157,15 @@ const ImportProduct = () => {
         if (selectedRow.length > 0) {
             let indexProposal = option.missingProposal
                 ? missingListProposal.findIndex((it) => it.orderPurchaseMissingID == selectedRow[0])
-                : suggestListProposal.findIndex((it) => it.proposalID == selectedRow[0]);  
+                : suggestListProposal.findIndex((it) => it.proposalID == selectedRow[0]);
             if (indexProposal == -1) return;
             if (option.suggestProposal) {
                 setProposalSelected(suggestListProposal[indexProposal]);
                 setShowModalCreate(true);
-            }
-            else {
+            } else {
                 setProposalSelected(missingListProposal[indexProposal]);
                 setShowModalCreateMissing(true);
-            }    
+            }
         }
     }, [selectedRow]);
 
@@ -219,7 +237,7 @@ const ImportProduct = () => {
             {option.missingProposal && (
                 <div className={cx('view-list-proposal')}>
                     <div className={cx('table-header')}>
-                        '<p className={cx('table-title')}>Danh sách phiếu đề xuất</p>
+                        '<p className={cx('table-title')}>Danh sách phiếu nhập thiếu</p>
                         <InputBase className={cx('search')} placeholder="Tìm kiếm" />
                     </div>
 
@@ -238,17 +256,29 @@ const ImportProduct = () => {
                 </div>
             )}
 
-            {showModalCreate && <CreateImportReceiptDialog
-                isOpen={showModalCreate}
-                onClose={() => setShowModalCreate(false)}
-                proposalItem={proposalSelected}
-            />}
+            {showModalCreate && (
+                <CreateImportReceiptDialog
+                    isOpen={showModalCreate}
+                    onClose={() => {
+                        setSelectedRow([]);
+                        setShowModalCreate(false);
+                    }}
+                    proposalItem={proposalSelected}
+                    handleFetchProposalMissingOrderPurchase={handleFetchProposalMissingOrderPurchase}
+                />
+            )}
 
-            {showModalCreateMissing && <CreateImportReceiptMissingDialog
-                isOpen={showModalCreateMissing}
-                onClose={() => setShowModalCreateMissing(false)}
-                orderPurchaseMissing={proposalSelected}
-            />}
+            {showModalCreateMissing && (
+                <CreateImportReceiptMissingDialog
+                    isOpen={showModalCreateMissing}
+                    onClose={() => {
+                        setSelectedRow([]);
+                        setShowModalCreateMissing(false);
+                    }}
+                    orderPurchaseMissing={proposalSelected}
+                    handleFetchOrderMissing={handleFetchOrderMissing}
+                />
+            )}
         </div>
     );
 };

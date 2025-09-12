@@ -32,11 +32,17 @@ export default function GoodsReceiptRequest() {
     const [items, setItems] = useState([]); // danh sách sản phẩm gợi ý
     const [openModal, setOpenModal] = useState(false);
     const [qrCode, setQrCode] = useState(null);
-    const [productIDSearch, setProductIDSearch] = useState("")
-    const [listUnitUOM, setListUnitUOM] = useState([])
+    const [productIDSearch, setProductIDSearch] = useState('');
+    const [listUnitUOM, setListUnitUOM] = useState([]);
 
     const totals = useMemo(() => {
-        const totalQty = items.reduce((s, i) => s + (Number(i.qty) * Number(i.listUom.find(ix => ix.unitID == Number.parseInt(i.uom))?.unitName.slice(-2)) || 0), 0);
+        const totalQty = items.reduce(
+            (s, i) =>
+                s +
+                (Number(i.qty) *
+                    Number(i.listUom.find((ix) => ix.unitID == Number.parseInt(i.uom))?.unitName.slice(-2)) || 0),
+            0,
+        );
         const unique = items.filter((i) => i.name?.trim()).length;
         return { totalQty, unique };
     }, [items]);
@@ -49,10 +55,10 @@ export default function GoodsReceiptRequest() {
     const validate = () => {
         const errors = [];
         if (!code) errors.push('Vui lòng tạo mã phiếu nhập kho');
-        if (!reason) errors.push('Vui lòng ghi lý do nhập');
         if (items.length === 0) errors.push('Danh sách hàng hóa đang trống');
-        const checkRow = items.every(row => row.sku && row.name && row.uom && row.qty > 0)
-        if(!checkRow) errors.push('Vui lòng điền đầy đủ thông tin chi tiết sản phẩm cần nhập và số lượng tối thiểu là 1')
+        const checkRow = items.every((row) => row.sku && row.name && row.uom && row.qty > 0);
+        if (!checkRow)
+            errors.push('Vui lòng điền đầy đủ thông tin chi tiết sản phẩm cần nhập và số lượng tối thiểu là 1');
         return errors;
     };
 
@@ -69,7 +75,7 @@ export default function GoodsReceiptRequest() {
             creator,
             warehouse,
             reason,
-            items: items.filter((i) => i.name || i.sku).map(i => ({...i, proposalDetailID: generateCode('PRD-')})),
+            items: items.filter((i) => i.name || i.sku).map((i) => ({ ...i, proposalDetailID: generateCode('PRD-') })),
         };
         console.log('SUBMIT PDX:', payload); // Thực tế: gọi API backend
         try {
@@ -96,19 +102,19 @@ export default function GoodsReceiptRequest() {
                     },
                 },
             );
-            if(resCreate.data.status == "OK") {
-              toast.success(resCreate.data.message, styleMessage)
-              handleReset()
-            }  
+            if (resCreate.data.status == 'OK') {
+                toast.success(resCreate.data.message, styleMessage);
+                handleReset();
+            }
         } catch (err) {
             console.log(err);
-            toast.error(err.response.data.messages[0], styleMessage)
+            toast.error(err.response.data.messages[0], styleMessage);
             return;
         }
     };
 
     const handleReset = () => {
-        setCode("");
+        setCode('');
         setDate(todayISO());
         setReason('');
         setItems([]);
@@ -118,67 +124,67 @@ export default function GoodsReceiptRequest() {
         setOpenModal((prev) => !prev);
     };
 
-     const fetchProduct = async (productID) => {
-            try {
-                const token = parseToken('tokenUser');
-                const [resProduct, resBatchUnit] = await Promise.all([
-                    request.get(`/api/product?productID=${productID}`, {
-                        headers: {
-                            token: `Beare ${token.accessToken}`,
-                            employeeid: token.employeeID,
-                            warehouse: warehouse.warehouseID,
-                        },
-                    }),
-                    request.get(`api/batch/list-units`, {
-                        params: {
-                            warehouseID: warehouse.warehouseID,
-                            productID: productID,
-                        },
-                        headers: {
-                            token: `Beare ${token.accessToken}`,
-                            employeeid: token.employeeID,
-                        },
-                    }),
-                ]);
-                const { product } = resProduct.data;
-                const newProduct = emptyItem();
-                newProduct.sku = product.productID;
-                newProduct.name = product.productName;
-                newProduct.listUom = listUnitUOM;
-                
-                setItems((prev) => [...prev, newProduct]);
-            } catch (err) {
-                console.log(err);
-                toast.error(err.response.data?.message || err.response.data?.messages[0], styleMessage)
-                return;
-            }
-        };
+    const fetchProduct = async (productID) => {
+        try {
+            const token = parseToken('tokenUser');
+            const [resProduct, resBatchUnit] = await Promise.all([
+                request.get(`/api/product?productID=${productID}`, {
+                    headers: {
+                        token: `Beare ${token.accessToken}`,
+                        employeeid: token.employeeID,
+                        warehouse: warehouse.warehouseID,
+                    },
+                }),
+                request.get(`api/batch/list-units`, {
+                    params: {
+                        warehouseID: warehouse.warehouseID,
+                        productID: productID,
+                    },
+                    headers: {
+                        token: `Beare ${token.accessToken}`,
+                        employeeid: token.employeeID,
+                    },
+                }),
+            ]);
+            const { product } = resProduct.data;
+            const newProduct = emptyItem();
+            newProduct.sku = product.productID;
+            newProduct.name = product.productName;
+            newProduct.listUom = listUnitUOM;
 
-    const handleSearchProduct = async (productID) => {
-      if(productID) {
-        const checkProductExist = items.find(it => it.sku == productID)
-        if(checkProductExist) {
-            toast.error("Sản phẩm này đã tồn tại trong danh sách đề xuất", styleMessage)
+            setItems((prev) => [...prev, newProduct]);
+        } catch (err) {
+            console.log(err);
+            toast.error(err.response.data?.message || err.response.data?.messages[0], styleMessage);
             return;
         }
-        await fetchProduct(productID)
-        setProductIDSearch("")
-      }  
-      return;
-    }
+    };
+
+    const handleSearchProduct = async (productID) => {
+        if (productID) {
+            const checkProductExist = items.find((it) => it.sku == productID);
+            if (checkProductExist) {
+                toast.error('Sản phẩm này đã tồn tại trong danh sách đề xuất', styleMessage);
+                return;
+            }
+            await fetchProduct(productID);
+            setProductIDSearch('');
+        }
+        return;
+    };
 
     useEffect(() => {
         const fetchUnitUOM = async () => {
-            try{
-                const res = await request.get("/api/unit/get-all")
-                const formatUnitUOM = res.data.data.map(it => ({unitID: it.unitID, unitName: it.unitName}))
-                setListUnitUOM(formatUnitUOM)
-            }catch(err) {   
-                console.log(err)
+            try {
+                const res = await request.get('/api/unit/get-all');
+                const formatUnitUOM = res.data.data.map((it) => ({ unitID: it.unitID, unitName: it.unitName }));
+                setListUnitUOM(formatUnitUOM);
+            } catch (err) {
+                console.log(err);
             }
-        }
+        };
         fetchUnitUOM();
-    }, [])
+    }, []);
 
     useEffect(() => {
         if (currentUser) setCreator(currentUser);
@@ -232,7 +238,7 @@ export default function GoodsReceiptRequest() {
                         </div>
                         <div className={cx('field')}>
                             <label>Ngày lập</label>
-                            <input type="date" value={date} readOnly/>
+                            <input type="date" value={date} readOnly />
                         </div>
                         <div className={cx('field')}>
                             <label>Kho nhập</label>
@@ -269,10 +275,14 @@ export default function GoodsReceiptRequest() {
                     </div>
 
                     <div className={cx('search')}>
-                      <div className={cx('input')}>
-                        <input placeholder='Nhập mã sản phẩm' value={productIDSearch} onChange={(e) => setProductIDSearch(e.target.value)}/>
-                      </div>
-                      <Search className={cx('icon')} size={22} onClick={() => handleSearchProduct(productIDSearch)}/>
+                        <div className={cx('input')}>
+                            <input
+                                placeholder="Nhập mã sản phẩm"
+                                value={productIDSearch}
+                                onChange={(e) => setProductIDSearch(e.target.value)}
+                            />
+                        </div>
+                        <Search className={cx('icon')} size={22} onClick={() => handleSearchProduct(productIDSearch)} />
                     </div>
 
                     <div className={cx('tableWrap')}>
@@ -324,11 +334,9 @@ export default function GoodsReceiptRequest() {
                                                     type="number"
                                                     min={1}
                                                     value={it.qty}
-                                                    onChange={(e) => 
-                                                        updateCell(idx, 'qty', e.target.value)
-                                                    }
+                                                    onChange={(e) => updateCell(idx, 'qty', e.target.value)}
                                                     onKeyDown={(e) => {
-                                                        if(e.key == "-") e.preventDefault()
+                                                        if (e.key == '-') e.preventDefault();
                                                     }}
                                                 />
                                             </td>
@@ -373,7 +381,9 @@ export default function GoodsReceiptRequest() {
                 <p>© {new Date().getFullYear()} Kho Hàng • Phiếu đề xuất nhập kho</p>
             </footer>
 
-            {openModal && <QrReader data={items} setData={setQrCode} isOpenInfo={openModal} onClose={openAndCloseQRCode} />}
+            {openModal && (
+                <QrReader data={items} setData={setQrCode} isOpenInfo={openModal} onClose={openAndCloseQRCode} />
+            )}
         </div>
     );
 }

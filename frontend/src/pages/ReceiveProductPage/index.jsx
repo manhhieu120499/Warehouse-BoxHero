@@ -127,10 +127,8 @@ const ReceiveProductPage = () => {
                     <span>Phiếu nhập thiếu</span>
                 </Button>
             </section>
-           
-            {tabActive == 1 && (
-                 <ImportProduct/>
-            )}
+
+            {tabActive == 1 && <ImportProduct />}
             {tabActive == 2 && (
                 <HistoryReceiveAndReleasePage
                     title={'Danh sách lịch sử nhập kho'}

@@ -28,7 +28,7 @@ const emptyItem = () => ({
     supplierName: '',
 });
 
-const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose }) => {
+const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchProposalMissingOrderPurchase }) => {
     const currentUser = useSelector((state) => state.AuthSlice.user);
     const [productListImport, setProductListImport] = useState([]);
     const [orderPurchase, setOrderPurchase] = useState({
@@ -41,7 +41,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose }) => {
         proposalID: proposalItem?.proposalID || '',
         note: proposalItem?.note || '',
     });
-    const [showPopupConfirmSaveMissing, setShowPopConfirmSaveMissing] = useState(false)
+    const [showPopupConfirmSaveMissing, setShowPopConfirmSaveMissing] = useState(false);
 
     const updateCellData = (idx, item) => {
         const updateList = productListImport.map((it, index) => (index == idx ? item : it));
@@ -110,14 +110,15 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose }) => {
         };
 
         if (!validatePayloadCreateReceipt(payload)) return;
-        if(status) {
-            setShowPopConfirmSaveMissing(true)
+        if (status) {
+            setShowPopConfirmSaveMissing(true);
             return;
         }
         try {
             const res = await saveReceipt(payload);
             if (res) {
                 toast.success(res.data.message, styleMessage);
+                handleFetchProposalMissingOrderPurchase();
                 onClose();
             }
         } catch (err) {
@@ -159,16 +160,12 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose }) => {
         if (!validatePayloadCreateReceipt(payload)) return;
         try {
             const res = await saveReceipt(payload);
-            if (res) {
-                toast.success(res.data.message, styleMessage);
-                onClose();
-            }
+            toast.success(res.data.message, styleMessage);
+            onClose();
         } catch (err) {
             console.log(err);
-            toast.error(err.response.data.message, styleMessage);
-            return;
         }
-    }
+    };
     const handleResetField = () => {
         const updateProductList = productListImport.map((item) => ({
             ...item,
@@ -183,7 +180,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose }) => {
             expiryDate: '',
             supplierName: '',
         }));
-        setProductListImport(updateProductList)
+        setProductListImport(updateProductList);
     };
 
     useEffect(() => {
@@ -207,7 +204,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose }) => {
             proposalID: proposalItem.proposalID,
             note: proposalItem.note,
             warehouseName: proposalItem.warehouse.warehouseName,
-            warehouseID: proposalItem.warehouse.warehouseID
+            warehouseID: proposalItem.warehouse.warehouseID,
         }));
     }, [proposalItem, currentUser]);
 
@@ -469,10 +466,13 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose }) => {
                             Phiếu nhập bị thiếu sản phẩm. Bạn có muốn tạo phiếu nhập thiếu không?
                         </p>
                         <div className={cx('action-confirm')}>
-                            <Button primary onClick={() => {
-                                handleSaveReceiptMissing()
-                                setShowPopConfirmSaveMissing(false)
-                            }}>
+                            <Button
+                                primary
+                                onClick={() => {
+                                    handleSaveReceiptMissing();
+                                    setShowPopConfirmSaveMissing(false);
+                                }}
+                            >
                                 <span>Có</span>
                             </Button>
                             <Button outline onClick={() => setShowPopConfirmSaveMissing(false)}>

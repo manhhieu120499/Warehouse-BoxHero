@@ -4,13 +4,8 @@ import styles from './ReceiveProductMissingPage.module.scss';
 import { Button, ModelFilter, MyTable, PaginationUI } from '../../components';
 import request, { post } from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
-import { formatStatusOrderPurchaseMissing, styleMessage } from '../../constants';
-import toast from 'react-hot-toast';
-import Select from '../../components/Select';
-import Tippy from '@tippyjs/react';
-import { CakeSlice } from 'lucide-react';
+import { formatStatusOrderPurchaseMissing } from '../../constants';
 import ModalReceiveProductMissingDetail from '../../components/ModalReceiveProductMissingDetail';
-import { set } from 'react-hook-form';
 
 const cx = classNames.bind(styles);
 
@@ -133,6 +128,7 @@ const ReceiveProductMissingPage = () => {
             const res = await request.get('/api/order-purchase-missing/filter', {
                 params: {
                     warehouseID: warehouse.warehouseID,
+                    status: 'PENDING',
                 },
                 headers: {
                     token: `Beare ${token.accessToken}`,
@@ -148,28 +144,31 @@ const ReceiveProductMissingPage = () => {
     };
 
     const handleFilter = async () => {
-        try{
+        try {
             const token = parseToken('tokenUser');
             const warehouse = parseToken('warehouse');
             const filterParam = {};
-            if(filterReceiverPurchase.proposalID) filterParam.orderPurchaseMissingID = filterReceiverPurchase.proposalID;
-            if(filterReceiverPurchase.createdAt) filterParam.createdAt = filterReceiverPurchase.createdAt;
-            if(filterReceiverPurchase.status) filterParam.status = filterReceiverPurchase.status === "Đang xử lý" ? "PENDING" : filterReceiverPurchase.status;
+            if (filterReceiverPurchase.proposalID)
+                filterParam.orderPurchaseMissingID = filterReceiverPurchase.proposalID;
+            if (filterReceiverPurchase.createdAt) filterParam.createdAt = filterReceiverPurchase.createdAt;
+            if (filterReceiverPurchase.status)
+                filterParam.status =
+                    filterReceiverPurchase.status === 'Đang xử lý' ? 'PENDING' : filterReceiverPurchase.status;
 
-            const params = {...filterParam, warehouseID: warehouse.warehouseID} 
+            const params = { ...filterParam, warehouseID: warehouse.warehouseID };
             const res = await request.get(`/api/order-purchase-missing/filter`, {
                 params,
                 headers: {
                     token: `Beare ${token.accessToken}`,
-                    employeeid: token.employeeID
-                }
-            })
-            setReceiverPurchaseList(res.data.data || [])
-        }catch(err) {   
+                    employeeid: token.employeeID,
+                },
+            });
+            setReceiverPurchaseList(res.data.data || []);
+        } catch (err) {
             console.log(err);
             fetchProposals(1);
         }
-    }
+    };
 
     const handleResetFilter = () => {
         setFilterReceiverPurchase({
