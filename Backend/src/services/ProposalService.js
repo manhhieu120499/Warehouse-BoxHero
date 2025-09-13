@@ -77,7 +77,7 @@ class ProposalService {
                 if (data.status === 'COMPLETED') {
                     message = 'Đề xuất đã được phê duyệt';
                 }
-                if (data.status === 'REFUSED') {
+                if (data.status === 'REFUSE') {
                     message = 'Đề xuất đã bị từ chối';
                 }
                 await transaction.commit();
