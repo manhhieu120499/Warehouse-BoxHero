@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ModalUpdateDetailImportProduct.module.scss';
 import Modal from '../Modal';
@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 import { styleMessage } from '../../constants';
 import Button from '../Button';
 import MyTable from '../MyTable';
+import request from '../../utils/httpRequest';
+import parseToken from '../../utils/parseToken';
 
 const cx = classNames.bind(styles);
 
@@ -24,6 +26,7 @@ const ModalUpdateDetailImportProduct = ({ indexItem, item = {
     expiryDate: ""
 }, isOpen, onClose, updateCellData, suggestLocation, hasProposal = false }) => {
     const [selectedRows, setSelectedRows] = useState(null)
+    const [locationSuggest, setLocationSuggest] = useState([])
     const handleApplyDetail = () => {
         if(!item.realAmount) {
             toast.error("Vui lòng nhập số lượng thực tế", styleMessage)
@@ -32,26 +35,54 @@ const ModalUpdateDetailImportProduct = ({ indexItem, item = {
         onClose(false)
     }
 
+
+    // fetch data
+        const fetchData = async () => {
+           try{
+            const token = parseToken("tokenUser")   
+            const warehouse = parseToken("warehouse")
+                const res = await request.get(`/api/batch-box/suggest-boxes`, {
+                    params: {
+                        warehouseID: warehouse.warehouseID,
+                        productID: item.productID
+                    },
+                    headers: {
+                        token: `Beare ${token.accessToken}`,
+                        employeeid: token.employeeID,
+                    }
+                })
+                console.log(res.data)
+                setLocationSuggest(res.data.boxes)
+           }catch(err) {
+            console.log(err)
+           } 
+        }
+        
+
     const columns = [
         {
-            title: 'Mã khu vực',
+            title: 'Tên khu vực',
             dataIndex: "zoneID",
-            key: 'zoneID'
+            key: 'zoneID',
+            render: (_, record) => <p>{record.floor.shelf.zone.zoneName}</p> 
         },
          {
-            title: 'Mã kê',
+            title: 'Tên kệ',
             dataIndex: "shelfID",
-            key: 'shelfID'
+            key: 'shelfID',
+            render: (_, record) => <p>{record.floor.shelf.shelfName}</p> 
         },
          {
-            title: 'Mã tầng',
+            title: 'Tên tầng',
             dataIndex: "floorID",
-            key: 'floorID'
+            key: 'floorID',
+            render: (_, record) => <p>{record.floor.floorName}</p> 
         },
          {
-            title: 'Mã ô',
+            title: 'Tên ô',
             dataIndex: "boxID",
-            key: 'boxID'
+            key: 'boxID',
+            render: (_, record) => <p>{record.boxName}</p>
         }
     ]
 
@@ -93,6 +124,16 @@ const ModalUpdateDetailImportProduct = ({ indexItem, item = {
 
                 <div className={cx('row')}>
                     <div className={cx('form-group')}>
+                        <label>Số lượng yêu cầu</label>
+                        <input
+                            type="number"
+                            placeholder="Số lượng yêu cầu"
+                            value={item.requestAmount}    
+                            readOnly
+                        />
+                    </div>
+                     
+                    <div className={cx('form-group')}>
                     <label>Số lượng thực tế</label>
                         <input
                             type="number"
@@ -106,12 +147,14 @@ const ModalUpdateDetailImportProduct = ({ indexItem, item = {
                                 if(raw === "") {
                                      item.realAmount = raw 
                                     updateCellData(indexItem, item)
+                                    setLocationSuggest([])
                                 }  
                                 else {
                                     const errorAmount = Number.parseInt(item.requestAmount) - Number.parseInt(raw)
                                     if(errorAmount < 0) {
-                                        toast.error('Số lượng thực tế vượt mức yêu cầu', styleMessage)
+                                        toast.error('Số lượng thực tế vượt mức yêu cầu ' + item.requestAmount, styleMessage)
                                     }else {
+                                        fetchData();
                                         item.realAmount = isNaN(num) ? undefined : num 
                                         if(hasProposal)
                                             item.errorAmount = errorAmount
@@ -123,26 +166,30 @@ const ModalUpdateDetailImportProduct = ({ indexItem, item = {
                         />
                     </div>
              
+                    
+                </div>
+                <div className={cx('row')}>
                     {hasProposal && <div className={cx('form-group')}>
                         <label>Số lượng thiếu</label>
                         <input
                             type="number"
                             placeholder="Số lượng thiếu"
                             min={1}
-                            value={item.errorAmount}
+                            value={item.errorAmount}    
                             readOnly
                         />
                     </div>}
-                </div>
-                {hasProposal && <div className={cx('form-group')}>
-                    <label>Lý do lỗi</label>
+                    {hasProposal && <div className={cx('form-group')}>
+                    <label>Lý do thiếu</label>
                     <input type="text" placeholder="Nhập lý do" value={item.reasonError || ""} onChange={(e) => {
                         item.reasonError = e.target.value
                         updateCellData(indexItem, item)}}/>
                 </div>}
+                </div>
+                
                <div className={cx('suggest-location-view')}>
                     <p>Danh sách gợi ý vị trí lưu trữ lô hàng</p>
-                    <MyTable columns={columns} data={[]} rowSelection={rowSelection}/>
+                    <MyTable columns={columns} data={locationSuggest} rowSelection={rowSelection}/>
                 </div>
                 <div className={cx('action-modal')}>
                     <Button success onClick={handleApplyDetail}>

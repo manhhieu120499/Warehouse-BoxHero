@@ -15,7 +15,7 @@ const cx = classNames.bind(styles);
 
 const currency = (n) => (isNaN(n) ? '0' : new Intl.NumberFormat('vi-VN').format(Number(n)));
 const todayISO = () => new Date().toISOString().slice(0, 10);
-const emptyItem = () => ({ sku: '', name: '', uom: '', qty: 0, note: '', listUom: [] });
+const emptyItem = () => ({ sku: '', name: '', uom: '', qty: 1, note: '', listUom: [] });
 
 export default function GoodsReceiptRequest() {
     const currentUser = useSelector((state) => state.AuthSlice.user);
@@ -32,10 +32,17 @@ export default function GoodsReceiptRequest() {
     const [items, setItems] = useState([]); // danh sách sản phẩm gợi ý
     const [openModal, setOpenModal] = useState(false);
     const [qrCode, setQrCode] = useState(null);
-    const [productIDSearch, setProductIDSearch] = useState("")
+    const [productIDSearch, setProductIDSearch] = useState('');
+    const [listUnitUOM, setListUnitUOM] = useState([]);
 
     const totals = useMemo(() => {
-        const totalQty = items.reduce((s, i) => s + (Number(i.qty) * Number(i.listUom.find(ix => ix.unitID == Number.parseInt(i.uom))?.unitName.slice(-2)) || 0), 0);
+        const totalQty = items.reduce(
+            (s, i) =>
+                s +
+                (Number(i.qty) *
+                    Number(i.listUom.find((ix) => ix.unitID == Number.parseInt(i.uom))?.unitName.slice(-2)) || 0),
+            0,
+        );
         const unique = items.filter((i) => i.name?.trim()).length;
         return { totalQty, unique };
     }, [items]);
@@ -48,10 +55,10 @@ export default function GoodsReceiptRequest() {
     const validate = () => {
         const errors = [];
         if (!code) errors.push('Vui lòng tạo mã phiếu nhập kho');
-        if (!reason) errors.push('Vui lòng ghi lý do nhập');
         if (items.length === 0) errors.push('Danh sách hàng hóa đang trống');
-        const checkRow = items.every(row => row.sku && row.name && row.uom && row.qty > 0)
-        if(!checkRow) errors.push('Vui lòng điền đầy đủ thông tin chi tiết sản phẩm cần nhập và số lượng tối thiểu là 1')
+        const checkRow = items.every((row) => row.sku && row.name && row.uom && row.qty > 0);
+        if (!checkRow)
+            errors.push('Vui lòng điền đầy đủ thông tin chi tiết sản phẩm cần nhập và số lượng tối thiểu là 1');
         return errors;
     };
 
@@ -68,7 +75,7 @@ export default function GoodsReceiptRequest() {
             creator,
             warehouse,
             reason,
-            items: items.filter((i) => i.name || i.sku),
+            items: items.filter((i) => i.name || i.sku).map((i) => ({ ...i, proposalDetailID: generateCode('PRD-') })),
         };
         console.log('SUBMIT PDX:', payload); // Thực tế: gọi API backend
         try {
@@ -81,7 +88,7 @@ export default function GoodsReceiptRequest() {
                     warehouseID: payload.warehouse.warehouseID,
                     note: payload.reason,
                     proposalDetails: payload.items.map((it) => ({
-                        proposalDetailID: generateCode('PRD-'),
+                        //proposalDetailID: it.proposalDetailID,
                         productID: it.sku,
                         unitID: it.uom,
                         quantity: it.qty,
@@ -95,19 +102,19 @@ export default function GoodsReceiptRequest() {
                     },
                 },
             );
-            if(resCreate.data.status == "OK") {
-              toast.success(resCreate.data.message, styleMessage)
-              handleReset()
-            }  
+            if (resCreate.data.status == 'OK') {
+                toast.success(resCreate.data.message, styleMessage);
+                handleReset();
+            }
         } catch (err) {
             console.log(err);
-            toast.error(err.response.data.messages[0], styleMessage)
+            toast.error(err.response.data.messages[0], styleMessage);
             return;
         }
     };
 
     const handleReset = () => {
-        setCode("");
+        setCode('');
         setDate(todayISO());
         setReason('');
         setItems([]);
@@ -117,55 +124,73 @@ export default function GoodsReceiptRequest() {
         setOpenModal((prev) => !prev);
     };
 
-     const fetchProduct = async (productID) => {
-            try {
-                const token = parseToken('tokenUser');
-                const [resProduct, resBatchUnit] = await Promise.all([
-                    request.get(`/api/product?productID=${productID}`, {
-                        headers: {
-                            token: `Beare ${token.accessToken}`,
-                            employeeid: token.employeeID,
-                            warehouse: warehouse.warehouseID,
-                        },
-                    }),
-                    request.get(`api/batch/list-units`, {
-                        params: {
-                            warehouseID: warehouse.warehouseID,
-                            productID: productID,
-                        },
-                        headers: {
-                            token: `Beare ${token.accessToken}`,
-                            employeeid: token.employeeID,
-                        },
-                    }),
-                ]);
-                const { product } = resProduct.data;
-                const newProduct = emptyItem();
-                newProduct.sku = product.productID;
-                newProduct.name = product.productName;
-                newProduct.listUom = resBatchUnit.data.units;
-                
-                setItems((prev) => [...prev, newProduct]);
-            } catch (err) {
-                console.log(err);
-                toast.error(err.response.data?.message || err.response.data?.messages[0], styleMessage)
-                return;
-            }
-        };
+    const fetchProduct = async (productID) => {
+        try {
+            const token = parseToken('tokenUser');
+            const [resProduct, resBatchUnit] = await Promise.all([
+                request.get(`/api/product?productID=${productID}`, {
+                    headers: {
+                        token: `Beare ${token.accessToken}`,
+                        employeeid: token.employeeID,
+                        warehouse: warehouse.warehouseID,
+                    },
+                }),
+                request.get(`api/batch/list-units`, {
+                    params: {
+                        warehouseID: warehouse.warehouseID,
+                        productID: productID,
+                    },
+                    headers: {
+                        token: `Beare ${token.accessToken}`,
+                        employeeid: token.employeeID,
+                    },
+                }),
+            ]);
+            const { product } = resProduct.data;
+            const newProduct = emptyItem();
+            newProduct.sku = product.productID;
+            newProduct.name = product.productName;
+            newProduct.listUom = listUnitUOM;
+
+            setItems((prev) => [...prev, newProduct]);
+        } catch (err) {
+            console.log(err);
+            toast.error(err.response.data?.message || err.response.data?.messages[0], styleMessage);
+            return;
+        }
+    };
 
     const handleSearchProduct = async (productID) => {
-      if(productID) {
-        await fetchProduct(productID)
-        setProductIDSearch("")
-      }  
-    }
+        if (productID) {
+            const checkProductExist = items.find((it) => it.sku == productID);
+            if (checkProductExist) {
+                toast.error('Sản phẩm này đã tồn tại trong danh sách đề xuất', styleMessage);
+                return;
+            }
+            await fetchProduct(productID);
+            setProductIDSearch('');
+        }
+        return;
+    };
+
+    useEffect(() => {
+        const fetchUnitUOM = async () => {
+            try {
+                const res = await request.get('/api/unit/get-all');
+                const formatUnitUOM = res.data.data.map((it) => ({ unitID: it.unitID, unitName: it.unitName }));
+                setListUnitUOM(formatUnitUOM);
+            } catch (err) {
+                console.log(err);
+            }
+        };
+        fetchUnitUOM();
+    }, []);
 
     useEffect(() => {
         if (currentUser) setCreator(currentUser);
     }, [currentUser]);
 
     useEffect(() => {
-        console.log(warehouseCurrent)
         if (warehouseCurrent) setWarehouse(warehouseCurrent);
     }, [warehouseCurrent]);
 
@@ -196,7 +221,7 @@ export default function GoodsReceiptRequest() {
                 {/* Thông tin chung */}
                 <section className={cx('card')}>
                     <h2 className={cx('cardTitle')}>Thông tin chung</h2>
-                    <div className={cx('grid3')}>
+                    <div className={cx('grid4')}>
                         <div className={cx('field')}>
                             <label>Mã phiếu</label>
                             <div className={cx('field-control')}>
@@ -206,14 +231,14 @@ export default function GoodsReceiptRequest() {
                                     value={code}
                                     onChange={(e) => setCode(e.target.value)}
                                 />
-                                <Button primary borderRadiusMedium onClick={() => setCode(generateCode('PDX-'))}>
+                                <Button small primary borderRadiusSmall onClick={() => setCode(generateCode('PDX-'))}>
                                     <span>Tạo mã phiếu</span>
                                 </Button>
                             </div>
                         </div>
                         <div className={cx('field')}>
-                            <label>Ngày lập</label>
-                            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                            <label>Ngày tạo phiếu</label>
+                            <input type="date" value={date} readOnly />
                         </div>
                         <div className={cx('field')}>
                             <label>Kho nhập</label>
@@ -223,8 +248,8 @@ export default function GoodsReceiptRequest() {
                             <label>Người lập phiếu</label>
                             <input placeholder="Nguyễn Văn A" value={creator.empName} readOnly />
                         </div>
-                        <div className={cx('field', 'colSpan3')}>
-                            <label>Lý do nhập</label>
+                        <div className={cx('field', 'colSpan4')}>
+                            <label>Ghi chú</label>
                             <textarea
                                 rows={3}
                                 placeholder="Nhập bổ sung, trả hàng NCC, nhập khuyến mãi..."
@@ -250,10 +275,14 @@ export default function GoodsReceiptRequest() {
                     </div>
 
                     <div className={cx('search')}>
-                      <div className={cx('input')}>
-                        <input placeholder='Nhập mã sản phẩm' value={productIDSearch} onChange={(e) => setProductIDSearch(e.target.value)}/>
-                      </div>
-                      <Search className={cx('icon')} size={22} onClick={() => handleSearchProduct(productIDSearch)}/>
+                        <div className={cx('input')}>
+                            <input
+                                placeholder="Nhập mã sản phẩm"
+                                value={productIDSearch}
+                                onChange={(e) => setProductIDSearch(e.target.value)}
+                            />
+                        </div>
+                        <Search className={cx('icon')} size={22} onClick={() => handleSearchProduct(productIDSearch)} />
                     </div>
 
                     <div className={cx('tableWrap')}>
@@ -285,6 +314,7 @@ export default function GoodsReceiptRequest() {
                                                 <input
                                                     value={it.name}
                                                     onChange={(e) => updateCell(idx, 'name', e.target.value)}
+                                                    readOnly
                                                     placeholder="Tên sản phẩm"
                                                 />
                                             </td>
@@ -302,9 +332,12 @@ export default function GoodsReceiptRequest() {
                                             <td className={cx('num')}>
                                                 <input
                                                     type="number"
-                                                    min={0}
+                                                    min={1}
                                                     value={it.qty}
                                                     onChange={(e) => updateCell(idx, 'qty', e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key == '-') e.preventDefault();
+                                                    }}
                                                 />
                                             </td>
                                             <td>
@@ -348,7 +381,9 @@ export default function GoodsReceiptRequest() {
                 <p>© {new Date().getFullYear()} Kho Hàng • Phiếu đề xuất nhập kho</p>
             </footer>
 
-            {openModal && <QrReader setData={setQrCode} isOpenInfo={openModal} onClose={openAndCloseQRCode} />}
+            {openModal && (
+                <QrReader data={items} setData={setQrCode} isOpenInfo={openModal} onClose={openAndCloseQRCode} />
+            )}
         </div>
     );
 }

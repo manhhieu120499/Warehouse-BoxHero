@@ -153,7 +153,20 @@ function isOver18(birthDateStr) {
         return true;
     };
 
+function formatDate(date) {
+  if (!(date instanceof Date)) {
+    date = new Date(date);
+  }
+
+  const day = String(date.getDate()).padStart(2, '0');   // lấy ngày, thêm 0 nếu < 10
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // getMonth() trả 0–11
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+}
+
 export {
     isOver18,
-    validateEmployeeData
+    validateEmployeeData,
+    formatDate
 }
