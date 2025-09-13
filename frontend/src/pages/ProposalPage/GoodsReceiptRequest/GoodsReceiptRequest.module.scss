@@ -1,10 +1,8 @@
 .page {
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
     background: #f9fafb;
     color: #1f2937;
-    margin-top: 35px;
 }
 
 /* ---------- HEADER ---------- */
@@ -51,17 +49,17 @@
 /* ---------- CONTENT ---------- */
 .container {
     flex: 1;
-    padding: 24px 32px;
+    padding: 2px 4px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 12px;
 }
 
 .card {
     background: #fff;
     border-radius: 14px;
-    padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    padding: 15px 10px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -77,6 +75,7 @@
     font-size: 1.5rem;
     font-weight: 600;
     color: #111827;
+    margin: 0;
 }
 
 .muted {
@@ -97,9 +96,9 @@
 }
 
 /* ---------- FORM GRID ---------- */
-.grid3 {
+.grid4 {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
 }
 
@@ -138,15 +137,11 @@
         width: 100%;
         display: flex;
         column-gap: 10px;
-
-        input {
-            width: 58%;
-        }
     }
 }
 
-.colSpan3 {
-    grid-column: span 3;
+.colSpan4 {
+    grid-column: span 4;
 }
 
 /* ---------- TABLE ---------- */

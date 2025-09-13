@@ -8,6 +8,10 @@ import parseToken from '../../utils/parseToken';
 import { formatStatusProposal, styleMessage } from '../../constants';
 import toast from 'react-hot-toast';
 import Select from '../../components/Select';
+import Tippy from '@tippyjs/react';
+import { Eye } from 'lucide-react';
+import { set } from 'react-hook-form';
+import ModelProposalDetail from './ModelProposalDetail';
 
 const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle);
@@ -17,6 +21,7 @@ const ApprovePage = () => {
     const [page, setPage] = useState(1);
     const [proposalPurchaseList, setProposalPurchaseList] = useState([]);
     const [proposalReleaseList, setProposalReleaseList] = useState([]);
+    const [showModalDetail, setShowModalDetail] = useState(false);
     const [filterProposal, setFilterProposal] = useState({
         proposalID: '',
         createdAt: '',
@@ -126,34 +131,62 @@ const ApprovePage = () => {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            render: (text) => <p>{formatStatusProposal[text]}</p>,
+            render: (index, record) => {
+                return (
+                    <div className={cx('status-proposal')}>
+                        <div className={cx('status-indicator', record.status)}></div>
+                        <p>{formatStatusProposal[index]}</p>
+                    </div>
+                );
+            },
         },
+        // {
+        //     title: 'Phê duyệt',
+        //     dataIndex: 'action',
+        //     key: 'action',
+        //     width: '20%',
+        //     render: (_, record) => {
+        //         return (
+        //             <div className={cxGlobal('action-table')}>
+        //                 {record.status == 'PENDING' && (
+        //                     <>
+        //                         <Button
+        //                             disabled={record.status == 'COMPLETED'}
+        //                             success
+        //                             onClick={() => handleApproveProposal(record.proposalID, 'COMPLETED')}
+        //                         >
+        //                             <span>Chấp nhận</span>
+        //                         </Button>
+        //                         <Button
+        //                             disabled={record.status == 'REFUSE'}
+        //                             error
+        //                             onClick={() => handleApproveProposal(record.proposalID, 'REFUSE')}
+        //                         >
+        //                             <span>Từ chối</span>
+        //                         </Button>
+        //                     </>
+        //                 )}
+        //             </div>
+        //         );
+        //     },
+        // },
         {
-            title: 'Phê duyệt',
+            title: 'Chi tiết',
             dataIndex: 'action',
             key: 'action',
-            width: '20%',
-            render: (_, record) => {
+            render: (text, record) => {
                 return (
                     <div className={cxGlobal('action-table')}>
-                        {record.status == 'PENDING' && (
-                            <>
-                                <Button
-                                    disabled={record.status == 'COMPLETED'}
-                                    success
-                                    onClick={() => handleApproveProposal(record.proposalID, 'COMPLETED')}
-                                >
-                                    <span>Chấp nhận</span>
-                                </Button>
-                                <Button
-                                    disabled={record.status == 'REFUSE'}
-                                    error
-                                    onClick={() => handleApproveProposal(record.proposalID, 'REFUSE')}
-                                >
-                                    <span>Từ chối</span>
-                                </Button>
-                            </>
-                        )}
+                        <Tippy content={'Xem chi tiết'} placement="bottom-end">
+                            <button
+                                className={cxGlobal('action-table-icon')}
+                                onClick={() => {
+                                    setShowModalDetail(true);
+                                }}
+                            >
+                                <Eye size={20} />
+                            </button>
+                        </Tippy>
                     </div>
                 );
             },
@@ -275,6 +308,9 @@ const ApprovePage = () => {
                 />
                 <PaginationUI currentPage={page} handleNextPage={handleNextPage} handlePrevPage={handlePrevPage} />
             </div>
+            {showModalDetail && (
+                <ModelProposalDetail isOpen={showModalDetail} onClose={() => setShowModalDetail(false)} />
+            )}
         </div>
     );
 };

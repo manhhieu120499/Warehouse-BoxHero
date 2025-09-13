@@ -221,7 +221,7 @@ export default function GoodsReceiptRequest() {
                 {/* Thông tin chung */}
                 <section className={cx('card')}>
                     <h2 className={cx('cardTitle')}>Thông tin chung</h2>
-                    <div className={cx('grid3')}>
+                    <div className={cx('grid4')}>
                         <div className={cx('field')}>
                             <label>Mã phiếu</label>
                             <div className={cx('field-control')}>
@@ -231,13 +231,13 @@ export default function GoodsReceiptRequest() {
                                     value={code}
                                     onChange={(e) => setCode(e.target.value)}
                                 />
-                                <Button primary borderRadiusMedium onClick={() => setCode(generateCode('PDX-'))}>
+                                <Button small primary borderRadiusSmall onClick={() => setCode(generateCode('PDX-'))}>
                                     <span>Tạo mã phiếu</span>
                                 </Button>
                             </div>
                         </div>
                         <div className={cx('field')}>
-                            <label>Ngày lập</label>
+                            <label>Ngày tạo phiếu</label>
                             <input type="date" value={date} readOnly />
                         </div>
                         <div className={cx('field')}>
@@ -248,7 +248,7 @@ export default function GoodsReceiptRequest() {
                             <label>Người lập phiếu</label>
                             <input placeholder="Nguyễn Văn A" value={creator.empName} readOnly />
                         </div>
-                        <div className={cx('field', 'colSpan3')}>
+                        <div className={cx('field', 'colSpan4')}>
                             <label>Ghi chú</label>
                             <textarea
                                 rows={3}
