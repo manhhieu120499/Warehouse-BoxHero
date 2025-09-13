@@ -19,7 +19,7 @@ const ReceiveProductMissingPage = () => {
         proposalID: '',
         createdAt: '',
         status: 'Đang xử lý',
-        employeeIDCreate: '',
+        employeeName: '',
     });
     const columnsFilter = [
         {
@@ -32,16 +32,17 @@ const ReceiveProductMissingPage = () => {
         {
             id: 2,
             label: 'Ngày lập',
+            type: 'date',
             value: filterReceiverPurchase.createdAt,
             name: 'createdAt',
             setValue: (value) => setFilterReceiverPurchase((prev) => ({ ...prev, createdAt: value })),
         },
         {
             id: 3,
-            label: 'Mã người tạo',
-            value: filterReceiverPurchase.employeeIDCreate,
-            name: 'employeeIDCreate',
-            setValue: (value) => setFilterReceiverPurchase((prev) => ({ ...prev, employeeIDCreate: value })),
+            label: 'Tên người tạo',
+            value: filterReceiverPurchase.employeeName,
+            name: 'employeeName',
+            setValue: (value) => setFilterReceiverPurchase((prev) => ({ ...prev, employeeName: value })),
         },
     ];
 
@@ -82,10 +83,10 @@ const ReceiveProductMissingPage = () => {
             render: (text) => <p>{text.slice(0, 10)}</p>,
         },
         {
-            title: 'Mã người tạo',
-            dataIndex: 'employeeIDCreate',
-            key: 'employeeIDCreate',
-            render: (_, record) => <p>{record.orderPurchase.employee.employeeID}</p>,
+            title: 'Tên người tạo',
+            dataIndex: 'employeeName',
+            key: 'employeeName',
+            render: (_, record) => <p>{record.orderPurchase.employee.employeeName}</p>,
         },
         {
             title: 'Mã kho',
@@ -148,23 +149,22 @@ const ReceiveProductMissingPage = () => {
             const token = parseToken('tokenUser');
             const warehouse = parseToken('warehouse');
             const filterParam = {};
-            if (filterReceiverPurchase.proposalID)
-                filterParam.orderPurchaseMissingID = filterReceiverPurchase.proposalID;
-            if (filterReceiverPurchase.createdAt) filterParam.createdAt = filterReceiverPurchase.createdAt;
-            if (filterReceiverPurchase.status)
-                filterParam.status =
-                    filterReceiverPurchase.status === 'Đang xử lý' ? 'PENDING' : filterReceiverPurchase.status;
+            if(filterReceiverPurchase.proposalID) filterParam.orderPurchaseMissingID = filterReceiverPurchase.proposalID;
+            if(filterReceiverPurchase.createdAt) filterParam.createdAt = filterReceiverPurchase.createdAt;
+            if(filterReceiverPurchase.status) filterParam.status = filterReceiverPurchase.status === "Đang xử lý" ? "PENDING" : filterReceiverPurchase.status;
+            if(filterReceiverPurchase.employeeName) filterParam.employeeName = filterReceiverPurchase.employeeName;
 
             const params = { ...filterParam, warehouseID: warehouse.warehouseID };
             const res = await request.get(`/api/order-purchase-missing/filter`, {
                 params,
                 headers: {
                     token: `Beare ${token.accessToken}`,
-                    employeeid: token.employeeID,
-                },
-            });
-            setReceiverPurchaseList(res.data.data || []);
-        } catch (err) {
+                    employeeid: token.employeeID
+                }
+            })
+            console.log(res.data)
+            setReceiverPurchaseList(res.data.data || [])
+        }catch(err) {   
             console.log(err);
             fetchProposals(1);
         }
@@ -175,7 +175,7 @@ const ReceiveProductMissingPage = () => {
             proposalID: '',
             createdAt: '',
             status: 'Đang xử lý',
-            employeeIDCreate: '',
+            employeeName: '',
         });
         setPage(1);
         fetchProposals();

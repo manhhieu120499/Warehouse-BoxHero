@@ -79,3 +79,27 @@
     background-color: var(--error);
     color: var(--white);
 }
+
+.wrapper-message {
+    width: 100%;
+
+    & > .title {
+        font-size: 2.2rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    & > .des {
+        font-size: 1.6rem;
+        margin-bottom: 20px;
+    }
+
+    .action-confirm {
+        width: 100%;
+        text-align: right;
+
+        Button {
+            margin-left: 10px;
+        }
+    }
+}

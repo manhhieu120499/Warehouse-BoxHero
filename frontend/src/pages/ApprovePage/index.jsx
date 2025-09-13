@@ -201,7 +201,7 @@ const ApprovePage = () => {
         setFilterProposal({
             proposalID: '',
             createdAt: '',
-            status: '',
+            status: 'PENDING',
             employeeIDCreate: '',
         });
         setPage((prev) => 1);
