@@ -11,7 +11,7 @@
         background-color: white;
         border-bottom: 3px solid #5c7cc2;
         position: fixed;
-        z-index: var(--z-index-header);
+        z-index: var(--z-index-header-import);
         top: calc(var(--max-height-header));
         left: calc(var(--max-width-sidebar) + 10px);
 

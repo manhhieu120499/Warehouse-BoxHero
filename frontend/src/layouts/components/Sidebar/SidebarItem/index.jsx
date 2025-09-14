@@ -2,6 +2,7 @@ import React, { Fragment, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './SidebarItem.module.scss';
+import { ArrowBigRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const cx = classNames.bind(styles);
 
@@ -23,11 +24,13 @@ const SidebarItem = ({ id, title, iconName, path, location, subMenu = [], change
             if (checkDrop) {
                 divRef.current.style.height = divRef.current.scrollHeight + 'px';
                 divRef.current.style.animation = `slice 1s ease-in-out`;
+                divRef.current.classList.add(cx('active'));
                 // divRef.current.style.display= 'flex';
                 // divRef.current.style.flexDirection= 'column';
                 // divRef.current.style.alignItems= 'center';
             } else {
                 divRef.current.style.height = '35px';
+                divRef.current.classList.remove(cx('active'));
                 // divRef.current.style.display= 'block';
                 // divRef.current.style.flexDirection= 'none';
                 // divRef.current.style.alignItems= 'none';
@@ -43,6 +46,7 @@ const SidebarItem = ({ id, title, iconName, path, location, subMenu = [], change
                     <div className={cx('header-submenu')} onClick={handleScrollSubmenu}>
                         {iconName && <Icon size={18} />}
                         <span className={cx('title')}>{title}</span>
+                        <ChevronRight className={cx('chevron-icon')} size={20}/>
                     </div>
                     {subMenu.map((subItem, index) => {
                         const SubIcon = subItem.iconName ? subItem.iconName : Fragment;
@@ -63,7 +67,8 @@ const SidebarItem = ({ id, title, iconName, path, location, subMenu = [], change
                     })}
                 </div>
             ) : (
-                <Link
+                <div className={cx('header-submenu')}>
+                    <Link
                     to={`${path}`}
                     className={cx('wrapper-link', {
                         active: path == location,
@@ -72,6 +77,8 @@ const SidebarItem = ({ id, title, iconName, path, location, subMenu = [], change
                     {iconName && <Icon size={18} />}
                     <span className={cx('title')}>{title}</span>
                 </Link>
+                </div>
+                
             )}
         </>
     );

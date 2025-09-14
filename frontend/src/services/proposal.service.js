@@ -52,3 +52,24 @@ export const fetchProposalMissingOrderPurchase = async () => {
         throw new Error(err);
     }
 };
+
+
+export const filterProposal = async (params) => {
+    try{
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const res = await request.post('/api/proposal/filter-proposal', {
+            ...params,
+            warehouseID: warehouse.warehouseID,
+        }, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeid: token.employeeID,
+                warehouseid: warehouse.warehouseID,
+            },
+        });
+        return res.data;
+    }catch(err) {
+        throw new Error(err);
+    }
+}

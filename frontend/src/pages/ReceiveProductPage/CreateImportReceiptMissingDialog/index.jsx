@@ -221,57 +221,6 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
                                                     <td>
                                                         <input
                                                             type="text"
-                                                            placeholder="Nhập mã lô"
-                                                            value={it.batchID ?? ''}
-                                                            onChange={(e) => {
-                                                                it.batchID = e.target.value;
-                                                                updateCellData(idx, it);
-                                                            }}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="date"
-                                                            placeholder="Nhập ngày sản xuất"
-                                                            value={it.manufactureDate ?? ''}
-                                                            onChange={(e) => {
-                                                                it.manufactureDate = e.target.value;
-                                                                updateCellData(idx, it);
-                                                            }}
-                                                            max={new Date().toISOString().split('T')[0]}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="date"
-                                                            placeholder="Nhập hạn sử dụng"
-                                                            value={it.expiryDate ?? ''}
-                                                            onChange={(e) => {
-                                                                it.expiryDate = e.target.value;
-                                                                updateCellData(idx, it);
-                                                            }}
-                                                            min={new Date().toISOString().split('T')[0]}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã nhà cung cấp"
-                                                            value={it.supplierID ?? ''}
-                                                            readOnly
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã sản phẩm"
-                                                            value={it.productID ?? ''}
-                                                            readOnly
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
                                                             placeholder="Nhập tên sản phẩm"
                                                             value={it.productName ?? ''}
                                                             readOnly
@@ -321,6 +270,57 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
                                                                     e.preventDefault();
                                                                 }
                                                             }}
+                                                        />
+                                                    </td>
+                                                                     <td>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Nhập mã lô"
+                                                            value={it.batchID ?? ''}
+                                                            onChange={(e) => {
+                                                                it.batchID = e.target.value;
+                                                                updateCellData(idx, it);
+                                                            }}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="date"
+                                                            placeholder="Nhập ngày sản xuất"
+                                                            value={it.manufactureDate ?? ''}
+                                                            onChange={(e) => {
+                                                                it.manufactureDate = e.target.value;
+                                                                updateCellData(idx, it);
+                                                            }}
+                                                            max={new Date().toISOString().split('T')[0]}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="date"
+                                                            placeholder="Nhập hạn sử dụng"
+                                                            value={it.expiryDate ?? ''}
+                                                            onChange={(e) => {
+                                                                it.expiryDate = e.target.value;
+                                                                updateCellData(idx, it);
+                                                            }}
+                                                            min={new Date().toISOString().split('T')[0]}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Nhập mã nhà cung cấp"
+                                                            value={it.supplierID ?? ''}
+                                                            readOnly
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Nhập mã sản phẩm"
+                                                            value={it.productID ?? ''}
+                                                            readOnly
                                                         />
                                                     </td>
                                                 </tr>

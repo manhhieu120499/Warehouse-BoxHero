@@ -4,7 +4,7 @@
     height: 35px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     column-gap: 15px;
     color: black;
     border-radius: 8px;
@@ -55,23 +55,37 @@
     transition: 0.3s;
     visibility: visible;
 
+     & > .wrapper-link {
+            justify-content: center;
+    }
+
+    &.active .chevron-icon {
+        transform: rotate(90deg);
+        transition: 0.2s;
+    }
+
     .header-submenu {
+        padding: 0 8px;
         width: 100%;
         height: 35px;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         column-gap: 15px;
-        
+
         
         .title {
             font-size: 1.4rem;
             text-align: left;
-            width: 61%;
+            width: 62%;
             display: inline-block;
         }
 
     }
+}
+
+.header-submenu > .wrapper-link {
+    padding: 0 8px;
 }
 
 @keyframes slice {

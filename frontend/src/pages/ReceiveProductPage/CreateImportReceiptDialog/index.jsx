@@ -190,6 +190,8 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
             batchProduct.productID = it.productID;
             batchProduct.productName = it.product.productName;
             batchProduct.requestAmount = it.quantity;
+            batchProduct.realAmount = it.quantity;
+            batchProduct.errorAmount = 0
             batchProduct.unit = {
                 unitID: it.unit.unitID,
                 unitName: it.unit.unitName,
@@ -303,11 +305,6 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                 <thead>
                                     <tr>
                                         <th>STT</th>
-                                        <th>Mã lô</th>
-                                        <th>Ngày sản xuất</th>
-                                        <th>Hạn sử dụng</th>
-                                        <th>Mã nhà cung cấp</th>
-                                        <th>Tên nhà cung cấp</th>
                                         <th>Mã sản phẩm</th>
                                         <th>Tên sản phẩm</th>
                                         <th>Đơn vị tính</th>
@@ -315,6 +312,11 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                         <th>Số lượng thực tế</th>
                                         <th>Số lượng thiếu</th>
                                         <th>Lý do thiếu</th>
+                                        <th>Mã lô</th>
+                                        <th>Ngày sản xuất</th>
+                                        <th>Hạn sử dụng</th>
+                                        <th>Mã nhà cung cấp</th>
+                                        <th>Tên nhà cung cấp</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -323,61 +325,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                             return (
                                                 <tr key={idx}>
                                                     <td>{idx + 1}</td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã lô"
-                                                            value={it.batchID ?? ''}
-                                                            onChange={(e) => {
-                                                                it.batchID = e.target.value;
-                                                                updateCellData(idx, it);
-                                                            }}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="date"
-                                                            placeholder="Nhập ngày sản xuất"
-                                                            value={it.manufactureDate ?? ''}
-                                                            onChange={(e) => {
-                                                                it.manufactureDate = e.target.value;
-                                                                updateCellData(idx, it);
-                                                            }}
-                                                            max={new Date().toISOString().split('T')[0]}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="date"
-                                                            placeholder="Nhập hạn sử dụng"
-                                                            value={it.expiryDate ?? ''}
-                                                            onChange={(e) => {
-                                                                it.expiryDate = e.target.value;
-                                                                updateCellData(idx, it);
-                                                            }}
-                                                            min={new Date().toISOString().split('T')[0]}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã nhà cung cấp"
-                                                            value={it.supplierID ?? ''}
-                                                            onChange={(e) => {
-                                                                it.supplierID = e.target.value;
-                                                                updateCellData(idx, it);
-                                                            }}
-                                                            onBlur={() => handleFindSupplier(it.supplierID, it, idx)}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Tên nhà cung cấp"
-                                                            value={it.supplierName ?? ''}
-                                                            readOnly
-                                                        />
-                                                    </td>
+                                                    
                                                     <td>
                                                         <input
                                                             type="text"
@@ -447,6 +395,61 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                                             disabled={
                                                                 it.realAmount === it.requestAmount || !it.errorAmount
                                                             }
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Nhập mã lô"
+                                                            value={it.batchID ?? ''}
+                                                            onChange={(e) => {
+                                                                it.batchID = e.target.value;
+                                                                updateCellData(idx, it);
+                                                            }}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="date"
+                                                            placeholder="Nhập ngày sản xuất"
+                                                            value={it.manufactureDate ?? ''}
+                                                            onChange={(e) => {
+                                                                it.manufactureDate = e.target.value;
+                                                                updateCellData(idx, it);
+                                                            }}
+                                                            max={new Date().toISOString().split('T')[0]}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="date"
+                                                            placeholder="Nhập hạn sử dụng"
+                                                            value={it.expiryDate ?? ''}
+                                                            onChange={(e) => {
+                                                                it.expiryDate = e.target.value;
+                                                                updateCellData(idx, it);
+                                                            }}
+                                                            min={new Date().toISOString().split('T')[0]}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Nhập mã nhà cung cấp"
+                                                            value={it.supplierID ?? ''}
+                                                            onChange={(e) => {
+                                                                it.supplierID = e.target.value;
+                                                                updateCellData(idx, it);
+                                                            }}
+                                                            onBlur={() => handleFindSupplier(it.supplierID, it, idx)}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Tên nhà cung cấp"
+                                                            value={it.supplierName ?? ''}
+                                                            readOnly
                                                         />
                                                     </td>
                                                 </tr>

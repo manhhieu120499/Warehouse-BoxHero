@@ -61,7 +61,7 @@
     }
 
     .view-list-proposal {
-        margin-top: 10px;
+        margin-top: 210px;
         width: 100%;
         display: flex;
         flex-direction: column;
@@ -81,8 +81,37 @@
         }
 
         .pagination-table {
-            margin-top: 15px;
+            margin: 15px 0;
             align-self: flex-end;
         }
     }
+}
+
+.header-filter {
+    margin-top: 45px;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-indicator.PENDING {
+    background-color: orange;
+}
+
+.status-indicator.COMPLETED {
+    background-color: green;
+}
+
+.status-indicator.REFUSE {
+    background-color: red;
+}
+
+.status-proposal {
+    display: flex;
+    align-items: center;
 }
