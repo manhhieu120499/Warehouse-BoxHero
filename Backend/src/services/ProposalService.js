@@ -275,6 +275,59 @@ class ProposalService {
         });
     }
 
+    getProposalDetail(proposalID) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let options = {
+                    where: { proposalID: proposalID },
+                    include: [
+                        {
+                            model: ProposalDetail,
+                            as: 'proposalDetails',
+                            include: [
+                                { model: Product, as: 'product' },
+                                { model: Unit, as: 'unit' },
+                            ],
+                        },
+                        { model: Employee, as: 'employeeCreate' },
+                        { model: Employee, as: 'approver' },
+                        { model: Warehouse, as: 'warehouse' },
+                    ],
+                    order: [['createdAt', 'DESC']], // để bản mới nhất lên trước
+                };
+
+                const proposal = await Proposal.findByPk(proposalID, {
+                    include: [
+                        {
+                            model: ProposalDetail,
+                            as: 'proposalDetails',
+                            include: [
+                                { model: Product, as: 'product' },
+                                { model: Unit, as: 'unit' },
+                            ],
+                        },
+                        { model: Employee, as: 'employeeCreate' },
+                        { model: Employee, as: 'approver' },
+                        { model: Warehouse, as: 'warehouse' },
+                    ],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy chi tiết đề xuất thành công',
+                    proposal,
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+
     // filter proposal
     filterProposal(data) {
         return new Promise(async (resolve, reject) => {

@@ -26,6 +26,7 @@ router.post(
 );
 router.get('/get-proposal/warehouse', authUserIsManager, ProposalController.getProposalByWarehouse);
 router.get('/get-proposal/employee', authUser, ProposalController.getProposalByEmployee);
+router.get('/get-proposal-detail/:id', authUserIsManager, ProposalController.getProposalDetail);
 router.get('/get-proposal-missing', authUserIsManager, ProposalController.getProposalMissing);
 
 router.post('/filter-proposal', authUserIsManagerOrStockReceiver, ProposalController.filterProposal);
