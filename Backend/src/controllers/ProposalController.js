@@ -50,6 +50,16 @@ class ProposalController {
         }
     }
 
+    async getProposalDetail(req, res) {
+        try {
+            const proposalID = req.params.id;
+            const { statusHttp, ...response } = await ProposalService.getProposalDetail(proposalID);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
+
     async filterProposal(req, res) {
         try {
             const { statusHttp, ...response } = await ProposalService.filterProposal(req.body);
