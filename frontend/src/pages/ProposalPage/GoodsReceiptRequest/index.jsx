@@ -17,7 +17,7 @@ const currency = (n) => (isNaN(n) ? '0' : new Intl.NumberFormat('vi-VN').format(
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const emptyItem = () => ({ sku: '', name: '', uom: '', qty: 1, note: '', listUom: [] });
 
-export default function GoodsReceiptRequest() {
+export default function GoodsReceiptRequest({ typeDetail = false, proposalDetailID = null, onClose, handleSearch }) {
     const currentUser = useSelector((state) => state.AuthSlice.user);
     const warehouseCurrent = useSelector((state) => state.WareHouseSlice.warehouse);
     const [code, setCode] = useState('');
@@ -34,18 +34,27 @@ export default function GoodsReceiptRequest() {
     const [qrCode, setQrCode] = useState(null);
     const [productIDSearch, setProductIDSearch] = useState('');
     const [listUnitUOM, setListUnitUOM] = useState([]);
+    const [proposalDetail, setProposalDetail] = useState({});
+    const [proposalDetails, setProposalDetails] = useState([]);
 
     const totals = useMemo(() => {
-        const totalQty = items.reduce(
-            (s, i) =>
-                s +
-                (Number(i.qty) *
-                    Number(i.listUom.find((ix) => ix.unitID == Number.parseInt(i.uom))?.unitName.slice(-2)) || 0),
-            0,
-        );
-        const unique = items.filter((i) => i.name?.trim()).length;
+        let totalQty = 0;
+        let unique = 0;
+        if (typeDetail) {
+            totalQty = proposalDetails.reduce((s, i) => s + i.quantity * i.unit?.conversionQuantity, 0);
+            unique = proposalDetails.filter((i) => i.product?.productName?.trim()).length;
+        } else {
+            totalQty = items.reduce(
+                (s, i) =>
+                    s +
+                    (Number(i.qty) *
+                        Number(i.listUom.find((ix) => ix.unitID == Number.parseInt(i.uom))?.unitName.slice(-2)) || 0),
+                0,
+            );
+            unique = items.filter((i) => i.name?.trim()).length;
+        }
         return { totalQty, unique };
-    }, [items]);
+    }, [items, proposalDetail]);
 
     const addRow = () => setItems((prev) => [...prev, emptyItem()]);
     const removeRow = (idx) => setItems((prev) => prev.filter((_, i) => i !== idx));
@@ -104,11 +113,37 @@ export default function GoodsReceiptRequest() {
             );
             if (resCreate.data.status == 'OK') {
                 toast.success(resCreate.data.message, styleMessage);
+                onClose();
+                handleSearch();
                 handleReset();
             }
         } catch (err) {
             console.log(err);
             toast.error(err.response.data.messages[0], styleMessage);
+            return;
+        }
+    };
+
+    const handleApproveProposal = async (proposalID, status = 'COMPLETED') => {
+        try {
+            const token = parseToken('tokenUser');
+            const res = await post(
+                '/api/proposal/update-status-proposal',
+                {
+                    proposalID,
+                    employeeIDApproval: token.employeeID,
+                    status,
+                },
+                token.accessToken,
+                token.employeeID,
+            );
+            // console.log(res)
+            toast.success(res.message, styleMessage);
+            onClose();
+            handleSearch();
+        } catch (err) {
+            console.log(err);
+            toast.error(err.response.data.message, styleMessage);
             return;
         }
     };
@@ -161,14 +196,23 @@ export default function GoodsReceiptRequest() {
     };
 
     const handleSearchProduct = async (productID) => {
-        if (productID) {
-            const checkProductExist = items.find((it) => it.sku == productID);
-            if (checkProductExist) {
-                toast.error('Sản phẩm này đã tồn tại trong danh sách đề xuất', styleMessage);
-                return;
+        if (typeDetail) {
+            if (productID !== '') {
+                const productFind = proposalDetail?.proposalDetails.find((it) => it.product.productID == productID);
+                setProposalDetails(productFind ? [productFind] : []);
+            } else {
+                setProposalDetails(proposalDetail.proposalDetails);
             }
-            await fetchProduct(productID);
-            setProductIDSearch('');
+        } else {
+            if (productID) {
+                const checkProductExist = items.find((it) => it.sku == productID);
+                if (checkProductExist) {
+                    toast.error('Sản phẩm này đã tồn tại trong danh sách đề xuất', styleMessage);
+                    return;
+                }
+                await fetchProduct(productID);
+                setProductIDSearch('');
+            }
         }
         return;
     };
@@ -184,6 +228,24 @@ export default function GoodsReceiptRequest() {
             }
         };
         fetchUnitUOM();
+        const fetchProposalDetail = async () => {
+            try {
+                const token = parseToken('tokenUser');
+                const res = await request.get(`/api/proposal/get-proposal-detail/${proposalDetailID}`, {
+                    headers: {
+                        token: `Bearer ${token.accessToken}`,
+                        employeeid: token.employeeID,
+                    },
+                });
+                setProposalDetail(res.data.proposal);
+                setProposalDetails(res.data.proposal.proposalDetails);
+            } catch (err) {
+                console.log(err);
+            }
+        };
+        if (typeDetail && proposalDetailID) {
+            fetchProposalDetail();
+        }
     }, []);
 
     useEffect(() => {
@@ -200,6 +262,75 @@ export default function GoodsReceiptRequest() {
         }
     }, [qrCode]);
 
+    const createdAt = proposalDetail?.createdAt ? new Date(proposalDetail.createdAt).toISOString().split('T')[0] : '';
+
+    const handleShowProposalDetail = (items) => {
+        if (items) {
+            return items.map((it, idx) => {
+                return (
+                    <tr key={idx}>
+                        <td>{idx + 1}</td>
+                        <td>
+                            <input
+                                value={typeDetail ? it.product.productID : it.sku}
+                                onChange={(e) => updateCell(idx, 'sku', e.target.value)}
+                                placeholder="Mã sản phẩm"
+                                readOnly={typeDetail}
+                            />
+                        </td>
+                        <td>
+                            <input
+                                value={typeDetail ? it.product.productName : it.name}
+                                onChange={(e) => updateCell(idx, 'name', e.target.value)}
+                                readOnly
+                                placeholder="Tên sản phẩm"
+                            />
+                        </td>
+                        <td>
+                            <select
+                                value={typeDetail ? it.unit.unitID : it.uom}
+                                onChange={(e) => updateCell(idx, 'uom', e.target.value)}
+                            >
+                                <option>-- Chọn đơn vị --</option>
+                                {typeDetail ? (
+                                    <option value={it.unit.unitID}>{it.unit.unitName}</option>
+                                ) : (
+                                    it.listUom.map((uom) => <option value={uom.unitID}>{uom.unitName}</option>)
+                                )}
+                            </select>
+                        </td>
+                        <td className={cx('num')}>
+                            <input
+                                type="number"
+                                min={1}
+                                value={typeDetail ? it.quantity : it.qty}
+                                onChange={(e) => updateCell(idx, 'qty', e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key == '-') e.preventDefault();
+                                }}
+                                readOnly={typeDetail}
+                            />
+                        </td>
+                        <td>
+                            <input
+                                value={typeDetail ? it.note || 'Không có ghi chú' : it.note}
+                                onChange={(e) => updateCell(idx, 'note', e.target.value)}
+                                placeholder="Ghi chú"
+                            />
+                        </td>
+                        <td>
+                            {!typeDetail && (
+                                <button className={cx('iconBtn')} onClick={() => removeRow(idx)} title="Xóa dòng">
+                                    ✕
+                                </button>
+                            )}
+                        </td>
+                    </tr>
+                );
+            });
+        }
+    };
+
     return (
         <div className={cx('page')}>
             {/* Header */}
@@ -207,14 +338,26 @@ export default function GoodsReceiptRequest() {
                 <div className={cx('headerLeft')}>
                     <h1 className={cx('title')}>Phiếu đề xuất nhập kho</h1>
                 </div>
-                <div className={cx('headerActions')}>
-                    <Button outline borderRadiusMedium onClick={handleReset}>
-                        <span>Làm mới</span>
-                    </Button>
-                    <Button success borderRadiusMedium onClick={handleSubmit}>
-                        Gửi phê duyệt
-                    </Button>
-                </div>
+                {!typeDetail && (
+                    <div className={cx('headerActions')}>
+                        <Button outline borderRadiusMedium onClick={handleReset}>
+                            <span>Làm mới</span>
+                        </Button>
+                        <Button success borderRadiusMedium onClick={handleSubmit}>
+                            Gửi phê duyệt
+                        </Button>
+                    </div>
+                )}
+                {typeDetail && proposalDetail?.status === 'PENDING' && (
+                    <div>
+                        <Button success onClick={() => handleApproveProposal(proposalDetail.proposalID, 'COMPLETED')}>
+                            <span>Chấp nhận</span>
+                        </Button>
+                        <Button error onClick={() => handleApproveProposal(proposalDetail.proposalID, 'REFUSE')}>
+                            <span>Từ chối</span>
+                        </Button>
+                    </div>
+                )}
             </header>
 
             <main className={cx('container')}>
@@ -228,33 +371,47 @@ export default function GoodsReceiptRequest() {
                                 <input
                                     placeholder="Tạo mã phiếu"
                                     readOnly={true}
-                                    value={code}
+                                    value={typeDetail ? proposalDetail.proposalID : code}
                                     onChange={(e) => setCode(e.target.value)}
                                 />
-                                <Button small primary borderRadiusSmall onClick={() => setCode(generateCode('PDX-'))}>
-                                    <span>Tạo mã phiếu</span>
-                                </Button>
+                                {!typeDetail && (
+                                    <Button
+                                        small
+                                        primary
+                                        borderRadiusSmall
+                                        onClick={() => setCode(generateCode('PDX-'))}
+                                    >
+                                        <span>Tạo mã phiếu</span>
+                                    </Button>
+                                )}
                             </div>
                         </div>
                         <div className={cx('field')}>
                             <label>Ngày tạo phiếu</label>
-                            <input type="date" value={date} readOnly />
+                            <input type="date" value={typeDetail ? createdAt : date} readOnly />
                         </div>
                         <div className={cx('field')}>
                             <label>Kho nhập</label>
-                            <input value={warehouse.warehouseName || ''} readOnly />
+                            <input
+                                value={typeDetail ? proposalDetail?.warehouse?.warehouseName : warehouse.warehouseName}
+                                readOnly
+                            />
                         </div>
                         <div className={cx('field')}>
                             <label>Người lập phiếu</label>
-                            <input placeholder="Nguyễn Văn A" value={creator.empName} readOnly />
+                            <input
+                                value={typeDetail ? proposalDetail?.employeeCreate?.employeeName : creator.empName}
+                                readOnly
+                            />
                         </div>
                         <div className={cx('field', 'colSpan4')}>
                             <label>Ghi chú</label>
                             <textarea
                                 rows={3}
                                 placeholder="Nhập bổ sung, trả hàng NCC, nhập khuyến mãi..."
-                                value={reason}
+                                value={typeDetail ? proposalDetail.note || 'Không có ghi chú' : reason}
                                 onChange={(e) => setReason(e.target.value)}
+                                readOnly={typeDetail}
                             />
                         </div>
                     </div>
@@ -265,9 +422,11 @@ export default function GoodsReceiptRequest() {
                     <div className={cx('cardHeader')}>
                         <h2 className={cx('cardTitle')}>Danh sách hàng hóa đề xuất nhập</h2>
                         <div className={cx('actions')}>
-                            <Button primary small borderRadiusSmall onClick={openAndCloseQRCode}>
-                                <span>Quét mã</span>
-                            </Button>
+                            {!typeDetail && (
+                                <Button primary small borderRadiusSmall onClick={openAndCloseQRCode}>
+                                    <span>Quét mã</span>
+                                </Button>
+                            )}
                             {/* <Button primary small borderRadiusSmall onClick={addRow}>
                                 <span>Thêm dòng</span>
                             </Button> */}
@@ -282,83 +441,33 @@ export default function GoodsReceiptRequest() {
                                 onChange={(e) => setProductIDSearch(e.target.value)}
                             />
                         </div>
-                        <Search className={cx('icon')} size={22} onClick={() => handleSearchProduct(productIDSearch)} />
+                        <Button
+                            primary
+                            medium
+                            borderRadiusSmall
+                            className={cx('btn-filter')}
+                            onClick={() => handleSearchProduct(productIDSearch)}
+                        >
+                            Tìm kiếm
+                        </Button>
                     </div>
 
                     <div className={cx('tableWrap')}>
                         <table className={cx('table')}>
                             <thead>
                                 <tr>
-                                    <th>STT</th>
-                                    <th>Mã SP</th>
-                                    <th>Tên SP</th>
-                                    <th>Đơn vị tính</th>
+                                    <th className={cx('stt')}>STT</th>
+                                    <th className={cx('productID')}>Mã SP</th>
+                                    <th className={cx('productName')}>Tên SP</th>
+                                    <th className={cx('unit')}>Đơn vị tính</th>
                                     <th className={cx('num')}>Số lượng</th>
-                                    <th>Ghi chú</th>
-                                    <th></th>
+                                    <th className={cx('note')}>Ghi chú</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {items.map((it, idx) => {
-                                    return (
-                                        <tr key={idx}>
-                                            <td>{idx + 1}</td>
-                                            <td>
-                                                <input
-                                                    value={it.sku}
-                                                    onChange={(e) => updateCell(idx, 'sku', e.target.value)}
-                                                    placeholder="Mã sản phẩm"
-                                                />
-                                            </td>
-                                            <td>
-                                                <input
-                                                    value={it.name}
-                                                    onChange={(e) => updateCell(idx, 'name', e.target.value)}
-                                                    readOnly
-                                                    placeholder="Tên sản phẩm"
-                                                />
-                                            </td>
-                                            <td>
-                                                <select
-                                                    // value={it.uom}
-                                                    onChange={(e) => updateCell(idx, 'uom', e.target.value)}
-                                                >
-                                                    <option>-- Chọn đơn vị --</option>
-                                                    {it.listUom.map((uom) => (
-                                                        <option value={uom.unitID}>{uom.unitName}</option>
-                                                    ))}
-                                                </select>
-                                            </td>
-                                            <td className={cx('num')}>
-                                                <input
-                                                    type="number"
-                                                    min={1}
-                                                    value={it.qty}
-                                                    onChange={(e) => updateCell(idx, 'qty', e.target.value)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key == '-') e.preventDefault();
-                                                    }}
-                                                />
-                                            </td>
-                                            <td>
-                                                <input
-                                                    value={it.note}
-                                                    onChange={(e) => updateCell(idx, 'note', e.target.value)}
-                                                    placeholder="Ghi chú"
-                                                />
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className={cx('iconBtn')}
-                                                    onClick={() => removeRow(idx)}
-                                                    title="Xóa dòng"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
+                                {typeDetail
+                                    ? handleShowProposalDetail(proposalDetails)
+                                    : handleShowProposalDetail(items)}
                             </tbody>
                         </table>
                     </div>

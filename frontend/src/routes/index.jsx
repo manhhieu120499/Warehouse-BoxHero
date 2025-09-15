@@ -19,7 +19,7 @@ import {
     BatchPage,
     ZonePage,
     CategoryPage,
-    ApprovePage
+    ApprovePage,
 } from '../pages';
 import DefaultLayout from '../layouts/DefaultLayout';
 
@@ -104,11 +104,11 @@ const publicRoute = [
         path: '/profile',
         layout: DefaultLayout,
     },
-    {
-        page: ProposalPage,
-        path: '/proposal',
-        layout: DefaultLayout,
-    },
+    // {
+    //     page: ProposalPage,
+    //     path: '/proposal',
+    //     layout: DefaultLayout,
+    // },
     {
         page: BatchPage,
         path: '/batch',
@@ -122,13 +122,18 @@ const publicRoute = [
     {
         page: CategoryPage,
         path: '/categories',
-        layout: DefaultLayout
+        layout: DefaultLayout,
     },
     {
         page: ApprovePage,
         path: '/approve',
-        layout: DefaultLayout
-    }
+        layout: DefaultLayout,
+    },
+    {
+        page: ApprovePage,
+        path: '/proposal-list',
+        layout: DefaultLayout,
+    },
 ];
 
 export { publicRoute };

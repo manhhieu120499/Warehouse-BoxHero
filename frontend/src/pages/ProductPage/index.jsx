@@ -100,13 +100,13 @@ const ProductPage = () => {
     };
 
     const handleShowEditProduct = (productId) => {
-            const productSelected = productList.find(item => item.sku == productId)
-            setProductData(productSelected)
-            setAction({
-                productId,
-                actionName: 'edit',
-            });
-        };
+        const productSelected = productList.find((item) => item.sku == productId);
+        setProductData(productSelected);
+        setAction({
+            productId,
+            actionName: 'edit',
+        });
+    };
 
     const columnsModelFilter = [
         {
@@ -172,7 +172,10 @@ const ProductPage = () => {
                             </button>
                         </Tippy>
                         <Tippy content={'Chỉnh sửa'} placement="bottom-end">
-                            <button className={cx('action-table-icon')} onClick={()=> handleShowEditProduct(record.sku)}>
+                            <button
+                                className={cx('action-table-icon')}
+                                onClick={() => handleShowEditProduct(record.sku)}
+                            >
                                 <PencilIcon size={20} />
                             </button>
                         </Tippy>
@@ -230,10 +233,10 @@ const ProductPage = () => {
                 },
             });
 
-            const formatProduct = res.data.products.map(item => {
-                const product = new ProductDTO(item)
-                return {...product}
-            })
+            const formatProduct = res.data.products.map((item) => {
+                const product = new ProductDTO(item);
+                return { ...product };
+            });
             setProductList(formatProduct || []);
         } catch (err) {
             console.log(err);
@@ -251,38 +254,42 @@ const ProductPage = () => {
     };
 
     useEffect(() => {
-        if(location.state) {
-            console.log(location.state)
-            setProductData(location.state)
+        if (location.state) {
+            console.log(location.state);
+            setProductData(location.state);
             setAction({
                 productId: location.state.sku,
-                actionName: 'view'
-            })
-
+                actionName: 'view',
+            });
         }
         fetchProducts();
     }, []);
 
     const handleUpdateProduct = async (dataUpdate) => {
-        try{
+        try {
             // call api
-            const token = parseToken('tokenUser')
-            const result = await put(`/api/product/update/${productData.sku}`, {
-                productName: dataUpdate.productName,
-                minStock: dataUpdate.productMinStock,
-                status: dataUpdate.productStatus
-            }, token.accessToken, token.employeeID, currentUser.warehouseId)
+            const token = parseToken('tokenUser');
+            const result = await put(
+                `/api/product/update/${productData.sku}`,
+                {
+                    productName: dataUpdate.productName,
+                    minStock: dataUpdate.productMinStock,
+                    status: dataUpdate.productStatus,
+                },
+                token.accessToken,
+                token.employeeID,
+                currentUser.warehouseId,
+            );
             //console.log(result)
-            setAction({ productId: null, actionName: null })
-            setProductData(null)
-            toast.success(result.message, styleMessage)
-            fetchProducts()
-        }catch(err) {
-            console.error(err)
-            toast.error(err.response.data.message, styleMessage)
+            setAction({ productId: null, actionName: null });
+            setProductData(null);
+            toast.success(result.message, styleMessage);
+            fetchProducts();
+        } catch (err) {
+            console.error(err);
+            toast.error(err.response.data.message, styleMessage);
         }
-    }
-
+    };
 
     return (
         <div className={cx('wrapper-product')}>
@@ -305,14 +312,18 @@ const ProductPage = () => {
                 <ProductDetail
                     data={productData}
                     onClose={() => {
-                        setAction({ productId: null, actionName: null })
-                        navigate(location.pathname, {replace: true})
+                        setAction({ productId: null, actionName: null });
+                        navigate(location.pathname, { replace: true });
                     }}
                     classname={cx('modal-product-detail')}
                 />
             )}
             {action.productId && action.actionName === 'edit' && (
-                <ProductEdit data={productData} onClose={() => setAction({ productId: null, actionName: null })} handleUpdateProduct={handleUpdateProduct}/>
+                <ProductEdit
+                    data={productData}
+                    onClose={() => setAction({ productId: null, actionName: null })}
+                    handleUpdateProduct={handleUpdateProduct}
+                />
             )}
         </div>
     );

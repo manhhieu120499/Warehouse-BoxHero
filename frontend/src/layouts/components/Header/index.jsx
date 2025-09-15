@@ -27,16 +27,17 @@ const Header = ({ children }) => {
         '/ware-transfer': 'Chuyển kho',
         '/manage-warehouse': 'Quản lý kho',
         '/customer': 'Khách hàng',
-        "/profile": "Thông tin cá nhân",
-        "/proposal": 'Tạo phiếu đề xuất',
-        "/batch": 'Quản lý lô hàng',
-        "/zone": 'Quản lý khu vực',
-        "/categories": 'Nhóm sản phẩm',
-        "/approve": 'Phê duyệt'
+        '/profile': 'Thông tin cá nhân',
+        '/proposal': 'Tạo phiếu đề xuất',
+        '/batch': 'Quản lý lô hàng',
+        '/zone': 'Quản lý khu vực',
+        '/categories': 'Nhóm sản phẩm',
+        '/approve': 'Phê duyệt',
+        '/proposal-list': 'Danh sách đề xuất',
     };
-    
+
     const navigate = useNavigate();
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
     const menuItems = [
         {
             title: 'Thông tin cá nhân',
@@ -48,13 +49,13 @@ const Header = ({ children }) => {
             Icon: LogOut,
             path: '/login',
             onClick: () => {
-                dispatch(logout())
-                dispatch(resetActiveItemDrop())
-                localStorage.setItem('tokenUser', null)
-                localStorage.setItem('indexItemDropActive', JSON.stringify([]))
-                localStorage.setItem('warehouse', null)
-                navigate('/login')
-            }
+                dispatch(logout());
+                dispatch(resetActiveItemDrop());
+                localStorage.setItem('tokenUser', null);
+                localStorage.setItem('indexItemDropActive', JSON.stringify([]));
+                localStorage.setItem('warehouse', null);
+                navigate('/login');
+            },
         },
     ];
     return (

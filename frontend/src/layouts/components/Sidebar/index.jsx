@@ -138,7 +138,6 @@ const Sidebar = () => {
     //                 path: '/check-inventory',
     //             },
 
-               
     //             {
     //                 title: 'Quản lý khu vực',
     //                 iconName: Columns3,
@@ -156,7 +155,7 @@ const Sidebar = () => {
             path: '/',
         },
         {
-            id: 2, 
+            id: 2,
             title: 'Master Data',
             iconName: Target,
             subMenu: [
@@ -185,29 +184,29 @@ const Sidebar = () => {
                     iconName: User,
                     path: '/auth',
                 },
-            ]
+            ],
         },
         {
-            id: 3, 
+            id: 3,
             title: 'Phiếu đề xuất',
             iconName: ClipboardMinus,
             subMenu: [
                 {
-                        title: 'Danh sách phiếu đề xuất',
-                        iconName: List,
-                        path: '/proposal-list',
+                    title: 'DS phiếu đề xuất',
+                    iconName: List,
+                    path: '/proposal-list',
                 },
-                {
-                    title: 'Tạo phiếu đề xuất',
-                    iconName: PenLine,
-                    path: '/proposal',
-                },
+                // {
+                //     title: 'Tạo phiếu đề xuất',
+                //     iconName: PenLine,
+                //     path: '/proposal',
+                // },
                 {
                     title: 'Phê duyệt',
                     iconName: CheckLine,
                     path: '/approve',
                 },
-            ]
+            ],
         },
         {
             id: 4,
@@ -223,8 +222,8 @@ const Sidebar = () => {
                     title: 'Tạo phiếu xuất kho',
                     iconName: CircleArrowLeft,
                     path: '/ware-release',
-                }
-            ]
+                },
+            ],
         },
         {
             id: 5,
@@ -237,7 +236,6 @@ const Sidebar = () => {
                     path: '/check-inventory',
                 },
 
-               
                 {
                     title: 'Quản lý khu vực',
                     iconName: Columns3,
@@ -250,32 +248,32 @@ const Sidebar = () => {
                 },
             ],
         },
-    ]
+    ];
 
     let location = useLocation();
     const [isOpenInfo, setIsOpenInfo] = useState(false);
-    const itemDrop = useSelector(state => state.DropSideBarSlice.itemDrop)
+    const itemDrop = useSelector((state) => state.DropSideBarSlice.itemDrop);
     const dispatch = useDispatch();
-    const warehouseRedux = useSelector(state => state.WareHouseSlice.warehouse)
+    const warehouseRedux = useSelector((state) => state.WareHouseSlice.warehouse);
     const [warehouse, setWarehouse] = useState({
-        warehouseID: "",
+        warehouseID: '',
         warehouseName: '',
         faxNumber: '',
         address: '',
-        status: ''
-    })
+        status: '',
+    });
 
     const closeInfoWarehouse = () => {
         setIsOpenInfo(false);
     };
 
     const changeDropItem = (ids) => {
-        dispatch(changDropItem([...ids]))
+        dispatch(changDropItem([...ids]));
     };
 
-    useEffect(()=> {
-        if(warehouseRedux) setWarehouse(warehouseRedux)
-    }, [])
+    useEffect(() => {
+        if (warehouseRedux) setWarehouse(warehouseRedux);
+    }, []);
 
     return (
         <>

@@ -12,6 +12,7 @@ import Tippy from '@tippyjs/react';
 import { Eye } from 'lucide-react';
 import { set } from 'react-hook-form';
 import ModelProposalDetail from './ModelProposalDetail';
+import { convertDateVN } from '../../common';
 
 const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle);
@@ -22,6 +23,8 @@ const ApprovePage = () => {
     const [proposalPurchaseList, setProposalPurchaseList] = useState([]);
     const [proposalReleaseList, setProposalReleaseList] = useState([]);
     const [showModalDetail, setShowModalDetail] = useState(false);
+    const [typeDetail, setTypeDetail] = useState(true);
+    const [proposalDetailID, setProposalDetailID] = useState(null);
     const [filterProposal, setFilterProposal] = useState({
         proposalID: '',
         createdAt: '',
@@ -57,6 +60,7 @@ const ApprovePage = () => {
             return;
         }
     };
+
     const columnsFilter = [
         {
             id: 1,
@@ -115,7 +119,9 @@ const ApprovePage = () => {
             title: 'Ngày lập',
             dataIndex: 'createdAt',
             key: 'createAt',
-            render: (text) => <p>{text.slice(0, 10)}</p>,
+            render: (text) => {
+                return <p>{convertDateVN(text)}</p>;
+            },
         },
         {
             title: 'Mã người tạo',
@@ -181,6 +187,8 @@ const ApprovePage = () => {
                             <button
                                 className={cxGlobal('action-table-icon')}
                                 onClick={() => {
+                                    setTypeDetail(true);
+                                    setProposalDetailID(record.proposalID);
                                     setShowModalDetail(true);
                                 }}
                             >
@@ -271,13 +279,6 @@ const ApprovePage = () => {
         //fetchProposals(page - 1)
     };
 
-    const handleOnChangeSelectProposal = (e) => {
-        console.log(e.target.value);
-        if (e.target.value === 'PURCHASE_PROPOSAL')
-            setFilterTabProposal((prev) => ({ PURCHASE_PROPOSAL: true, RELEASE_PROPOSAL: false }));
-        else setFilterTabProposal((prev) => ({ PURCHASE_PROPOSAL: false, RELEASE_PROPOSAL: true }));
-    };
-
     useEffect(() => {
         //fetchProposals(page)
         handleSearch();
@@ -289,7 +290,17 @@ const ApprovePage = () => {
                 handleResetFilters={handleResetFilter}
                 selectInput={selectFilter}
                 handleSubmitFilter={handleSearch}
-            />
+            >
+                <Button
+                    primary
+                    onClick={() => {
+                        setTypeDetail(false);
+                        setShowModalDetail(true);
+                    }}
+                >
+                    <span>Tạo phiếu đề xuất</span>
+                </Button>
+            </ModelFilter>
             <div className={cx('table-container-header')}>
                 <h1 className={cx('title-approve')}>{`Danh sách phiếu đề xuất ${formatStatusProposal[
                     filterProposal.status
@@ -309,7 +320,13 @@ const ApprovePage = () => {
                 <PaginationUI currentPage={page} handleNextPage={handleNextPage} handlePrevPage={handlePrevPage} />
             </div>
             {showModalDetail && (
-                <ModelProposalDetail isOpen={showModalDetail} onClose={() => setShowModalDetail(false)} />
+                <ModelProposalDetail
+                    proposalDetailID={proposalDetailID}
+                    typeDetail={typeDetail}
+                    isOpen={showModalDetail}
+                    onClose={() => setShowModalDetail(false)}
+                    handleSearch={handleSearch}
+                />
             )}
         </div>
     );
