@@ -6,7 +6,7 @@ class BatchDTO {
         this.receive = data.importAmount;
         this.available = data.remainAmount;
         this.unit = data.unitName;
-        this.location = data.locationBatch[0].location;
+        this.location = data.locationBatch[0]?.location || 'N/A';
         this.wareId = data.warehouseID;
         this.totalProductRemain = data.totalProductRemain;
         this.importDate = data.createdAt.slice(0, 10);
