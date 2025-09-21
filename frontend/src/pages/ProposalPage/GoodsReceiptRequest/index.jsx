@@ -65,7 +65,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
         const errors = [];
         if (!code) errors.push('Vui lòng tạo mã phiếu nhập kho');
         if (items.length === 0) errors.push('Danh sách hàng hóa đang trống');
-        const checkRow = items.every((row) => row.sku && row.name && row.uom && row.qty > 0);
+        const checkRow = items.every((row) => row.sku && row.name && row.uom && Number(row.qty) > 0);
         if (!checkRow)
             errors.push('Vui lòng điền đầy đủ thông tin chi tiết sản phẩm cần nhập và số lượng tối thiểu là 1');
         return errors;
@@ -272,7 +272,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                         <td>{idx + 1}</td>
                         <td>
                             <input
-                                value={typeDetail ? it.product.productID : it.sku}
+                                value={typeDetail ? it.product?.productID || '' : it.sku || ''}
                                 onChange={(e) => updateCell(idx, 'sku', e.target.value)}
                                 placeholder="Mã sản phẩm"
                                 readOnly={typeDetail}
@@ -280,7 +280,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                         </td>
                         <td>
                             <input
-                                value={typeDetail ? it.product.productName : it.name}
+                                value={typeDetail ? it.product?.productName || '' : it.name || ''}
                                 onChange={(e) => updateCell(idx, 'name', e.target.value)}
                                 readOnly
                                 placeholder="Tên sản phẩm"
@@ -288,7 +288,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                         </td>
                         <td>
                             <select
-                                value={typeDetail ? it.unit.unitID : it.uom}
+                                value={typeDetail ? it.unit?.unitID || '' : it.uom || ''}
                                 onChange={(e) => updateCell(idx, 'uom', e.target.value)}
                             >
                                 <option>-- Chọn đơn vị --</option>
@@ -303,7 +303,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                             <input
                                 type="number"
                                 min={1}
-                                value={typeDetail ? it.quantity : it.qty}
+                                value={typeDetail ? it.quantity || '' : it.qty || ''}
                                 onChange={(e) => updateCell(idx, 'qty', e.target.value)}
                                 onKeyDown={(e) => {
                                     if (e.key == '-') e.preventDefault();
@@ -313,7 +313,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                         </td>
                         <td>
                             <input
-                                value={typeDetail ? it.note || 'Không có ghi chú' : it.note}
+                                value={typeDetail ? it.note || 'Không có ghi chú' : it.note || ''}
                                 onChange={(e) => updateCell(idx, 'note', e.target.value)}
                                 placeholder="Ghi chú"
                             />
@@ -371,7 +371,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                 <input
                                     placeholder="Tạo mã phiếu"
                                     readOnly={true}
-                                    value={typeDetail ? proposalDetail.proposalID : code}
+                                    value={typeDetail ? proposalDetail.proposalID || '' : code || ''}
                                     onChange={(e) => setCode(e.target.value)}
                                 />
                                 {!typeDetail && (
@@ -393,14 +393,22 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                         <div className={cx('field')}>
                             <label>Kho nhập</label>
                             <input
-                                value={typeDetail ? proposalDetail?.warehouse?.warehouseName : warehouse.warehouseName}
+                                value={
+                                    typeDetail
+                                        ? proposalDetail?.warehouse?.warehouseName || ''
+                                        : warehouse.warehouseName || ''
+                                }
                                 readOnly
                             />
                         </div>
                         <div className={cx('field')}>
                             <label>Người lập phiếu</label>
                             <input
-                                value={typeDetail ? proposalDetail?.employeeCreate?.employeeName : creator.empName}
+                                value={
+                                    typeDetail
+                                        ? proposalDetail?.employeeCreate?.employeeName || ''
+                                        : creator.empName || ''
+                                }
                                 readOnly
                             />
                         </div>

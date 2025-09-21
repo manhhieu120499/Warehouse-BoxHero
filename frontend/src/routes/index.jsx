@@ -126,11 +126,6 @@ const publicRoute = [
     },
     {
         page: ApprovePage,
-        path: '/approve',
-        layout: DefaultLayout,
-    },
-    {
-        page: ApprovePage,
         path: '/proposal-list',
         layout: DefaultLayout,
     },

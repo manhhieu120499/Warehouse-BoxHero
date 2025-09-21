@@ -3,14 +3,11 @@ import classNames from 'classnames/bind';
 import styles from './ApprovePage.module.scss';
 import { Button, ModelFilter, MyTable, PaginationUI } from '../../components';
 import globalStyle from '../../components/GlobalStyle/GlobalStyle.module.scss';
-import request, { post } from '../../utils/httpRequest';
+import { post } from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
-import { formatStatusProposal, styleMessage } from '../../constants';
-import toast from 'react-hot-toast';
-import Select from '../../components/Select';
+import { formatStatusProposal } from '../../constants';
 import Tippy from '@tippyjs/react';
 import { Eye } from 'lucide-react';
-import { set } from 'react-hook-form';
 import ModelProposalDetail from './ModelProposalDetail';
 import { convertDateVN } from '../../common';
 
@@ -21,7 +18,6 @@ const ApprovePage = () => {
     const pageSize = 5;
     const [page, setPage] = useState(1);
     const [proposalPurchaseList, setProposalPurchaseList] = useState([]);
-    const [proposalReleaseList, setProposalReleaseList] = useState([]);
     const [showModalDetail, setShowModalDetail] = useState(false);
     const [typeDetail, setTypeDetail] = useState(true);
     const [proposalDetailID, setProposalDetailID] = useState(null);
@@ -29,37 +25,8 @@ const ApprovePage = () => {
         proposalID: '',
         createdAt: '',
         status: 'PENDING',
-        employeeIDCreate: '',
+        employeeName: '',
     });
-
-    const [filterTabProposal, setFilterTabProposal] = useState({
-        PURCHASE_PROPOSAL: true,
-        RELEASE_PROPOSAL: false,
-    });
-
-    const handleApproveProposal = async (proposalID, status = 'COMPLETED') => {
-        try {
-            const token = parseToken('tokenUser');
-            const res = await post(
-                '/api/proposal/update-status-proposal',
-                {
-                    proposalID,
-                    employeeIDApproval: token.employeeID,
-                    status,
-                },
-                token.accessToken,
-                token.employeeID,
-            );
-            // console.log(res)
-            toast.success(res.message, styleMessage);
-            //fetchProposals(1)\
-            handleSearch();
-        } catch (err) {
-            console.log(err);
-            toast.error(err.response.data.message, styleMessage);
-            return;
-        }
-    };
 
     const columnsFilter = [
         {
@@ -74,14 +41,15 @@ const ApprovePage = () => {
             label: 'Ngày lập',
             value: filterProposal.createdAt,
             name: 'createdAt',
+            type: 'date',
             setValue: (value) => setFilterProposal((prev) => ({ ...prev, createdAt: value })),
         },
         {
             id: 3,
             label: 'Mã người tạo',
-            value: filterProposal.employeeIDCreate,
-            name: 'employeeIDCreate',
-            setValue: (value) => setFilterProposal((prev) => ({ ...prev, employeeIDCreate: value })),
+            value: filterProposal.employeeName,
+            name: 'employeeName',
+            setValue: (value) => setFilterProposal((prev) => ({ ...prev, employeeName: value })),
         },
     ];
 
@@ -111,7 +79,7 @@ const ApprovePage = () => {
 
     const columnsTable = [
         {
-            title: filterTabProposal.PURCHASE_PROPOSAL ? 'Mã phiếu đề xuất nhập' : 'Mã phiếu đề xuất xuất',
+            title: 'Mã phiếu đề xuất nhập',
             dataIndex: 'proposalID',
             key: 'proposalID',
         },
@@ -124,14 +92,16 @@ const ApprovePage = () => {
             },
         },
         {
-            title: 'Mã người tạo',
-            dataIndex: 'employeeIDCreate',
-            key: 'employeeIDCreate',
+            title: 'Tên người tạo',
+            dataIndex: 'employeeName',
+            key: 'employeeName',
+            render: (_, record) => <p>{record?.employeeCreate?.employeeName}</p>,
         },
         {
-            title: 'Mã kho',
-            dataIndex: 'warehouseID',
-            key: 'warehouseID',
+            title: 'Tên kho',
+            dataIndex: 'warehouseName',
+            key: 'warehouseName',
+            render: (_, record) => <p>{record?.warehouse?.warehouseName}</p>,
         },
         {
             title: 'Trạng thái',
@@ -146,36 +116,6 @@ const ApprovePage = () => {
                 );
             },
         },
-        // {
-        //     title: 'Phê duyệt',
-        //     dataIndex: 'action',
-        //     key: 'action',
-        //     width: '20%',
-        //     render: (_, record) => {
-        //         return (
-        //             <div className={cxGlobal('action-table')}>
-        //                 {record.status == 'PENDING' && (
-        //                     <>
-        //                         <Button
-        //                             disabled={record.status == 'COMPLETED'}
-        //                             success
-        //                             onClick={() => handleApproveProposal(record.proposalID, 'COMPLETED')}
-        //                         >
-        //                             <span>Chấp nhận</span>
-        //                         </Button>
-        //                         <Button
-        //                             disabled={record.status == 'REFUSE'}
-        //                             error
-        //                             onClick={() => handleApproveProposal(record.proposalID, 'REFUSE')}
-        //                         >
-        //                             <span>Từ chối</span>
-        //                         </Button>
-        //                     </>
-        //                 )}
-        //             </div>
-        //         );
-        //     },
-        // },
         {
             title: 'Chi tiết',
             dataIndex: 'action',
@@ -201,52 +141,35 @@ const ApprovePage = () => {
         },
     ];
 
-    const optionsSelect = [
-        {
-            name: 'Phiếu đề xuất nhập',
-            value: 'PURCHASE_PROPOSAL',
-        },
-        {
-            name: 'Phiếu đề xuất xuất',
-            value: 'RELEASE_PROPOSAL',
-        },
-    ];
-
-    // const fetchProposals = async (page = 1, type="PURCHASE_PROPOSAL") => {
-    //     try {
-    //         console.log(page)
-    //         const token = parseToken("tokenUser")
-    //         const warehouse = parseToken('warehouse')
-    //         const res = await request.post('/api/proposal/filter-proposal', {
-    //             params: {
-    //                 page,
-    //                 status: filterProposal.status,
-    //             },
-    //             headers: {
-    //                 token: `Beare ${token.accessToken}`,
-    //                 employeeid: token.employeeID,
-    //                 warehouseID: warehouse.warehouseID
-    //             }
-    //         })
-    //         //console.log(res.data.proposals)
-    //         if(type === 'PURCHASE_PROPOSAL')
-    //             setProposalPurchaseList(res.data.proposals.length > 0 ? res.data.proposals : [])
-    //         else setProposalReleaseList(res.data.proposals.length > 0 ? res.data.proposals : [])
-    //         setPage(page)
-    //     } catch (err) {
-    //         console.log(err)
-    //     }
-    // }
+    const fetchProposals = async (page = 1) => {
+        try {
+            const token = parseToken('tokenUser');
+            const res = await post(
+                '/api/proposal/filter-proposal',
+                {
+                    status: 'PENDING',
+                    page,
+                },
+                token.accessToken,
+                token.employeeID,
+            );
+            setProposalPurchaseList(res.proposals || []);
+        } catch (err) {
+            console.log(err);
+        }
+    };
 
     const handleResetFilter = () => {
+        const { proposalID, createdAt, employeeName } = filterProposal;
+        if (!proposalID && !createdAt && !employeeName) return;
         setFilterProposal({
             proposalID: '',
             createdAt: '',
             status: 'PENDING',
-            employeeIDCreate: '',
+            employeeName: '',
         });
-        setPage((prev) => 1);
-        //fetchProposals(1)
+        setPage(1);
+        fetchProposals();
     };
 
     const handleSearch = async () => {
@@ -259,11 +182,12 @@ const ApprovePage = () => {
                     proposalID: filterProposal?.proposalID,
                     createdAt: filterProposal?.createdAt,
                     status: filterProposal?.status,
-                    employeeIDCreate: filterProposal?.employeeIDCreate,
+                    employeeName: filterProposal?.employeeName,
                 },
                 token.accessToken,
                 token.employeeID,
             );
+            console.log(res);
             setProposalPurchaseList(res.proposals || []);
         } catch (err) {
             console.log(err);
@@ -271,18 +195,24 @@ const ApprovePage = () => {
     };
 
     const handleNextPage = () => {
-        //fetchProposals(page + 1)
+        setPage(page + 1);
     };
 
     const handlePrevPage = async () => {
         if (page - 1 <= 0) return;
-        //fetchProposals(page - 1)
+        setPage(page - 1);
     };
 
     useEffect(() => {
         //fetchProposals(page)
         handleSearch();
     }, [filterProposal.status]);
+
+    useEffect(() => {
+        console.log('page', page);
+        fetchProposals(page);
+    }, [page]);
+
     return (
         <div className={cx('wrapper-approve')}>
             <ModelFilter
@@ -305,12 +235,8 @@ const ApprovePage = () => {
                 <h1 className={cx('title-approve')}>{`Danh sách phiếu đề xuất ${formatStatusProposal[
                     filterProposal.status
                 ].toLowerCase()}`}</h1>
-                {/* <Select options={optionsSelect} onChange={handleOnChangeSelectProposal}/> */}
             </div>
             <div className={cx('table-container')}>
-                {/* {filterTabProposal.PURCHASE_PROPOSAL
-                    && <MyTable className={cx("my-table")} columns={columnsTable} data={proposalPurchaseList} pageSize={pageSize} />}
-                {filterTabProposal.RELEASE_PROPOSAL && <MyTable className={cx("my-table")} columns={columnsTable} data={proposalReleaseList} pageSize={pageSize} />} */}
                 <MyTable
                     className={cx('my-table')}
                     columns={columnsTable}
