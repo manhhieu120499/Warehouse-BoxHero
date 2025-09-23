@@ -37,30 +37,6 @@ const ApprovePage = () => {
         RELEASE_PROPOSAL: false,
     });
 
-    const handleApproveProposal = async (proposalID, status = 'COMPLETED') => {
-        try {
-            const token = parseToken('tokenUser');
-            const res = await post(
-                '/api/proposal/update-status-proposal',
-                {
-                    proposalID,
-                    employeeIDApproval: token.employeeID,
-                    status,
-                },
-                token.accessToken,
-                token.employeeID,
-            );
-            // console.log(res)
-            toast.success(res.message, styleMessage);
-            //fetchProposals(1)\
-            handleSearch();
-        } catch (err) {
-            console.log(err);
-            toast.error(err.response.data.message, styleMessage);
-            return;
-        }
-    };
-
     const columnsFilter = [
         {
             id: 1,

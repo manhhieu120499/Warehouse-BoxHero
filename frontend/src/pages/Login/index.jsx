@@ -13,7 +13,7 @@ import { useDispatch } from 'react-redux';
 import { login } from '@/lib/redux/auth/authSlice';
 import { jwtDecode } from 'jwt-decode';
 import EmployeeDTO from '../../dtos/EmployeeDTO';
-import request from "../../utils/httpRequest"
+import request from '../../utils/httpRequest';
 import { addInfo } from '../../lib/redux/warehouse/wareHouseSlice';
 
 const cx = classNames.bind(styles);
@@ -41,36 +41,39 @@ const Login = () => {
     const submitData = async (data) => {
         try {
             const responseLogin = await post('/api/account/sign-in', { ...data });
-           
+
             if (responseLogin.status == 'OK') {
                 const { message, accessToken, refreshToken } = responseLogin;
                 const { employeeID, roles, warehouseID } = jwtDecode(accessToken).payload;
 
                 // call api get user detail
-                const responseUser = await post('/api/employee/employee-detail', 
+                const responseUser = await post(
+                    '/api/employee/employee-detail',
                     {
                         email: data.email,
                     },
                     accessToken,
-                    employeeID
+                    employeeID,
                 );
                 const { employee } = responseUser;
 
-                if(warehouseID) {
-                    
+                if (warehouseID) {
                     const responseWarehouse = await request.get(`/api/warehouse/get-detail/${warehouseID}`, {
                         headers: {
                             token: `Beare ${accessToken}`,
                             employeeid: employeeID,
-                            warehouseid: warehouseID
-                        }
-                    })
-                    dispatch(addInfo({...responseWarehouse.data.warehouse}))
-                    localStorage.setItem('warehouse', JSON.stringify({...responseWarehouse.data.warehouse}))
+                            warehouseid: warehouseID,
+                        },
+                    });
+                    dispatch(addInfo({ ...responseWarehouse.data.warehouse }));
+                    localStorage.setItem('warehouse', JSON.stringify({ ...responseWarehouse.data.warehouse }));
                 }
-               
-                dispatch(login({...new EmployeeDTO({...employee, roles})}));
-                localStorage.setItem('tokenUser', JSON.stringify({ email: data.email, employeeID, accessToken, refreshToken }));
+
+                dispatch(login({ ...new EmployeeDTO({ ...employee, roles }) }));
+                localStorage.setItem(
+                    'tokenUser',
+                    JSON.stringify({ email: data.email, employeeID, accessToken, refreshToken }),
+                );
                 toast.success(message, {
                     ...styleMessage,
                 });
