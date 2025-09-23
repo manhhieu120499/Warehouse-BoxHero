@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
 
     Shelf.associate = (models) => {
         Shelf.belongsTo(models.Zone, { foreignKey: 'zoneID', as: 'zone' });
-        Shelf.hasMany(models.Floor, { foreignKey: 'shelfID' });
+        Shelf.hasMany(models.Floor, { foreignKey: 'shelfID', as: 'floor' });
     };
 
     return Shelf;

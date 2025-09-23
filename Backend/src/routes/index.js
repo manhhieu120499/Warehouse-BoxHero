@@ -19,6 +19,7 @@ const ProposalRouter = require('./ProposalRouter');
 const OrderPurchaseMissingRouter = require('./OrderPurchaseMissingRouter');
 const UnitRouter = require('./UnitRouter');
 const BatchBoxRouter = require('./BatchBoxRouter');
+const ShelfRouter = require('./ShelfRouter');
 
 const router = (app) => {
     app.use('/api/account', AccountRouter);
@@ -42,6 +43,7 @@ const router = (app) => {
     app.use('/api/order-purchase-missing', OrderPurchaseMissingRouter);
     app.use('/api/unit', UnitRouter);
     app.use('/api/batch-box', BatchBoxRouter);
+    app.use('/api/shelf', ShelfRouter);
 };
 
 module.exports = router;
