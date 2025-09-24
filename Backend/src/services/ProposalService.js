@@ -1,6 +1,6 @@
 const dotenv = require('dotenv');
 const db = require('../../models');
-const { Op, where } = require('sequelize');
+const { Op, fn, col, where } = require('sequelize');
 const Proposal = db.Proposal;
 const Employee = db.Employee;
 const Product = db.Product;
@@ -339,8 +339,8 @@ class ProposalService {
                     page,
                     employeeIDCreate,
                     employeeIDApproval,
-                    updateAt,
-                    createAt,
+                    updatedAt,
+                    createdAt,
                 } = data;
 
                 let options = {
@@ -358,9 +358,10 @@ class ProposalService {
                         { model: Employee, as: 'approver' },
                         { model: Warehouse, as: 'warehouse' },
                     ],
-                    order: [['createdAt', 'DESC']], // để bản mới nhất lên trước
+                    order: [['createdAt', 'DESC']], // Mới nhất lên đầu
                 };
 
+                // Thêm điều kiện lọc
                 if (proposalID) {
                     options.where.proposalID = proposalID;
                 }
@@ -381,17 +382,30 @@ class ProposalService {
                     options.where.employeeIDApproval = employeeIDApproval;
                 }
 
-                if (updateAt) {
-                    options.where.updateAt = updateAt;
+                // So sánh ngày (bỏ thời gian)
+                if (updatedAt) {
+                    options.where = {
+                        ...options.where,
+                        [Op.and]: [
+                            ...(options.where[Op.and] || []),
+                            where(fn('DATE', col('Proposal.updatedAt')), updatedAt),
+                        ],
+                    };
                 }
 
-                if (createAt) {
-                    options.where.createAt = createAt;
+                if (createdAt) {
+                    options.where = {
+                        ...options.where,
+                        [Op.and]: [
+                            ...(options.where[Op.and] || []),
+                            where(fn('DATE', col('Proposal.createdAt')), createdAt),
+                        ],
+                    };
                 }
 
+                // Phân trang
                 if (page) {
                     const offset = (page - 1) * LIMIT_PAGE;
-
                     options.limit = LIMIT_PAGE;
                     options.offset = offset;
                 }
@@ -408,7 +422,7 @@ class ProposalService {
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    message: err,
+                    message: err.message || 'Lỗi không xác định',
                 });
             }
         });
