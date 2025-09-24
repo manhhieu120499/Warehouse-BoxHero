@@ -33,11 +33,12 @@ class ProductService {
                     ],
                 });
 
-                if(!product) reject({
-                    status: 'ERR',
-                    statusHttp: HTTP_NOT_FOUND,
-                    message: 'Sản phẩm không tồn tại'
-                })
+                if (!product)
+                    reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_NOT_FOUND,
+                        message: 'Sản phẩm không tồn tại',
+                    });
 
                 const { batches, ...restProduct } = product.toJSON();
                 const filterBatch = batches.filter((item) => item.warehouseID == warehouseID);
@@ -65,18 +66,21 @@ class ProductService {
                                                         {
                                                             model: Zone,
                                                             attributes: ['zoneID', 'zoneName', 'warehouseID'],
+                                                            as: 'zone',
                                                         },
                                                     ],
+                                                    as: 'shelf',
                                                 },
                                             ],
+                                            as: 'floor',
                                         },
                                     ],
                                 },
                                 {
                                     model: Unit,
-                                    attributes: ["unitID", "unitName", "conversionQuantity"],
-                                    as: 'unit'
-                                }
+                                    attributes: ['unitID', 'unitName', 'conversionQuantity'],
+                                    as: 'unit',
+                                },
                             ],
                         }),
                     ),
@@ -91,13 +95,15 @@ class ProductService {
                 if (listBatch) {
                     const formatBatchResponse = listBatch.map((item) => {
                         const { boxes, ...restBatch } = item.toJSON();
-                        const {unit, remainAmount, ...rest} = restBatch
-                        const totalProductRemain = Number.parseInt(unit.conversionQuantity) * Number.parseInt(remainAmount)
+                        const { unit, remainAmount, ...rest } = restBatch;
+                        const totalProductRemain =
+                            Number.parseInt(unit.conversionQuantity) * Number.parseInt(remainAmount);
                         const locationBatch = boxes.map((boxItem) => {
+                            console.log(boxItem);
                             const { boxID, boxName } = boxItem;
-                            const { floorName } = boxItem.Floor;
-                            const { shelfName } = boxItem.Floor.Shelf;
-                            const { zoneName } = boxItem.Floor.Shelf.Zone;
+                            const { floorName } = boxItem.floor;
+                            const { shelfName } = boxItem.floor.shelf;
+                            const { zoneName } = boxItem.floor.shelf.zone;
                             return {
                                 boxID,
                                 boxName,
@@ -126,7 +132,7 @@ class ProductService {
                 }
                 //console.log(4);
             } catch (err) {
-                console.log(err)
+                console.log(err);
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
@@ -135,8 +141,9 @@ class ProductService {
             }
         });
     }
-    findAllProduct() {
+    findAllProduct(page = 1) {
         return new Promise(async (resolve, reject) => {
+            const LIMIT_PAGE = 5;
             try {
                 const products = await Product.findAll({
                     include: [
@@ -146,6 +153,8 @@ class ProductService {
                             attributes: ['categoryID', 'categoryName'],
                         },
                     ],
+                    offset: (page - 1) * LIMIT_PAGE,
+                    limit: LIMIT_PAGE,
                 });
                 resolve({
                     status: 'OK',
@@ -167,21 +176,21 @@ class ProductService {
         return new Promise(async (resolve, reject) => {
             try {
                 //console.log(minStock)
-                let where = {}
-                if(productID) where.productID = {[Op.like]: `%${productID}%`}
-                if(productName) where.productName = {[Op.like]: `%${productName}%`}
-                if(minStock) where.minStock = minStock
-                if(categoryID) where.categoryID = categoryID
-                if(supplierID) where.supplierID = supplierID
+                let where = {};
+                if (productID) where.productID = { [Op.like]: `%${productID}%` };
+                if (productName) where.productName = { [Op.like]: `%${productName}%` };
+                if (minStock) where.minStock = minStock;
+                if (categoryID) where.categoryID = categoryID;
+                if (supplierID) where.supplierID = supplierID;
                 const resultSearch = await Product.findAll({
                     where,
                     include: [
                         {
                             model: Category,
-                            attributes: ["categoryID", "categoryName"],
-                            as: 'category'
-                        }
-                    ]
+                            attributes: ['categoryID', 'categoryName'],
+                            as: 'category',
+                        },
+                    ],
                 });
                 resolve({
                     status: 'OK',
@@ -190,7 +199,7 @@ class ProductService {
                     products: resultSearch,
                 });
             } catch (err) {
-                console.error(err)
+                console.error(err);
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
@@ -201,35 +210,36 @@ class ProductService {
     }
     updateProduct(data) {
         return new Promise(async (resolve, reject) => {
-            const transaction = await db.sequelize.transaction()
-            try{
-                let updateData = {}
-                if(data.productName) updateData.productName = data.productName
-                if(data.minStock) updateData.minStock = data.minStock
-                if(data.status) updateData.status = data.status
-                const updateResult = await Product.update(updateData, 
+            const transaction = await db.sequelize.transaction();
+            try {
+                let updateData = {};
+                if (data.productName) updateData.productName = data.productName;
+                if (data.minStock) updateData.minStock = data.minStock;
+                if (data.status) updateData.status = data.status;
+                const updateResult = await Product.update(
+                    updateData,
                     {
-                        where: {productID: data.productID}
+                        where: { productID: data.productID },
                     },
                     {
-                        transaction
-                    }
-                )
-                await transaction.commit()
+                        transaction,
+                    },
+                );
+                await transaction.commit();
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Cập nhật sản phẩm thành công',
-                })
-            }catch(err) {
-                console.error(err)
+                });
+            } catch (err) {
+                console.error(err);
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    message: err
-                })
+                    message: err,
+                });
             }
-        })
+        });
     }
 }
 

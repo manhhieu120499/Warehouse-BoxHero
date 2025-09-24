@@ -12,8 +12,9 @@ class ProductController {
         }
     }
     async getAllProduct(req, res) {
+        const { page } = req.query;
         try {
-            const { statusHttp, ...response } = await ProductService.findAllProduct();
+            const { statusHttp, ...response } = await ProductService.findAllProduct(page);
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp).json(err);
