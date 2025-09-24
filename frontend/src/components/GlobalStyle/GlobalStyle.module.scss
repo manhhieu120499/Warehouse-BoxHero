@@ -33,7 +33,7 @@
     --z-index-header-import: 999;
 
     // modal filter
-    --filter-height-customer: 160px; 
+    --filter-height-customer: 160px;
 
     // button-color
     --success: #3b82f6;
@@ -47,6 +47,10 @@
     // border-input
     --border-color: #3b82f6;
     --show-input: rgba(59, 130, 246, 0.2);
+
+    // constant for shelf
+    --color-road: rgb(208, 206, 206);
+    --color-shelf: rgb(244, 168, 82);
 }
 
 * {
@@ -117,5 +121,5 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0,0,0,.08);
+    background-color: rgba(0, 0, 0, 0.08);
 }
