@@ -81,7 +81,7 @@ const ProductPage = () => {
                     warehouseid: currentUser.warehouseId ? currentUser.warehouseId : null,
                 },
             });
-            console.log(res.data);
+            //console.log(res.data);
             const { batches, ...rest } = res.data.product;
             const formatBatch = batches.map((item) => {
                 const batch = new BatchDTO(item);
@@ -305,7 +305,7 @@ const ProductPage = () => {
                 className={cx('my-table')}
                 columns={tableColumns}
                 data={productList}
-                pageSize={15}
+                //pageSize={5}
                 //pagination
                 onChangePage={handleOnChange}
                 //currentPage={currentPage}

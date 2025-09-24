@@ -32,7 +32,6 @@ export const fetchProposal = async (type = 'warehouse', id, status = 'COMPLETED'
 export const fetchProposalMissingOrderPurchase = async () => {
     try {
         const token = parseToken('tokenUser');
-        console.log(token);
 
         const warehouse = parseToken('warehouse');
         const res = await request.get('/api/proposal/get-proposal-missing', {
@@ -53,23 +52,26 @@ export const fetchProposalMissingOrderPurchase = async () => {
     }
 };
 
-
-export const filterProposal = async (params) => {
-    try{
+export const fetchFilterProposal = async (params) => {
+    try {
         const token = parseToken('tokenUser');
         const warehouse = parseToken('warehouse');
-        const res = await request.post('/api/proposal/filter-proposal', {
-            ...params,
-            warehouseID: warehouse.warehouseID,
-        }, {
-            headers: {
-                token: `Bearer ${token.accessToken}`,
-                employeeid: token.employeeID,
-                warehouseid: warehouse.warehouseID,
+        const res = await request.post(
+            '/api/proposal/filter-proposal',
+            {
+                ...params,
+                warehouseID: warehouse.warehouseID,
             },
-        });
+            {
+                headers: {
+                    token: `Bearer ${token.accessToken}`,
+                    employeeid: token.employeeID,
+                    warehouseid: warehouse.warehouseID,
+                },
+            },
+        );
         return res.data;
-    }catch(err) {
+    } catch (err) {
         throw new Error(err);
     }
-}
+};

@@ -1,7 +1,6 @@
 .wrapper-modal-account {
     width: 400px;
     overflow: clip;
-    padding: 10px;
 
     .content {
         width: 820px;
@@ -11,14 +10,14 @@
         transform: translateX(0px);
         transition: transform 0.3s linear;
 
-        --max-width-input: 390px;
+        --max-width-input: 400px;
 
         .wrapper-email {
             width: 400px;
             height: 120px;
             align-self: center;
             display: inline-block;
-            
+
             .form-control {
                 width: var(--max-width-input);
                 height: 35px;
@@ -41,11 +40,9 @@
                         background: transparent;
                     }
                 }
-
-                
             }
 
-            .form-action{
+            .form-action {
                 width: 100%;
                 display: flex;
                 justify-content: flex-end;
@@ -53,7 +50,6 @@
                 column-gap: 8px;
                 margin-top: 22px;
             }
-            
         }
 
         .wrapper-verify-email {
@@ -64,7 +60,7 @@
                 font-size: 1.4rem;
                 color: rgb(158, 141, 141);
             }
-            
+
             input {
                 width: var(--max-width-input);
                 border-radius: 8px;
@@ -83,7 +79,6 @@
         .wrapper-password {
             width: 400px;
             display: inline-block;
-            
 
             .form-group {
                 width: 100%;

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './AuthPage.module.scss';
 import { Image, Button, ModalCreateAccount, ModalEmployee, ModelFilter, Modal } from '@/components';
@@ -10,9 +10,7 @@ import toast from 'react-hot-toast';
 import { formatRole, styleMessage } from '../../constants';
 import request, { post } from '../../utils/httpRequest';
 import { uploadImage } from '../../utils/uploadImage';
-import { useDispatch } from 'react-redux';
-import { startLoading, stopLoading } from '../../lib/redux/loading/slice';
-import { isOver18, validateEmployeeData } from '../../utils/validate';
+import { validateEmployeeData } from '../../utils/validate';
 import EmployeeDTO from '../../dtos/EmployeeDTO';
 import { ModalReadEmployee } from '../../components';
 
@@ -181,8 +179,6 @@ const dataSource = [
     // },
 ];
 
-
-
 const resetData = {
     empId: '',
     empName: '',
@@ -214,67 +210,66 @@ const AuthPage = () => {
         password: '',
         statusWork: 'Đang làm',
     });
-    const dispatch = useDispatch();
 
-    const [filterSearchEmployee, setFilterSearchEmployee]= useState({
-        employeeID: "",
-        phoneNumber: "",
-        status: '',
-    })
+    const [filterSearchEmployee, setFilterSearchEmployee] = useState({
+        employeeID: '',
+        phoneNumber: '',
+        status: 'ACTIVE',
+    });
 
     const columnsFilter = [
-    {
-        id: 1,
-        label: 'Mã nhân viên',
-        value: filterSearchEmployee.employeeID,
-        setValue: (value) => setFilterSearchEmployee(prev => ({...prev, employeeID: value}))
-    },
-    {
-        id: 2,
-        label: 'Số điện thoại',
-        value: filterSearchEmployee.phoneNumber,
-        setValue: (value) => setFilterSearchEmployee(prev => ({...prev, phoneNumber: value}))
-    },
-    // {
-    //     id: 3,
-    //     label: 'Chức vụ',
-    //     value: filterSearchEmployee.status,
-    //     setValue: (value) => setCurrentPageEmployee(prev => ({...prev, phoneNumber: value}))
-    // },
+        {
+            id: 1,
+            label: 'Mã nhân viên',
+            value: filterSearchEmployee.employeeID,
+            setValue: (value) => setFilterSearchEmployee((prev) => ({ ...prev, employeeID: value })),
+        },
+        {
+            id: 2,
+            label: 'Số điện thoại',
+            value: filterSearchEmployee.phoneNumber,
+            setValue: (value) => setFilterSearchEmployee((prev) => ({ ...prev, phoneNumber: value })),
+        },
+        // {
+        //     id: 3,
+        //     label: 'Chức vụ',
+        //     value: filterSearchEmployee.status,
+        //     setValue: (value) => setCurrentPageEmployee(prev => ({...prev, phoneNumber: value}))
+        // },
     ];
 
     // select box for model filter search
     const selectBoxFilter = [
         {
-            label: "Trạng thái làm việc",
+            label: 'Trạng thái làm việc',
             value: filterSearchEmployee.status,
             option: [
                 {
-                    name: "Đang làm",
-                    value: 'ACTIVE'
+                    name: 'Đang làm',
+                    value: 'ACTIVE',
                 },
                 {
                     name: 'Nghỉ việc',
-                    value: 'INACTIVE'
-                }
+                    value: 'INACTIVE',
+                },
             ],
-            setValue: (value) => setFilterSearchEmployee(prev => ({...prev, status: value}))
-        }
-    ]
+            setValue: (value) => setFilterSearchEmployee((prev) => ({ ...prev, status: value })),
+        },
+    ];
 
     const [statusCreateAccount, setStatusCreateAccount] = useState(false);
     const [currentPageEmployee, setCurrentPageEmployee] = useState(1);
 
-    const onChangeEmployeeTable = (newPage, pageSize) => [setCurrentPageEmployee(newPage)];
+    const onChangeEmployeeTable = (newPage, pageSize) => setCurrentPageEmployee(newPage);
 
     const [employeeList, setEmployeeList] = useState([]);
     const employeeSelected = useMemo(() => {
-        if(!selectedRowKeys) {
-            return null
-        }else {
-            return employeeList.find(item => item.empId == selectedRowKeys)
+        if (!selectedRowKeys) {
+            return null;
+        } else {
+            return employeeList.find((item) => item.empId == selectedRowKeys);
         }
-    }, [selectedRowKeys])
+    }, [selectedRowKeys]);
 
     const rowSelection = {
         type: 'radio',
@@ -300,7 +295,6 @@ const AuthPage = () => {
         // validate dữ liệu
         if (!validateEmployeeData(empData)) return;
         try {
-            dispatch(startLoading());
             const token = JSON.parse(localStorage.getItem('tokenUser'));
             const imageUrl = await uploadImage(empData.empImage);
             const requestData = {
@@ -329,7 +323,6 @@ const AuthPage = () => {
                     warehouseid: requestData.warehouseID,
                 },
             });
-            dispatch(stopLoading());
             toast.success('Thêm nhân viên mới thành công', styleMessage);
             setEmpData(resetData);
             setAccount({
@@ -338,9 +331,9 @@ const AuthPage = () => {
                 statusWork: 'Đang làm',
             });
             setStatusCreateAccount(false);
+            handleCloseModal('add', false);
             fetchEmployeeList();
         } catch (err) {
-            dispatch(stopLoading());
             console.log(err);
             const message =
                 typeof err.response.data.message == Object
@@ -358,7 +351,7 @@ const AuthPage = () => {
         setAction((prev) => ({ ...prev, [key]: value }));
         setTimeout(() => {
             setEmpData(resetData);
-        }, 1000)
+        }, 1000);
     };
 
     useEffect(() => {
@@ -373,7 +366,6 @@ const AuthPage = () => {
         if (!validValue) return;
         try {
             // call api update employee
-            dispatch(startLoading());
             const token = JSON.parse(localStorage.getItem('tokenUser'));
             const infoEmployeeBefore = employeeList.find((item) => item.empId == selectedRowKeys);
             let imageUrl = '';
@@ -408,7 +400,6 @@ const AuthPage = () => {
                     warehouseid: requestData.warehouseID,
                 },
             });
-            dispatch(stopLoading());
             toast.success('Cập nhật nhân viên thành công', styleMessage);
             setEmpData(resetData);
             setAccount({
@@ -419,7 +410,7 @@ const AuthPage = () => {
             fetchEmployeeList();
             handleCloseModal('update', false);
         } catch (err) {
-            console.log(err)
+            console.log(err);
             // throw err
             toast.error(err.response.data.messages[0], styleMessage);
             return;
@@ -463,33 +454,33 @@ const AuthPage = () => {
         setFilterSearchEmployee({
             employeeID: '',
             phoneNumber: '',
-            status: ''
-        })
-        fetchEmployeeList()
-    }
+            status: 'ACTIVE',
+        });
+        fetchEmployeeList();
+    };
 
     const handleSearch = async () => {
-        if(!Object.keys(filterSearchEmployee).some(key => filterSearchEmployee[key])) return;
-        try{
-            const tokenUser = JSON.parse(localStorage.getItem('tokenUser'))
-            const params = {...filterSearchEmployee}
-            console.log(tokenUser)
+        if (!Object.keys(filterSearchEmployee).some((key) => filterSearchEmployee[key])) return;
+        try {
+            const tokenUser = JSON.parse(localStorage.getItem('tokenUser'));
+            const params = { ...filterSearchEmployee };
+            console.log(tokenUser);
             const resultSearch = await request.get('/api/employee/filter', {
                 params,
                 headers: {
                     token: `Beare ${tokenUser.accessToken}`,
-                    employeeid: tokenUser.employeeID
-                }
-            })
+                    employeeid: tokenUser.employeeID,
+                },
+            });
             const formatEmployee = resultSearch.data.employeeFilter.map((item) => {
                 const emp = new EmployeeDTO(item);
                 return { ...emp };
             });
-            setEmployeeList(formatEmployee)
-        }catch(err) {
-            fetchEmployeeList()
+            setEmployeeList(formatEmployee);
+        } catch (err) {
+            fetchEmployeeList();
         }
-    }
+    };
 
     useEffect(() => {
         fetchEmployeeList();
@@ -532,11 +523,7 @@ const AuthPage = () => {
                     onClose={() => {}}
                     arrButton={[
                         (index) => (
-                            <Button
-                                key={index}
-                                primary
-                                onClick={handleUpdateEmployee}
-                            >
+                            <Button key={index} primary onClick={handleUpdateEmployee}>
                                 <span>Cập nhật</span>
                             </Button>
                         ),
@@ -553,12 +540,21 @@ const AuthPage = () => {
                 </Modal>
             ) : (
                 <Modal showButtonClose={false} isOpenInfo={action.update} onClose={() => {}}>
-                    <ModalReadEmployee className={cx('wrapper-model-employee')} data={empData} onClose={() => handleCloseModal('update', false)} />
+                    <ModalReadEmployee
+                        className={cx('wrapper-model-employee')}
+                        data={empData}
+                        onClose={() => handleCloseModal('update', false)}
+                    />
                 </Modal>
             )}
 
             {/** Lọc theo điều kiện */}
-            <ModelFilter columns={columnsFilter} handleResetFilters={handleResetFilter} handleSubmitFilter={handleSearch} selectInput={selectBoxFilter}>
+            <ModelFilter
+                columns={columnsFilter}
+                handleResetFilters={handleResetFilter}
+                handleSubmitFilter={handleSearch}
+                selectInput={selectBoxFilter}
+            >
                 <Button primary onClick={() => handleCloseModal('add', true)} disabled={action.add}>
                     <span>Thêm nhân viên</span>
                 </Button>

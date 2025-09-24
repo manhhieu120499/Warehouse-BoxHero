@@ -6,7 +6,7 @@ import { Eye, XCircle, ArrowRightLeft } from 'lucide-react';
 import Tippy from '@tippyjs/react';
 import md5 from 'md5';
 import { formatRole, mapperRole } from '../../constants';
-import request from "@/utils/httpRequest"
+import request from '@/utils/httpRequest';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 
@@ -28,16 +28,18 @@ const FormGroup = ({
     return (
         <div className={cx('form-group')}>
             <label htmlFor={htmlForLabel}>{labelTitle}</label>
-            <input
-                id={idInput}
-                type={typeInput}
-                readOnly={readOnly}
-                value={valueInput}
-                onChange={onChange}
-                checked={checked}
-                placeholder={placeholder}
-            />
-            {children}
+            <div className={cx('content-input')}>
+                <input
+                    id={idInput}
+                    type={typeInput}
+                    readOnly={readOnly}
+                    value={valueInput}
+                    onChange={onChange}
+                    checked={checked}
+                    placeholder={placeholder}
+                />
+                {children}
+            </div>
         </div>
     );
 };
@@ -47,7 +49,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
     const [viewDetailRole, setViewDetailRole] = useState(false);
     //const [listRoleUser, setListRoleUser] = useState([]);
     const listRoleUser = data.empRole || [];
-    const currentUser = useSelector(state => state.AuthSlice.user)
+    const currentUser = useSelector((state) => state.AuthSlice.user);
 
     const imageRef = useRef();
     const handleUploadImage = () => {
@@ -88,43 +90,44 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
     useEffect(() => {
         //fetch all warehouse
         const fetchWarehouseList = async () => {
-            const token = JSON.parse(localStorage.getItem('tokenUser'))
-            
-            try{
+            const token = JSON.parse(localStorage.getItem('tokenUser'));
+
+            try {
                 const response = await request.get('/api/warehouse/list', {
                     headers: {
                         token: `Beare ${token.accessToken}`,
-                        employeeid: currentUser.empId
-                    }
-                })
-                const formatWarehouseId = response.data.warehouses.map(ware => ware.warehouseID)
-                setListWarehouseId(formatWarehouseId)
-            }catch(err) {
-                setListWarehouseId([])
+                        employeeid: currentUser.empId,
+                    },
+                });
+                const formatWarehouseId = response.data.warehouses.map((ware) => ware.warehouseID);
+                setListWarehouseId(formatWarehouseId);
+            } catch (err) {
+                setListWarehouseId([]);
             }
-        }
+        };
 
-        fetchWarehouseList()
+        fetchWarehouseList();
     }, []);
 
     const handleAddNewRole = (e) => {
-        const checkRole = listRoleUser.find(item => item.roleName == mapperRole[e.target.value].roleName)
+        const checkRole = listRoleUser.find((item) => item.roleName == mapperRole[e.target.value].roleName);
         if (e.target.checked) {
             if (!checkRole)
                 setData((prev) => {
-                const updateListRole = [...listRoleUser, mapperRole[e.target.value]]
-                return ({
-                    ...prev,
-                    empRole: updateListRole
-                })});
+                    const updateListRole = [...listRoleUser, mapperRole[e.target.value]];
+                    return {
+                        ...prev,
+                        empRole: updateListRole,
+                    };
+                });
         } else {
             if (checkRole && listRoleUser.length > 1) {
                 setData((prev) => ({
                     ...prev,
-                    empRole: listRoleUser.filter((item) => item.roleName != mapperRole[e.target.value].roleName)
+                    empRole: listRoleUser.filter((item) => item.roleName != mapperRole[e.target.value].roleName),
                 }));
-            }else {
-                toast.error("Nhân viên phải có ít nhất một vai trò")
+            } else {
+                toast.error('Nhân viên phải có ít nhất một vai trò');
                 return;
             }
         }
@@ -132,11 +135,11 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
 
     const handleUpdateRoleEmployee = () => {
         if (action == 'add') {
-            setData((prev) => ({ ...prev, empRole: listRoleUser, empStatus: 'Đang làm'}));
+            setData((prev) => ({ ...prev, empRole: listRoleUser, empStatus: 'Đang làm' }));
             handleShowViewDetailRole();
         } else {
-            //action == update 
-            setData((prev) => ({ ...prev, empRole: listRoleUser}));
+            //action == update
+            setData((prev) => ({ ...prev, empRole: listRoleUser }));
             handleShowViewDetailRole();
         }
     };
@@ -170,14 +173,15 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                 </div>
                 <div className={cx('info')}>
                     <div className={cx('row')}>
-                        <FormGroup
-                            labelTitle={'Mã nhân viên'}
-                            idInput={'employeeId'}
-                            readOnly={true}
-                            valueInput={data.empId}
-                            typeInput={'text'}
-                            placeholder={'Nhấn tạo mã'}
-                        >
+                        <div style={{ width: '49%', display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <FormGroup
+                                labelTitle={'Mã nhân viên'}
+                                idInput={'employeeId'}
+                                readOnly={true}
+                                valueInput={data.empId}
+                                typeInput={'text'}
+                                placeholder={'Nhấn tạo mã'}
+                            />
                             {isAdmin && action != 'update' && (
                                 <Button
                                     primary
@@ -187,7 +191,8 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                                     <span>Tạo mã</span>
                                 </Button>
                             )}
-                        </FormGroup>
+                        </div>
+
                         <FormGroup
                             labelTitle={'Tên nhân viên'}
                             htmlForLabel={'employeeName'}
@@ -282,7 +287,9 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                                 onChange={(e) => onChangeInput('warehouseId', e.target.value)}
                                 disabled={!isAdmin}
                             >
-                                <option value={''} disabled selected={data.warehouseId === ''}>-- Chọn kho --</option>
+                                <option value={''} disabled selected={data.warehouseId === ''}>
+                                    -- Chọn kho --
+                                </option>
                                 {listWarehouseId.map((item, index) => (
                                     <option key={index} value={item} selected={data.warehouseId === item}>
                                         {item}
@@ -293,28 +300,28 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                     </div>
                     <div className={cx('row')}>
                         <FormGroup
-                            labelTitle={'Chức vụ'}
-                            htmlForLabel={'employeeRole'}
-                            typeInput={'text'}
-                            valueInput={data?.empRole ? data.empRole.map(role => formatRole[role.roleName]) : ""}
-                            idInput={'employeeRole'}
-                            onChange={(e) => onChangeInput('employeeRole', e.target.value)}
-                            readOnly={isAdmin ? false : true}
-                            placeholder={"-- Thêm chức vụ --"}
-                        >
-                            <Tippy content={'Xem tất cả quyền'}>
-                                <Eye size={22} className={cx('view-detail')} onClick={handleShowViewDetailRole} />
-                            </Tippy>
-                        </FormGroup>
+                            labelTitle={'Ngày nghỉ làm'}
+                            htmlForLabel={'employeeEndDate'}
+                            typeInput={'date'}
+                            valueInput={data.empEndDate}
+                            idInput={'employeeEndDate'}
+                            onChange={(e) => onChangeInput('empEndDate', e.target.value)}
+                            readOnly={isAdmin && data.empStatus == 'Nghỉ việc' ? false : true}
+                        />
+
                         <div className={cx('form-group')}>
                             <label htmlFor="employeeStatus">Trạng thái</label>
                             <select
                                 id="employeeStatus"
                                 onChange={(e) => onChangeInput('empStatus', e.target.value)}
-                                disabled={action=='add' ||!isAdmin}
+                                disabled={action == 'add' || !isAdmin}
                             >
-                                <option value={''} disabled selected={action =='add' ? false : data.empStatus === ''}></option>
-                                <option value={'Đang làm'} selected={action == 'add' ||data.empStatus == 'Đang làm'}>
+                                <option
+                                    value={''}
+                                    disabled
+                                    selected={action == 'add' ? false : data.empStatus === ''}
+                                ></option>
+                                <option value={'Đang làm'} selected={action == 'add' || data.empStatus == 'Đang làm'}>
                                     Đang làm
                                 </option>
                                 <option value={'Nghỉ việc'} selected={data.empStatus == 'Nghỉ việc'}>
@@ -322,57 +329,67 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                                 </option>
                             </select>
                         </div>
-                        
                     </div>
                     <div className={cx('row')}>
-                <FormGroup
-                            labelTitle={'Ngày nghỉ làm'}
-                            htmlForLabel={'employeeEndDate'}
-                            typeInput={'date'}
-                            valueInput={data.empEndDate}
-                            idInput={'employeeEndDate'}
-                            onChange={(e) => onChangeInput('empEndDate', e.target.value)}
-                            readOnly={isAdmin && data.empStatus == "Nghỉ việc" ? false : true}
+                        <FormGroup
+                            labelTitle={'Chức vụ'}
+                            htmlForLabel={'employeeRole'}
+                            typeInput={'text'}
+                            valueInput={
+                                data?.empRole ? data.empRole.map((role) => formatRole[role.roleName]).join(', ') : ''
+                            }
+                            idInput={'employeeRole'}
+                            readOnly={true}
+                            placeholder={'-- Thêm chức vụ --'}
                         />
-            </div>
+                        <Tippy className={cx('role-view-btn')} content={'Xem tất cả quyền'} placement="top">
+                            <Eye size={24} className={cx('view-detail')} onClick={handleShowViewDetailRole} />
+                        </Tippy>
+                    </div>
                     <div className={cx('form-action')}>{children}</div>
                 </div>
             </div>
 
-            <Modal isOpenInfo={viewDetailRole} onClose={handleShowViewDetailRole} arrButton={[
-                (index) => 
-                    (
-                    <Button
-                        key={index}
-                        primary
-                        medium
-                        borderRadiusSmall
-                        onClick={handleUpdateRoleEmployee}
-                    >
-                        <span>Cập nhật</span>
-                    </Button>
-                )
-            ]}>
+            <Modal
+                isOpenInfo={viewDetailRole}
+                onClose={handleShowViewDetailRole}
+                arrButton={[
+                    (index) => (
+                        <Button key={index} primary medium borderRadiusSmall onClick={handleUpdateRoleEmployee}>
+                            <span>Cập nhật</span>
+                        </Button>
+                    ),
+                ]}
+            >
                 <div
                     className={cx('wrapper-role-employee', {
                         admin: isAdmin,
                     })}
                 >
                     <div className={cx('wrapper-view-role')}>
-                        <h2>Các quyền truy cập hiện có</h2>
+                        <h2>🔐 Quyền Hiện Có</h2>
                         <div className={cx('view-role')}>
-                            {listRoleUser.map((item, index) => (
-                                <div className={cx('role-item')} key={index}>
-                                    <span className={cx('role-title')}>{formatRole[item.roleName]}</span>
+                            {listRoleUser.length > 0 ? (
+                                listRoleUser.map((item, index) => (
+                                    <div className={cx('role-item')} key={index}>
+                                        <span className={cx('role-title')}>{formatRole[item.roleName]}</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className={cx('role-item')}>
+                                    <span className={cx('role-title')}>Chưa có quyền nào</span>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </div>
                     {isAdmin && (
                         <>
-                            <ArrowRightLeft className={cx('icon-transfer')} size={22} />
+                            <div className={cx('icon-transfer')}>
+                                <ArrowRightLeft size={24} />
+                            </div>
+
                             <div className={cx('wrapper-list-role')}>
-                                <h2>Danh sách các quyền truy cập</h2>
+                                <h2>📋 Tất Cả Quyền</h2>
                                 <div className={cx('list-role')}>
                                     {roleEmployee.map((item, index) => (
                                         <div className={cx('role-item')} key={index}>
@@ -380,9 +397,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                                                 type="checkbox"
                                                 value={item}
                                                 onChange={handleAddNewRole}
-                                                checked={
-                                                    data.empRole.find(role => formatRole[role.roleName] == item)
-                                                }
+                                                checked={data.empRole.find((role) => formatRole[role.roleName] == item)}
                                             />
                                             <span className={cx('role-title')}>{item}</span>
                                         </div>
@@ -392,9 +407,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                         </>
                     )}
                 </div>
-                
             </Modal>
-            
         </div>
     );
 };
