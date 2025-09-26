@@ -108,7 +108,6 @@ class BatchService {
                         {
                             model: Unit,
                             as: 'unit',
-                            attributes: ['unitID', 'unitName'],
                         },
                         {
                             model: Warehouse,
@@ -381,7 +380,6 @@ class BatchService {
                                 {
                                     model: Unit,
                                     as: 'unit',
-                                    attributes: ['unitID', 'unitName'],
                                 },
                                 {
                                     model: db.Supplier,
