@@ -1,0 +1,268 @@
+import { Button, Modal, MyTable } from '../../../components';
+import classNames from 'classnames/bind';
+import styles from './BoxDetail.module.scss';
+import { useEffect, useState } from 'react';
+import { getBoxDetails } from '../../../services/box.service';
+import parseToken from '../../../utils/parseToken';
+import { convertDateVN } from '@/common';
+import { getBatchesWithoutLocation } from '../../../services/batch.service';
+import { set } from 'react-hook-form';
+const cx = classNames.bind(styles);
+
+const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUpdate }) => {
+    const [batchID, setBatchID] = useState('');
+    const [productID, setProductID] = useState('');
+    const [boxDetail, setBoxDetail] = useState({});
+    const [batches, setBatches] = useState([]);
+    const [batchesWithoutLocation, setBatchesWithoutLocation] = useState([]);
+    const [selectedBatches, setSelectedBatches] = useState([]);
+    const [selectAll, setSelectAll] = useState(false);
+
+    const handleSelectAllChange = () => {
+        if (selectAll) {
+            // nếu đang chọn tất cả thì bỏ hết
+            setSelectedBatches([]);
+            setSelectAll(false);
+        } else {
+            // nếu chưa chọn hết thì chọn toàn bộ batch trong bảng hiện tại
+            setSelectedBatches(batches);
+            setSelectAll(true);
+        }
+    };
+
+    const handleCheckboxChange = (batch) => {
+        setSelectedBatches((prev) => {
+            let updated;
+            if (prev.some((item) => item.batchID === batch.batchID)) {
+                // bỏ batch ra
+                updated = prev.filter((item) => item.batchID !== batch.batchID);
+            } else {
+                // thêm batch vào
+                updated = [...prev, batch];
+            }
+
+            // cập nhật lại trạng thái checkbox tổng
+            setSelectAll(updated.length === batches.length);
+
+            return updated;
+        });
+    };
+
+    useEffect(() => {
+        if (isOpen && boxID) {
+            // fetch box details
+            const fetchBoxDetails = async () => {
+                const warehouse = parseToken('warehouse');
+                const warehouseID = warehouse.warehouseID;
+                const res = await getBoxDetails(warehouseID, boxID);
+                if (res) {
+                    console.log(res.data.data);
+
+                    setBoxDetail(res.data.data);
+                    setBatches(res.data.data.batches);
+                }
+            };
+            fetchBoxDetails();
+        } else if (isOpen && !boxID) {
+            const fetchBatchesWithoutLocation = async () => {
+                const warehouse = parseToken('warehouse');
+                const warehouseID = warehouse.warehouseID;
+                const res = await getBatchesWithoutLocation(warehouseID);
+                console.log(res.data.data);
+                if (res) {
+                    setBatchesWithoutLocation(res.data.data);
+                    setBatches(res.data.data);
+                }
+            };
+            fetchBatchesWithoutLocation();
+        }
+    }, [isOpen, boxID]);
+
+    const handleCLoseModel = () => {
+        setBatchID('');
+        setProductID('');
+        setBoxDetail({});
+        setBatches([]);
+        onClose();
+        setSelectedBatches([]);
+        setSelectAll(false);
+    };
+
+    const handleSearch = () => {
+        const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        if (boxID) {
+            const filteredBatches = boxDetail.batches.filter((batch) => {
+                const batchIdMatch = new RegExp(escapeRegex(batchID), 'i').test(batch.batchID ?? '');
+                const productIdMatch = new RegExp(escapeRegex(productID), 'i').test(batch.product?.productID ?? '');
+                return batchIdMatch && productIdMatch;
+            });
+            setBatches(filteredBatches);
+        } else {
+            const filteredBatches = batchesWithoutLocation.filter((batch) => {
+                const batchIdMatch = new RegExp(escapeRegex(batchID), 'i').test(batch.batchID ?? '');
+                const productIdMatch = new RegExp(escapeRegex(productID), 'i').test(batch.product?.productID ?? '');
+                return batchIdMatch && productIdMatch;
+            });
+            setBatches(filteredBatches);
+        }
+        setSelectedBatches([]);
+        setSelectAll(false);
+    };
+
+    const handleReset = () => {
+        setBatchID('');
+        setProductID('');
+        if (!boxID) {
+            setBatches(batchesWithoutLocation);
+        } else {
+            setBatches(boxDetail.batches);
+        }
+        setSelectedBatches([]);
+        setSelectAll(false);
+    };
+
+    const handleUpdateLocation = () => {
+        setShowUpdateLocation(true);
+        setBatchesUpdate(selectedBatches);
+        handleCLoseModel();
+    };
+
+    return (
+        <Modal isOpenInfo={isOpen} onClose={handleCLoseModel} showButtonClose={false}>
+            {boxID && (
+                <section className={cx('card')}>
+                    <h2 className={cx('cardTitle')}>Thông tin chung</h2>
+                    <div className={cx('grid4')}>
+                        <div className={cx('field')}>
+                            <label>Vị trí</label>
+                            <input
+                                readOnly={true}
+                                value={
+                                    boxDetail?.boxName +
+                                    ' - ' +
+                                    boxDetail?.floor?.floorName +
+                                    ' - ' +
+                                    boxDetail?.floor?.shelf?.shelfName
+                                }
+                            />
+                        </div>
+                        <div className={cx('field')}>
+                            <label>Chiều rộng</label>
+                            <input type="text" readOnly value={boxDetail?.width} />
+                        </div>
+                        <div className={cx('field')}>
+                            <label>Chiều dài</label>
+                            <input value={boxDetail?.length} readOnly />
+                        </div>
+                        <div className={cx('field')}>
+                            <label>Chiều cao</label>
+                            <input readOnly value={10} />
+                        </div>
+                        <div className={cx('field')}>
+                            <label>Tổng thể tích</label>
+                            <input readOnly value={boxDetail?.maxAcreage} />
+                        </div>
+                        <div className={cx('field')}>
+                            <label>Thể tích còn lại</label>
+                            <input readOnly value={boxDetail?.remainingAcreage} />
+                        </div>
+                    </div>
+                </section>
+            )}
+            <section className={cx('card', 'box-detail')}>
+                <div className={cx('box-detail-filter')}>
+                    <div className={cx('form-group')}>
+                        <label htmlFor="batchID">Mã lô</label>
+                        <input
+                            type={'text'}
+                            className={cx('form-input')}
+                            placeholder={`Nhập mã lô cần tìm`}
+                            id="batchID"
+                            value={batchID}
+                            onChange={(e) => setBatchID(e.target.value)}
+                        />
+                    </div>
+                    <div className={cx('form-group')}>
+                        <label htmlFor="productID">Mã sản phẩm</label>
+                        <input
+                            type={'text'}
+                            className={cx('form-input')}
+                            placeholder={`Nhập mã sản phẩm cần tìm`}
+                            id="productID"
+                            value={productID}
+                            onChange={(e) => setProductID(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <div className={cx('form-actions')}>
+                    <Button primary className={cx('btn-search')} onClick={handleSearch}>
+                        Tìm kiếm
+                    </Button>
+                    <Button primary className={cx('btn-search')} onClick={handleReset}>
+                        Đặt lại
+                    </Button>
+                    {!boxID && (
+                        <Button
+                            disabled={selectedBatches.length === 0}
+                            primary
+                            className={cx('btn-search')}
+                            onClick={handleUpdateLocation}
+                        >
+                            Cập nhật vị trí
+                        </Button>
+                    )}
+                </div>
+                <h4 className={cx('box-detail-content')}>Nội dung chi tiết ô</h4>
+                <div className={cx('tableWrap')}>
+                    <table className={cx('table')}>
+                        <thead>
+                            <tr>
+                                {!boxID && (
+                                    <th>
+                                        <input type="checkbox" checked={selectAll} onChange={handleSelectAllChange} />
+                                    </th>
+                                )}
+                                <th className={cx('stt')}>Mã lô</th>
+                                <th className={cx('productID')}>Mã sản phẩm</th>
+                                <th className={cx('productName')}>Tên sản phẩm</th>
+                                <th className={cx('unit')}>Đơn vị tính</th>
+                                <th className={cx('num')}>Số lượng</th>
+                                <th className={cx('note')}>Ngày sản xuất</th>
+                                <th className={cx('note')}>Ngày hết hạn</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {batches?.map((batch, index) => (
+                                <tr key={index}>
+                                    {!boxID && (
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedBatches
+                                                    .map((item) => item.batchID)
+                                                    .includes(batch.batchID)}
+                                                onChange={() => handleCheckboxChange(batch)}
+                                            />
+                                        </td>
+                                    )}
+                                    <td className={cx('stt')}>{batch.batchID}</td>
+                                    <td className={cx('productID')}>{batch.product.productID}</td>
+                                    <td className={cx('productName')}>{batch.product.productName}</td>
+                                    <td className={cx('unit')}>{batch.unit.unitName}</td>
+                                    <td className={cx('num')}>
+                                        {boxID ? batch.batch_boxes?.quantity : batch.remainAmount}
+                                    </td>
+                                    <td className={cx('note')}>{convertDateVN(batch.manufactureDate)}</td>
+                                    <td className={cx('note')}>{convertDateVN(batch.expiryDate)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </Modal>
+    );
+};
+
+export default BoxDetail;

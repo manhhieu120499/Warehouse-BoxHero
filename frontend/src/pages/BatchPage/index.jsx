@@ -5,12 +5,25 @@ import Button from '../../components/Button';
 import { getAllShelfOfWarehouse } from '../../services/shelf.service';
 import parseToken from '@/utils/parseToken';
 import Tippy from '@tippyjs/react';
+import BoxDetail from './BoxDetail';
+import UpdateLocation from './UpdateLocation';
 
 const cx = classNames.bind(styles);
 
 const BatchPage = () => {
     const [shelvesData, setShelvesData] = useState([]);
+    const [selectedBox, setSelectedBox] = useState(null);
+    const [showWareHouseTemp, setShowWareHouseTemp] = useState(false);
+    const [showUpdateLocation, setShowUpdateLocation] = useState(false);
+    const [batchesUpdate, setBatchesUpdate] = useState([]);
 
+    const volumePercentage = (maxAcreage, remainingAcreage) => {
+        const volume = (remainingAcreage / maxAcreage) * 100;
+        if (volume == 100) return 'empty';
+        if (volume >= 65) return 'ready';
+        if (volume >= 30) return 'processing';
+        else return 'warning';
+    };
     useEffect(() => {
         const fetchData = async () => {
             const token = parseToken('tokenUser');
@@ -39,7 +52,7 @@ const BatchPage = () => {
                 <div className={cx('packing-area')}>
                     <Button
                         onClick={() => {
-                            console.log(1);
+                            setShowWareHouseTemp(true);
                         }}
                         className={cx('button')}
                     >
@@ -62,9 +75,14 @@ const BatchPage = () => {
                                     <div className={cx('floor')} key={index}>
                                         {column.boxes.map((box, colIndex) => {
                                             return (
-                                                <div>
+                                                <div onClick={() => setSelectedBox(box.boxID)} key={colIndex}>
                                                     <Tippy key={colIndex} content={`${box.boxName}`}>
-                                                        <Button className={cx('box')}></Button>
+                                                        <Button
+                                                            className={cx([
+                                                                'box',
+                                                                volumePercentage(box.maxAcreage, box.remainingAcreage),
+                                                            ])}
+                                                        ></Button>
                                                     </Tippy>
                                                     <span>{box.boxID}</span>
                                                 </div>
@@ -108,6 +126,19 @@ const BatchPage = () => {
                     KHU VỰC CHỜ NHẬP HÀNG
                 </Button>
             </div>
+            <BoxDetail isOpen={!!selectedBox} onClose={() => setSelectedBox(null)} boxID={selectedBox} />
+            <BoxDetail
+                isOpen={showWareHouseTemp}
+                onClose={() => setShowWareHouseTemp(false)}
+                setShowUpdateLocation={setShowUpdateLocation}
+                setBatchesUpdate={setBatchesUpdate}
+            />
+            <UpdateLocation
+                isOpen={showUpdateLocation}
+                onClose={() => setShowUpdateLocation(false)}
+                batches={batchesUpdate}
+                shelvesData={shelvesData}
+            />
         </div>
     );
 };
