@@ -170,10 +170,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
         const updateProductList = productListImport.map((item) => ({
             ...item,
             batchID: '',
-            realAmount: '',
-            errorAmount: '',
             reasonError: '',
-            requestAmount: '',
             location: '',
             supplierID: '',
             manufactureDate: '',
@@ -191,7 +188,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
             batchProduct.productName = it.product.productName;
             batchProduct.requestAmount = it.quantity;
             batchProduct.realAmount = it.quantity;
-            batchProduct.errorAmount = 0
+            batchProduct.errorAmount = 0;
             batchProduct.unit = {
                 unitID: it.unit.unitID,
                 unitName: it.unit.unitName,
@@ -325,7 +322,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                             return (
                                                 <tr key={idx}>
                                                     <td>{idx + 1}</td>
-                                                    
+
                                                     <td>
                                                         <input
                                                             type="text"

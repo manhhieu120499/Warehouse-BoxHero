@@ -16,6 +16,7 @@ import BatchDTO from '../../dtos/BatchDTO';
 import ProductDetailDTO from '../../dtos/ProductDetailDTO';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { formatStatusProduct, styleMessage } from '../../constants';
+import PaginationUI from '@/components/PaginationUI';
 
 const cx = classNames.bind(styles);
 
@@ -80,7 +81,7 @@ const ProductPage = () => {
                     warehouseid: currentUser.warehouseId ? currentUser.warehouseId : null,
                 },
             });
-            console.log(res.data);
+            //console.log(res.data);
             const { batches, ...rest } = res.data.product;
             const formatBatch = batches.map((item) => {
                 const batch = new BatchDTO(item);
@@ -185,24 +186,13 @@ const ProductPage = () => {
         },
     ];
 
-    // const handleOpenModalCreateCategory = () => {
-    //     setShowModalCreateCategory((prev) => !prev);
-    // };
-
-    const handleCreateCategory = async (category) => {
-        try {
-            // call api create category
-            // fetch again list category
-        } catch (err) {
-            toast.error(err);
-            return;
-        }
-    };
-
-    const fetchProducts = async () => {
+    const fetchProducts = async (page = 1) => {
         try {
             const tokenUser = parseToken('tokenUser');
             const result = await request.get('/api/product/list', {
+                params: {
+                    page,
+                },
                 headers: {
                     token: `Beare ${tokenUser.accessToken}`,
                     employeeid: tokenUser.employeeID,
@@ -255,7 +245,6 @@ const ProductPage = () => {
 
     useEffect(() => {
         if (location.state) {
-            console.log(location.state);
             setProductData(location.state);
             setAction({
                 productId: location.state.sku,
@@ -291,6 +280,19 @@ const ProductPage = () => {
         }
     };
 
+    const handleNextPage = () => {
+        setCurrentPage(currentPage + 1);
+    };
+
+    const handlePrevPage = () => {
+        if (currentPage - 1 == 0) return;
+        setCurrentPage(currentPage - 1);
+    };
+
+    useEffect(() => {
+        fetchProducts(currentPage);
+    }, [currentPage]);
+
     return (
         <div className={cx('wrapper-product')}>
             <ModelFilter
@@ -303,11 +305,18 @@ const ProductPage = () => {
                 className={cx('my-table')}
                 columns={tableColumns}
                 data={productList}
-                pageSize={15}
-                pagination
+                //pageSize={5}
+                //pagination
                 onChangePage={handleOnChange}
-                currentPage={currentPage}
+                //currentPage={currentPage}
             />
+            <div className={cx('pagination-wrapper')}>
+                <PaginationUI
+                    currentPage={currentPage}
+                    handleNextPage={handleNextPage}
+                    handlePrevPage={handlePrevPage}
+                />
+            </div>
             {action.productId && action.actionName === 'view' && (
                 <ProductDetail
                     data={productData}

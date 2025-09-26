@@ -201,11 +201,11 @@ const Sidebar = () => {
                 //     iconName: PenLine,
                 //     path: '/proposal',
                 // },
-                {
-                    title: 'Phê duyệt',
-                    iconName: CheckLine,
-                    path: '/approve',
-                },
+                // {
+                //     title: 'Phê duyệt',
+                //     iconName: CheckLine,
+                //     path: '/approve',
+                // },
             ],
         },
         {

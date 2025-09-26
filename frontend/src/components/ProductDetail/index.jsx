@@ -37,37 +37,36 @@ const tableColumns = [
         key: 'sbu',
     },
     {
-        title: () => <TooltipTable text={"Ngày nhập"} textHover={"Click để sắp xếp ngày nhập"}/>,    
+        title: () => <TooltipTable text={'Ngày nhập'} textHover={'Click để sắp xếp ngày nhập'} />,
         dataIndex: 'importDate',
         key: 'importDate',
         defaultSortOrder: 'descend',
-        sorter: (a, b) => new Date(a.importDate) - new Date(b.importDate)
+        sorter: (a, b) => new Date(a.importDate) - new Date(b.importDate),
     },
     {
-        title: () => <TooltipTable text={"Ngày sản xuất"} textHover={"Click để sắp xếp ngày sản xuất"}/>,
+        title: () => <TooltipTable text={'Ngày sản xuất'} textHover={'Click để sắp xếp ngày sản xuất'} />,
         dataIndex: 'macDate',
         key: 'macDate',
         defaultSortOrder: 'descend',
-        sorter: (a, b) => new Date(a.macDate) - new Date(b.macDate)
+        sorter: (a, b) => new Date(a.macDate) - new Date(b.macDate),
     },
     {
-        title: () => <TooltipTable text={"Hạn sử dụng"} textHover={"Click để sắp xếp hạn sử dụng"}/>,  
+        title: () => <TooltipTable text={'Hạn sử dụng'} textHover={'Click để sắp xếp hạn sử dụng'} />,
         dataIndex: 'expiredDate',
         key: 'expiredDate',
         defaultSortOrder: 'descend',
-        sorter: (a, b) => new Date(a.expiredDate) - new Date(b.expiredDate)
+        sorter: (a, b) => new Date(a.expiredDate) - new Date(b.expiredDate),
     },
     {
-        title: () => <TooltipTable text={"Số lượng nhập"} textHover={"Click để sắp xếp số lượng nhập"}/>,  
+        title: () => <TooltipTable text={'Số lượng nhập'} textHover={'Click để sắp xếp số lượng nhập'} />,
         dataIndex: 'receive',
         key: 'receive',
         defaultSortOrder: 'descend',
         sorter: (a, b) => a.receive - b.receive,
         render: (text) => <p className={cx('number')}>{text}</p>,
-        
     },
     {
-        title: () => <TooltipTable text={"Số lượng tồn"} textHover={"Click để sắp xếp số lượng tồn"}/>,
+        title: () => <TooltipTable text={'Số lượng tồn'} textHover={'Click để sắp xếp số lượng tồn'} />,
         dataIndex: 'available',
         key: 'available',
         defaultSortOrder: 'descend',
@@ -81,7 +80,7 @@ const tableColumns = [
         render: (text, record) => <p className={cx('number')}>{record.unit}</p>,
     },
     {
-        title: () => <TooltipTable text={"Tổng sản phẩm"} textHover={"Click để sắp xếp tổng sản phẩm"}/>,  
+        title: () => <TooltipTable text={'Tổng sản phẩm'} textHover={'Click để sắp xếp tổng sản phẩm'} />,
         dataIndex: 'totalProductRemain',
         key: 'totalProductRemain',
         defaultSortOrder: 'descend',
@@ -242,7 +241,7 @@ const ProductDetail = ({ data, classname, onClose }) => {
                         <div className={cx('wrapper-image-product')}>
                             <Image
                                 src={
-                                    data.image ||
+                                    data?.image ||
                                     'https://marketplace.canva.com/EAFALM0AfOs/1/0/900w/canva-m%C3%A0u-n%C3%A2u-be-h%C3%ACnh-n%E1%BB%81n-%C4%91i%E1%BB%87n-tho%E1%BA%A1i-d%E1%BB%85-th%C6%B0%C6%A1ng-y%C3%AAu-%C4%91%E1%BB%9Di-iSucd-62myg.jpg'
                                 }
                                 alt="image-product"
@@ -259,8 +258,8 @@ const ProductDetail = ({ data, classname, onClose }) => {
                             <RowItem
                                 firstTitle="Mã sản phẩm"
                                 firstValue={data.sku}
-                                secondTitle="Tổng số lượng tồn"
-                                secondValue={data.total}
+                                secondTitle="Tổng lượng tồn kho"
+                                secondValue={data?.total || ''}
                             />
                             <RowItem firstTitle="Mô tả" firstValue={data.des} />
                             <RowItem firstTitle="Mã nhà cung cấp" firstValue={data.supplierId} />
