@@ -2,10 +2,6 @@ import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ReceiveProductPage.module.scss';
 import { MyTable, Button, Modal } from '../../components';
-import { useSelector } from 'react-redux';
-import request from '../../utils/httpRequest';
-import parseToken from '../../utils/parseToken';
-import { formatStatusProposal } from '../../constants';
 import { ClipboardClock, Eye, PlusCircle, Trash, FileMinus } from 'lucide-react';
 import HistoryReceiveAndReleasePage from '../HistoryReceiveAndReleasePage';
 import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
@@ -18,8 +14,6 @@ const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyle);
 
 const ReceiveProductPage = () => {
-    const currentWarehouse = useSelector((state) => state.WareHouseSlice.warehouse);
-    const currentUser = useSelector((state) => state.AuthSlice.user);
     const [tabActive, setTabActive] = useState(1);
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');

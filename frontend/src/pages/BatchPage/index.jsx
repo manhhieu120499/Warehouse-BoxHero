@@ -24,26 +24,28 @@ const BatchPage = () => {
         if (volume >= 30) return 'processing';
         else return 'warning';
     };
-    useEffect(() => {
-        const fetchData = async () => {
-            const token = parseToken('tokenUser');
-            const warehouse = parseToken('warehouse');
 
-            const headers = {
-                token: `Bearer ${token.accessToken}`,
-                employeeID: token.employeeID,
-                warehouseID: warehouse.warehouseID,
-            };
-            const data = await getAllShelfOfWarehouse({
-                warehouseID: warehouse.warehouseID,
-                headers,
-            });
-            if (data.status === 'OK') {
-                setShelvesData(data.data);
-            }
-        };
+    useEffect(() => {
         fetchData();
     }, []);
+
+    const fetchData = async () => {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+
+        const headers = {
+            token: `Bearer ${token.accessToken}`,
+            employeeID: token.employeeID,
+            warehouseID: warehouse.warehouseID,
+        };
+        const data = await getAllShelfOfWarehouse({
+            warehouseID: warehouse.warehouseID,
+            headers,
+        });
+        if (data.status === 'OK') {
+            setShelvesData(data.data);
+        }
+    };
 
     return (
         <div className={cx('warehouse-map')}>
@@ -58,10 +60,6 @@ const BatchPage = () => {
                     >
                         KHU VỰC KHO TẠM
                     </Button>
-                </div>
-                <div className={cx('toilet')}>
-                    <div className={cx('toilet-room')}>WC Nam</div>
-                    <div className={cx('toilet-room')}>WC Nữ</div>
                 </div>
             </div>
 
@@ -138,6 +136,7 @@ const BatchPage = () => {
                 onClose={() => setShowUpdateLocation(false)}
                 batches={batchesUpdate}
                 shelvesData={shelvesData}
+                fetchData={fetchData}
             />
         </div>
     );

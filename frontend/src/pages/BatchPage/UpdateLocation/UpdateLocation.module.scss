@@ -274,6 +274,7 @@
                 background: #cce5cc;
                 border-radius: 3px;
                 width: 100%;
+                border: 2px solid transparent;
                 padding: 8px 12px;
                 &.empty {
                     background: #ccffcc; // xanh lá
@@ -288,7 +289,7 @@
                     background: yellow;
                 }
                 &.active {
-                    border: 2px solid black;
+                    border-color: black;
                 }
             }
             .box + .box {
