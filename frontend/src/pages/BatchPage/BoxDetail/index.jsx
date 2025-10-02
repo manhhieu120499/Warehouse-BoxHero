@@ -213,7 +213,8 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
                         </Button>
                     )}
                 </div>
-                <h4 className={cx('box-detail-content')}>Nội dung chi tiết ô</h4>
+                {boxID && <h4 className={cx('box-detail-content')}>Nội dung chi tiết ô</h4>}
+                {!boxID && <h4 className={cx('box-detail-content')}>Danh sách sản phẩm trong kho tạm</h4>}
                 <div className={cx('tableWrap')}>
                     <table className={cx('table')}>
                         <thead>

@@ -52,3 +52,9 @@ export const formatStatusOrderPurchaseMissing = {
     RESOLVED: 'Đã giải quyết',
     CANCELED: 'Đã hủy',
 };
+
+export const formatStatusOrderPurchaseMissingInventoryCheck = {
+    MATCHED: 'Đủ sản phẩm',
+    SHORTAGE: 'Thiếu sản phẩm',
+    SURPLUS: 'Dư sản phẩm',
+};
