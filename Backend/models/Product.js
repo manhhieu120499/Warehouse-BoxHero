@@ -41,8 +41,8 @@ module.exports = (sequelize, Sequelize) => {
             },
             baseUnitProductID: {
                 type: Sequelize.STRING,
-                allowNull: false
-            }
+                allowNull: false,
+            },
         },
         {
             tableName: 'products',
@@ -54,7 +54,7 @@ module.exports = (sequelize, Sequelize) => {
         Product.hasMany(models.Batch, { foreignKey: 'productID', as: 'batches' });
         // Thêm belongsTo để join ngược lại Category
         Product.belongsTo(models.Category, { foreignKey: 'categoryID', as: 'category' });
-        Product.belongsTo(models.BaseUnitProduct, {foreignKey: 'baseUnitProductID', as: 'baseUnitProducts'})
+        Product.belongsTo(models.BaseUnitProduct, { foreignKey: 'baseUnitProductID', as: 'baseUnitProducts' });
     };
 
     return Product;

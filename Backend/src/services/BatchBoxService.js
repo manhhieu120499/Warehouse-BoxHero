@@ -250,7 +250,7 @@ class BatchBoxService {
                 }
                 // 2. Duyệt từng location để kiểm tra và cập nhật
                 for (const loc of locations) {
-                    const { batchID, box, quantity } = loc;
+                    const { batchID, boxes } = loc;
                     const batch = await Batch.findOne({
                         where: { batchID, warehouseID },
                         include: [{ model: Unit, as: 'unit' }],
@@ -262,70 +262,77 @@ class BatchBoxService {
                             message: `Batch ${batchID} không tồn tại hoặc không hợp lệ`,
                         });
                     }
-                    if (quantity > batch.remainAmount) {
-                        reject({
-                            status: 'ERR',
-                            statusHttp: HTTP_BAD_REQUEST,
-                            message: `Số lượng đặt (${quantity}) vượt quá số lượng còn lại của batch ${batchID} (${batch.remainAmount})`,
-                        });
-                    }
-                    // box is one
-                    // join box with warehouse through floor, shelf, zone
-                    const boxExist = await Box.findOne({
-                        where: { boxID: box.boxID },
-                        include: [
-                            {
-                                model: Floor,
-                                as: 'floor',
-                                include: [
-                                    {
-                                        model: Shelf,
-                                        as: 'shelf',
-                                        include: [
-                                            {
-                                                model: Zone,
-                                                as: 'zone',
-                                                where: { warehouseID },
-                                            },
-                                        ],
-                                    },
-                                ],
-                            },
-                        ],
-                    });
-                    if (!boxExist) {
-                        reject({
-                            status: 'ERR',
-                            statusHttp: HTTP_NOT_FOUND,
-                            message: `Box ${box.boxID} không tồn tại`,
-                        });
-                    }
-                    const unitVolume = batch.unit.length * batch.unit.width * batch.unit.height;
-                    const requiredVolume = unitVolume * quantity;
-                    if (boxExist.remainingAcreage < requiredVolume) {
-                        reject({
-                            status: 'ERR',
-                            statusHttp: HTTP_BAD_REQUEST,
-                            message: `Box ${box.boxID} không đủ diện tích (còn ${boxExist.remainingAcreage}, cần ${requiredVolume})`,
-                        });
-                    } else {
-                        // Cập nhật BatchBox
-                        await db.BatchBox.create(
-                            {
-                                batchID: batch.batchID,
-                                boxID: boxExist.boxID,
-                                quantity,
-                            },
-                            { transaction },
-                        );
-                        // Cập nhật remain của box
-                        boxExist.remainingAcreage -= requiredVolume;
-                        if (boxExist.remainingAcreage === 0) {
-                            boxExist.status = 'FULL';
-                        } else if (boxExist.status === 'AVAILABLE') {
-                            boxExist.status = 'OCCUPIED';
+                    for (const box of boxes) {
+                        const { boxID, quantity } = box;
+
+                        // kiểm tra số lượng vượt quá batch
+                        if (quantity > batch.remainAmount) {
+                            return reject({
+                                status: 'ERR',
+                                statusHttp: HTTP_BAD_REQUEST,
+                                message: `Số lượng đặt (${quantity}) vượt quá số lượng còn lại của batch ${batchID} (${batch.remainAmount})`,
+                            });
                         }
-                        await boxExist.save({ transaction });
+
+                        // kiểm tra box có tồn tại trong warehouse qua floor -> shelf -> zone
+                        const boxExist = await Box.findOne({
+                            where: { boxID },
+                            include: [
+                                {
+                                    model: Floor,
+                                    as: 'floor',
+                                    include: [
+                                        {
+                                            model: Shelf,
+                                            as: 'shelf',
+                                            include: [
+                                                {
+                                                    model: Zone,
+                                                    as: 'zone',
+                                                    where: { warehouseID },
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        });
+
+                        if (!boxExist) {
+                            return reject({
+                                status: 'ERR',
+                                statusHttp: HTTP_NOT_FOUND,
+                                message: `Box ${boxID} không tồn tại trong kho ${warehouseID}`,
+                            });
+                        }
+
+                        const unitVolume = batch.unit.length * batch.unit.width * batch.unit.height;
+                        const requiredVolume = unitVolume * quantity;
+                        if (boxExist.remainingAcreage < requiredVolume) {
+                            reject({
+                                status: 'ERR',
+                                statusHttp: HTTP_BAD_REQUEST,
+                                message: `Box ${box.boxID} không đủ diện tích (còn ${boxExist.remainingAcreage}, cần ${requiredVolume})`,
+                            });
+                        } else {
+                            // Cập nhật BatchBox
+                            await db.BatchBox.create(
+                                {
+                                    batchID: batch.batchID,
+                                    boxID: boxExist.boxID,
+                                    quantity,
+                                },
+                                { transaction },
+                            );
+                            // Cập nhật remain của box
+                            boxExist.remainingAcreage -= requiredVolume;
+                            if (boxExist.remainingAcreage === 0) {
+                                boxExist.status = 'FULL';
+                            } else if (boxExist.status === 'AVAILABLE') {
+                                boxExist.status = 'OCCUPIED';
+                            }
+                            await boxExist.save({ transaction });
+                        }
                     }
                 }
                 await transaction.commit();
