@@ -3,7 +3,11 @@ const router = express.Router();
 const InventoryCheckController = require('../controllers/InventoryCheckController');
 const { authUserIsManager } = require('../middleware/AuthMiddleware');
 const validate = require('../validates/validate');
-const { getAllInventoryChecks } = require('../validates/inventoryCheck.validation');
+const {
+    getAllInventoryChecks,
+    createInventoryCheck,
+    filterInventoryCheck,
+} = require('../validates/inventoryCheck.validation');
 router.get('/', (req, res) => {
     return res.send('InventoryCheckRouter Router is working!');
 });
@@ -14,6 +18,22 @@ router.get(
     validate,
     authUserIsManager,
     InventoryCheckController.getListInventoryCheck,
+);
+
+router.post(
+    '/create-inventory-checks',
+    createInventoryCheck,
+    validate,
+    authUserIsManager,
+    InventoryCheckController.createInventoryCheck,
+);
+
+router.get(
+    '/filter-inventory-checks',
+    filterInventoryCheck,
+    validate,
+    authUserIsManager,
+    InventoryCheckController.filterInventoryCheck,
 );
 
 module.exports = router;
