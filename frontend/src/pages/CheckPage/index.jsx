@@ -2,53 +2,80 @@
 import React, { use, useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './CheckPage.module.scss';
-import { formatStatusProposal, formatStatusOrderPurchaseMissing } from '@/constants';
 import { Button, ModelFilter, MyTable, PaginationUI } from '@/components';
 import CreateCheckDetail from './CreateCheckDetail';
 import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import ModelProposalDetail from '@/pages/ApprovePage/ModelProposalDetail';
-import { getAllInventoryCheck } from '../../services/inventoryCheck.service';
+import { getAllInventoryCheck, getFilterInventoryCheck } from '../../services/inventoryCheck.service';
 import parseToken from '../../utils/parseToken';
 import { formatStatusOrderPurchaseMissingInventoryCheck } from '../../constants';
-import { set } from 'react-hook-form';
+import { getAllShelfOfWarehouse } from '../../services/shelf.service';
 
 const cxGlobal = classNames.bind(globalStyle);
 const cx = classNames.bind(styles);
 
 const ImportProduct = () => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [showDetailProposal, setShowDetailProposal] = useState(false);
+    const [showDetailInventoryCheck, setShowDetailInventoryCheck] = useState(false);
+    const [showCreateInventoryCheck, setShowCreateInventoryCheck] = useState(false);
     const [listInventoryCheck, setListInventoryCheck] = useState([]);
     const [inventoryCheckDetail, setInventoryCheckDetail] = useState('');
+    const [shelvesData, setShelvesData] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const handleNextPage = () => {
+        setCurrentPage(currentPage + 1);
+    };
+
+    const handlePrevPage = () => {
+        if (currentPage - 1 == 0) return;
+        setCurrentPage(currentPage - 1);
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            const warehouseID = parseToken('warehouse').warehouseID;
-            const res = await getAllInventoryCheck(warehouseID);
-            if (res.status == 200) {
-                setListInventoryCheck(res.data.data);
-            }
+        fetchData(currentPage);
+    }, [currentPage]);
+
+    const fetchData = async (currentPage) => {
+        const warehouseID = parseToken('warehouse').warehouseID;
+        const res = await getAllInventoryCheck(warehouseID, currentPage);
+        if (res.status == 200) {
+            setListInventoryCheck(res.data.data);
+        }
+    };
+
+    const fetchShelfData = async () => {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+
+        const headers = {
+            token: `Bearer ${token.accessToken}`,
+            employeeID: token.employeeID,
+            warehouseID: warehouse.warehouseID,
         };
+        const data = await getAllShelfOfWarehouse({
+            warehouseID: warehouse.warehouseID,
+            headers,
+        });
+        if (data.status === 'OK') {
+            setShelvesData(data.data);
+        }
+    };
+
+    useEffect(() => {
         fetchData();
+        fetchShelfData();
     }, []);
+
     useEffect(() => {
         console.log(listInventoryCheck);
     }, [listInventoryCheck]);
 
-    const [filterProposal, setFilterProposal] = useState({
-        code: '',
+    const [filterInventoryCheck, setFilterInventoryCheck] = useState({
+        inventoryCheckID: '',
+        status: 'ALL',
         createdAt: '',
         employeeName: '',
     });
-
-    const handleNextPage = () => {
-        setCurrentPage((prev) => prev + 1);
-    };
-
-    const handlePrevPage = () => {
-        if (currentPage == 1) return;
-        setCurrentPage((prev) => (prev == 1 ? 1 : prev - 1));
-    };
 
     const columnsDefineSuggestProposal = [
         {
@@ -96,7 +123,7 @@ const ImportProduct = () => {
                             medium
                             onClick={() => {
                                 setInventoryCheckDetail(record);
-                                setShowDetailProposal(true);
+                                setShowDetailInventoryCheck(true);
                             }}
                         >
                             <span>Xem chi tiết</span>
@@ -113,8 +140,8 @@ const ImportProduct = () => {
             label: 'Mã phiếu kiểm kê',
             dataIndex: 'inventoryCheckID',
             key: 'inventoryCheckID',
-            setValue: (value) => setFilterProposal({ ...filterProposal, code: value }),
-            value: filterProposal.code,
+            setValue: (value) => setFilterInventoryCheck({ ...filterInventoryCheck, inventoryCheckID: value }),
+            value: filterInventoryCheck.inventoryCheckID,
         },
         {
             id: 2,
@@ -122,23 +149,28 @@ const ImportProduct = () => {
             dataIndex: 'createdAt',
             key: 'createdAt',
             type: 'date',
-            setValue: (value) => setFilterProposal({ ...filterProposal, createdAt: value }),
-            value: filterProposal.createdAt,
+            setValue: (value) => setFilterInventoryCheck({ ...filterInventoryCheck, createdAt: value }),
+            value: filterInventoryCheck.createdAt,
         },
         {
             id: 3,
             label: 'Tên nhân viên lập phiếu',
             dataIndex: 'employeeName',
             key: 'employeeName',
-            setValue: (value) => setFilterProposal({ ...filterProposal, employeeName: value }),
-            value: filterProposal.employeeName,
+            setValue: (value) => setFilterInventoryCheck({ ...filterInventoryCheck, employeeName: value }),
+            value: filterInventoryCheck.employeeName,
         },
     ];
 
     const selectInput = [
         {
             label: 'Trạng thái phiếu',
+            value: filterInventoryCheck.status,
             option: [
+                {
+                    name: 'Tất cả',
+                    value: 'ALL',
+                },
                 {
                     name: 'Đủ sản phẩm',
                     value: 'MATCHED',
@@ -152,17 +184,34 @@ const ImportProduct = () => {
                     value: 'SURPLUS',
                 },
             ],
+            setValue: (value) => setFilterInventoryCheck({ ...filterInventoryCheck, status: value }),
         },
     ];
 
-    const handleSubmitFilter = async () => {};
+    const handleSubmitFilter = async () => {
+        const warehouse = parseToken('warehouse');
+        const warehouseID = warehouse.warehouseID;
+        let status = '';
+        if (filterInventoryCheck.status === 'ALL') {
+            status = '';
+        } else {
+            status = filterInventoryCheck.status;
+        }
+        const res = await getFilterInventoryCheck({ ...filterInventoryCheck, warehouseID, currentPage, status });
+        if (res.data.status == 'OK') {
+            setListInventoryCheck(res.data.data);
+        }
+    };
 
     const handleResetFilter = () => {
-        setFilterProposal({
-            code: '',
+        setFilterInventoryCheck({
+            inventoryCheckID: '',
+            status: 'ALL',
             createdAt: '',
             employeeName: '',
         });
+        fetchData();
+        setCurrentPage(1);
     };
 
     return (
@@ -176,7 +225,7 @@ const ImportProduct = () => {
                 <Button
                     primary
                     onClick={() => {
-                        setShowDetailProposal(true);
+                        setShowCreateInventoryCheck(true);
                     }}
                 >
                     <span>Tạo phiếu kiểm kê</span>
@@ -198,12 +247,21 @@ const ImportProduct = () => {
                 </div>
             </div>
 
-            {showDetailProposal && (
+            {showDetailInventoryCheck && (
                 <CreateCheckDetail
                     inventoryCheckDetail={inventoryCheckDetail}
-                    isOpen={showDetailProposal}
-                    onClose={() => setShowDetailProposal(false)}
+                    isOpen={showDetailInventoryCheck}
+                    onClose={() => setShowDetailInventoryCheck(false)}
                     type="detail"
+                />
+            )}
+
+            {showCreateInventoryCheck && (
+                <CreateCheckDetail
+                    shelvesData={shelvesData}
+                    fetchData={fetchData}
+                    isOpen={showCreateInventoryCheck}
+                    onClose={() => setShowCreateInventoryCheck(false)}
                 />
             )}
         </div>
