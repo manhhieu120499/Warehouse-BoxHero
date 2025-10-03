@@ -130,3 +130,19 @@ export const validatePayloadCreateReceiptMissing = (payload) => {
     }
     return true;
 };
+
+export const saveOrderRelease = async (payload) => {
+    try {
+        const token = parseToken('tokenUser');
+        const res = await request.post('api/order-release/create', payload, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+                warehouseID: token.warehouseID,
+            },
+        });
+        return res;
+    } catch (err) {
+        throw new Error(err.response.data);
+    }
+};

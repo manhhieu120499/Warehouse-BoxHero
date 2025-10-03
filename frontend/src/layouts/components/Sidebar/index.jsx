@@ -156,38 +156,57 @@ const Sidebar = () => {
         },
         {
             id: 2,
-            title: 'Master Data',
-            iconName: Target,
-            subMenu: [
-                {
-                    title: 'Nhóm sản phẩm',
-                    iconName: ShoppingBasket,
-                    path: '/categories',
-                },
-                {
-                    title: 'Sản phẩm',
-                    iconName: Milk,
-                    path: '/products',
-                },
-                {
-                    title: 'Khách hàng',
-                    iconName: Users,
-                    path: '/customer',
-                },
-                {
-                    title: 'Nhà cung cấp',
-                    iconName: Factory,
-                    path: '/supplier',
-                },
-                {
-                    title: 'Nhân sự',
-                    iconName: User,
-                    path: '/auth',
-                },
-            ],
+            title: 'Sản phẩm',
+            iconName: Milk,
+            path: '/products',
+            // subMenu: [
+            //     {
+            //         title: 'Nhóm sản phẩm',
+            //         iconName: ShoppingBasket,
+            //         path: '/categories',
+            //     },
+            //     {
+            //         title: 'Sản phẩm',
+            //         iconName: Milk,
+            //         path: '/products',
+            //     },
+            //     {
+            //         title: 'Khách hàng',
+            //         iconName: Users,
+            //         path: '/customer',
+            //     },
+            //     {
+            //         title: 'Nhà cung cấp',
+            //         iconName: Factory,
+            //         path: '/supplier',
+            //     },
+            //     {
+            //         title: 'Nhân sự',
+            //         iconName: User,
+            //         path: '/auth',
+            //     },
+            // ],
         },
         {
             id: 3,
+            title: 'Khách hàng',
+            iconName: Users,
+            path: '/customer',
+        },
+        {
+            id: 4,
+            title: 'Nhà cung cấp',
+            iconName: Factory,
+            path: '/supplier',
+        },
+        {
+            id: 5,
+            title: 'Nhân sự',
+            iconName: User,
+            path: '/auth',
+        },
+        {
+            id: 6,
             title: 'Phiếu đề xuất',
             iconName: ClipboardMinus,
             subMenu: [
@@ -209,7 +228,7 @@ const Sidebar = () => {
             ],
         },
         {
-            id: 4,
+            id: 7,
             title: 'Quản lý nhập xuất',
             iconName: TruckElectric,
             subMenu: [
@@ -226,7 +245,7 @@ const Sidebar = () => {
             ],
         },
         {
-            id: 5,
+            id: 8,
             title: 'Quản lý kho',
             iconName: Warehouse,
             subMenu: [
@@ -242,7 +261,7 @@ const Sidebar = () => {
                     path: '/zone',
                 },
                 {
-                    title: 'Quản lý lô hàng',
+                    title: 'Quản lý kệ',
                     iconName: Package,
                     path: '/batch',
                 },

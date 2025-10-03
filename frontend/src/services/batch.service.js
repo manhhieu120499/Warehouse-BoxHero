@@ -29,3 +29,26 @@ export const getBatchesWithoutLocation = async (warehouseID) => {
         return err;
     }
 };
+
+export const getAllBatchWithProductID = async (productID) => {
+    try {
+        const warehouse = parseToken('warehouse');
+        const token = parseToken('tokenUser');
+        const res = await request.get(`/api/batch/all-batch-by-product`, {
+            params: {
+                productID: productID,
+                warehouseID: warehouse.warehouseID,
+            },
+
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+                warehouseID: warehouse.warehouseID,
+            },
+        });
+        return res?.data?.data || null;
+    } catch (err) {
+        console.log(err);
+        throw new Error(err.response.data);
+    }
+};

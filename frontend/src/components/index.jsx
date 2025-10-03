@@ -16,8 +16,8 @@ import ModalOrder from './ModalOrder';
 import ProductDetail from './ProductDetail';
 import ProductEdit from './ProductEdit';
 import ModalEmployee from './ModalEmployee';
-import ModelFilter from "./ModelFilter"
-import ModalUpdate from "./ModalUpdate"
+import ModelFilter from './ModelFilter';
+import ModalUpdate from './ModalUpdate';
 import ModalCreateAccount from './ModalCreateAccount';
 import CategoryList from './CategoryList';
 import ModalCreateCategory from './ModalCreateCategory';
@@ -27,6 +27,7 @@ import Loading from './Loading';
 import TooltipTable from './TooltipTable';
 import PaginationUI from './PaginationUI';
 import TableProductImport from './TableProductImport';
+import Select from './Select';
 
 export {
     GlobalStyle,
@@ -57,5 +58,6 @@ export {
     Loading,
     TooltipTable,
     PaginationUI,
-    TableProductImport
+    TableProductImport,
+    Select,
 };

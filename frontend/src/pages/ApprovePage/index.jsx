@@ -10,12 +10,13 @@ import Tippy from '@tippyjs/react';
 import { Eye } from 'lucide-react';
 import ModelProposalDetail from './ModelProposalDetail';
 import { convertDateVN } from '../../common';
+import ProposalStatus from '../../components/ProposalStatus';
 
 const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle);
 
 const ApprovePage = () => {
-    const pageSize = 5;
+    const pageSize = 4;
     const [page, setPage] = useState(1);
     const [proposalPurchaseList, setProposalPurchaseList] = useState([]);
     const [showModalDetail, setShowModalDetail] = useState(false);
@@ -108,12 +109,7 @@ const ApprovePage = () => {
             dataIndex: 'status',
             key: 'status',
             render: (index, record) => {
-                return (
-                    <div className={cx('status-proposal')}>
-                        <div className={cx('status-indicator', record.status)}></div>
-                        <p>{formatStatusProposal[index]}</p>
-                    </div>
-                );
+                return <ProposalStatus index={index} record={record} />;
             },
         },
         {
@@ -241,7 +237,7 @@ const ApprovePage = () => {
                     className={cx('my-table')}
                     columns={columnsTable}
                     data={proposalPurchaseList}
-                    pageSize={pageSize}
+                    //pageSize={pageSize}
                 />
                 <PaginationUI currentPage={page} handleNextPage={handleNextPage} handlePrevPage={handlePrevPage} />
             </div>

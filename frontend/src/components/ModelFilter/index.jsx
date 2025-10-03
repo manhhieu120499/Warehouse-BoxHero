@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ModelFilter.module.scss';
 import { MyTable, Button, Popper, Modal, ModalOrder } from '@/components';
+import { RotateCcw, Search } from 'lucide-react';
 
 const cx = classNames.bind(styles);
 
@@ -44,7 +45,7 @@ const ModelFilter = ({ handleSubmitFilter, handleResetFilters, columns, children
                     <div className={cx('form-group')} key={item.id}>
                         <label htmlFor={item.id}>{item.label}</label>
                         <input
-                            type={item?.type || "text"}
+                            type={item?.type || 'text'}
                             id={item.id}
                             className={cx('form-input')}
                             placeholder={`Nhập ${item.label}`}
@@ -70,10 +71,20 @@ const ModelFilter = ({ handleSubmitFilter, handleResetFilters, columns, children
             </div>
             <div className={cx('wrapper-action')}>
                 {children}
-                <Button primary className={cx('btn-filter')} onClick={handleSubmitFilter}>
+                <Button
+                    primary
+                    className={cx('btn-filter')}
+                    onClick={handleSubmitFilter}
+                    leftIcon={<Search size={15} />}
+                >
                     Tìm kiếm
                 </Button>
-                <Button primary className={cx('btn-reset')} onClick={handleResetFilters}>
+                <Button
+                    outline
+                    className={cx('btn-reset')}
+                    onClick={handleResetFilters}
+                    leftIcon={<RotateCcw size={15} />}
+                >
                     Đặt lại
                 </Button>
             </div>
