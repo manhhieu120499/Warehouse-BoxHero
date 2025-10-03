@@ -17,6 +17,15 @@ class BatchBoxController {
             return res.status(err.statusHttp).json(err);
         }
     }
+    async getAllBoxByBatchID(req, res) {
+        try {
+            const { batchID } = req.query;
+            const { statusHttp, ...response } = await BatchBoxService.getAllBoxByBatchID(batchID);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
 }
 
 module.exports = new BatchBoxController();

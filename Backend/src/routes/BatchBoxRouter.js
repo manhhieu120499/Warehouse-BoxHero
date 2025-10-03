@@ -1,5 +1,5 @@
 const express = require('express');
-const { authUserIsManager } = require('../middleware/AuthMiddleware');
+const { authUserIsManager, authUser } = require('../middleware/AuthMiddleware');
 const { suggestBoxes, updateLocationBatch } = require('../validates/batchBox.validation');
 const validate = require('../validates/validate');
 const BatchBoxController = require('../controllers/BatchBoxController');
@@ -13,4 +13,5 @@ router.post(
     validate,
     BatchBoxController.updateLocationBatch,
 );
+router.get('/get-all-box-by-batch-id', authUser, BatchBoxController.getAllBoxByBatchID);
 module.exports = router;

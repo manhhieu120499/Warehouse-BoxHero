@@ -31,4 +31,5 @@ router.get(
     BatchController.getBoxesContainingProduct,
 );
 router.get('/box-details', authUser, checkGetBoxDetails, validate, BatchController.getBoxDetails);
+router.get('/all-batch-by-product', authUser, BatchController.getAllBatchByProductID);
 module.exports = router;
