@@ -131,6 +131,7 @@
     }
     th.action {
         width: 180px;
+        text-align: center;
     }
 
     th {
@@ -144,6 +145,12 @@
 
     .num {
         text-align: right;
+    }
+
+    .action {
+        display: flex;
+        flex: 1;
+        justify-content: center;
     }
 
     .amount {

@@ -60,9 +60,9 @@ const ModelFilter = ({ handleSubmitFilter, handleResetFilters, columns, children
                             <label htmlFor={index}>{item.label}</label>
                             <select value={item.value} onChange={(e) => item.setValue(e.target.value)}>
                                 <option disabled></option>
-                                {item.option.map((item) => (
-                                    <option key={item.name} value={item.value}>
-                                        {item.name}
+                                {item.option.map((opt) => (
+                                    <option key={opt.name} value={opt.value}>
+                                        {opt.name}
                                     </option>
                                 ))}
                             </select>
