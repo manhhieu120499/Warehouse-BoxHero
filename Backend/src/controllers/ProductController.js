@@ -47,6 +47,14 @@ class ProductController {
             return res.status(err.statusHttp).json(err);
         }
     }
+    async filterProduct(req, res) {
+        try {
+            const { statusHttp, ...response } = await ProductService.filterProduct(req.body);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
 }
 
 module.exports = new ProductController();

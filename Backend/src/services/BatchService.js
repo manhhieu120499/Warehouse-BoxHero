@@ -415,6 +415,38 @@ class BatchService {
             }
         });
     }
+    async getAllBatchByProductID(productID, warehouseID) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const productExist = await Product.findOne({
+                    where: { productID },
+                });
+                if (!productExist) {
+                    return reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_NOT_FOUND,
+                        message: 'Sản phẩm không tồn tại',
+                    });
+                }
+                const batches = await Batch.findAll({
+                    where: { productID, warehouseID },
+                    include: [{ model: Unit, as: 'unit', attributes: ['unitID', 'unitName'] }],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    data: batches,
+                });
+            } catch (error) {
+                console.error(error);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: 'Không thể lấy danh sách lô hàng: ' + error.message,
+                });
+            }
+        });
+    }
 }
 
 module.exports = new BatchService();
