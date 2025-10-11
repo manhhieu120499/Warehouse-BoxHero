@@ -1,6 +1,7 @@
 const dotenv = require('dotenv');
 const db = require('../../models');
 const { Op } = require('sequelize');
+const { resolve } = require('path');
 const Product = db.Product;
 const Batch = db.Batch;
 const Box = db.Box;
@@ -9,6 +10,7 @@ const Shelf = db.Shelf;
 const Zone = db.Zone;
 const Unit = db.Unit;
 const Category = db.Category;
+const BaseUnitProduct = db.BaseUnitProduct;
 dotenv.config();
 
 const HTTP_OK = process.env.HTTP_OK;
@@ -230,6 +232,38 @@ class ProductService {
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Cập nhật sản phẩm thành công',
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+    filterProduct(data) {
+        return new Promise(async (resolve, reject) => {
+            const condition = {};
+            if (data?.status) condition.status = data.status;
+            if (data?.minAmount) condition.amount = { [Op.gt]: data.minAmount };
+            try {
+                const products = await Product.findAll({
+                    where: condition,
+                    include: [
+                        {
+                            model: BaseUnitProduct,
+                            as: 'baseUnitProducts',
+                            attributes: ['baseUnitName'],
+                        },
+                    ],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy danh sách sản phẩm thành công',
+                    data: products,
                 });
             } catch (err) {
                 console.error(err);
