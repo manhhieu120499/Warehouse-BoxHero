@@ -351,6 +351,44 @@ class BatchBoxService {
             }
         });
     }
+    async getAllBoxByBatchID(batchID) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const batch = await Batch.findOne({
+                    where: { batchID },
+                    include: [
+                        {
+                            model: Box,
+                            as: 'boxes',
+                            attributes: { exclude: ['createdAt', 'updatedAt'] },
+                            through: {
+                                attributes: ['quantity'],
+                            },
+                        },
+                    ],
+                });
+                if (!batch) {
+                    return reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_NOT_FOUND,
+                        message: `Lô hàng ${batchID} không tồn tại`,
+                    });
+                }
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy danh sách box của batch thành công',
+                    boxes: batch.boxes
+                });
+            } catch (err) {
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: [err.message] || err,
+                });
+            }
+        });
+    }
 }
 
 module.exports = new BatchBoxService();

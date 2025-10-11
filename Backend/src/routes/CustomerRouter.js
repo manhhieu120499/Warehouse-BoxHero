@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-router.get("/", (req, res) => {
-    return res.send("CustomerRouter Router is working!");
-});
+const CustomerController = require('../controllers/CustomerController');
+
+router.get("/find/:id", CustomerController.findCustomerById);
+router.get("/list", CustomerController.getAllCustomers);
 
 module.exports = router;
