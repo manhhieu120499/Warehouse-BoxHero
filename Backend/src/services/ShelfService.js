@@ -41,6 +41,12 @@ class ShelfService {
                                             'ASC',
                                         ],
                                     ],
+                                    include: [
+                                        {
+                                            model: db.BatchBox,
+                                            as: 'batchBoxes',
+                                        },
+                                    ],
                                 },
                             ],
                         },
