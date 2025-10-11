@@ -6,7 +6,7 @@ const createInventoryCheck = [
     body('inventoryCheckID').notEmpty().withMessage('Mã kiểm kê là bắt buộc').bail(),
     body('employeeID').notEmpty().withMessage('Mã nhân viên là bắt buộc').bail(),
     body('warehouseID').notEmpty().withMessage('Mã kho là bắt buộc').bail(),
-    body('status')
+    body('checkStatus')
         .notEmpty()
         .isString()
         .withMessage('Trạng thái phải là một chuỗi')
@@ -23,9 +23,10 @@ const createInventoryCheck = [
             }
             return true;
         }),
-    body('details.*.productID').notEmpty().withMessage('Mã sản phẩm là bắt buộc').bail(),
-    body('details.*.systemQuantity').isInt({ gt: 0 }).withMessage('Số lượng hệ thống phải lớn hơn 0').bail(),
-    body('details.*.actualQuantity').isInt({ gt: 0 }).withMessage('Số lượng thực tế phải lớn hơn 0').bail(),
+    body('details.*.batchID').notEmpty().withMessage('Mã lô hàng là bắt buộc').bail(),
+    body('details.*.boxID').notEmpty().withMessage('Mã ô là bắt buộc').bail(),
+    body('details.*.systemQuantity').isInt({ gte: 0 }).withMessage('Số lượng hệ thống phải lớn hơn hoặc bằng 0').bail(),
+    body('details.*.actualQuantity').isInt({ gte: 0 }).withMessage('Số lượng thực tế phải lớn hơn hoặc bằng 0').bail(),
     body('details.*.discrepancyQuantity')
         .notEmpty()
         .withMessage('Số lượng chênh lệch là bắt buộc')
@@ -33,12 +34,28 @@ const createInventoryCheck = [
         .withMessage('Số lượng chênh lệch phải là một số nguyên')
         .bail(),
 ];
+const updateInventoryCheck = [
+    body('inventoryCheckID').notEmpty().withMessage('Mã phiếu kiểm kê là bắt buộc').bail(),
+    body('status')
+        .optional()
+        .isString()
+        .withMessage('Trạng thái phải là một chuỗi')
+        .bail()
+        .isIn(['PENDING', 'COMPLETED', 'REFUSE'])
+        .withMessage('Trạng thái không hợp lệ'),
+];
 
 const filterInventoryCheck = [
     query('status')
         .optional()
-        .isIn(['MATCHED', 'SHORTAGE', 'SURPLUS', ''])
+        // .isIn(['MATCHED', 'SHORTAGE', 'SURPLUS', ''])
+        .isIn(['PENDING', 'COMPLETED', 'REFUSE', ''])
         .withMessage('Trạng thái không hợp lệ')
+        .bail(),
+    query('checkStatus')
+        .optional()
+        .isIn(['MATCHED', 'SHORTAGE', 'SURPLUS', ''])
+        .withMessage('Trạng thái kiểm kê thực tế không hợp lệ')
         .bail(),
     query('warehouseID').notEmpty().withMessage('Mã kho là bắt buộc').bail(),
 ];
@@ -47,4 +64,5 @@ module.exports = {
     getAllInventoryChecks,
     createInventoryCheck,
     filterInventoryCheck,
+    updateInventoryCheck,
 };

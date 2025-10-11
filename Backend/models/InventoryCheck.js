@@ -1,4 +1,3 @@
-// models/InventoryCheck.js
 module.exports = (sequelize, Sequelize) => {
     const InventoryCheck = sequelize.define(
         'InventoryCheck',
@@ -20,7 +19,14 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 allowNull: false,
             },
+
             status: {
+                type: Sequelize.ENUM('PENDING', 'COMPLETED', 'REFUSE'),
+                allowNull: false,
+                defaultValue: 'PENDING',
+            },
+
+            checkStatus: {
                 type: Sequelize.ENUM('MATCHED', 'SHORTAGE', 'SURPLUS'),
                 allowNull: false,
                 defaultValue: 'MATCHED',
@@ -38,8 +44,11 @@ module.exports = (sequelize, Sequelize) => {
         InventoryCheck.belongsTo(models.Employee, { foreignKey: 'employeeID', as: 'employee' });
         InventoryCheck.belongsTo(models.Warehouse, { foreignKey: 'warehouseID' });
 
-        // 🔥 join với InventoryCheckDetail
-        InventoryCheck.hasMany(models.InventoryCheckDetail, { foreignKey: 'inventoryCheckID', as: 'details' });
+        // 🔥 Liên kết với chi tiết kiểm kê
+        InventoryCheck.hasMany(models.InventoryCheckDetail, {
+            foreignKey: 'inventoryCheckID',
+            as: 'details',
+        });
     };
 
     return InventoryCheck;
