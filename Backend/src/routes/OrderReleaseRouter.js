@@ -9,6 +9,7 @@ router.get('/', (req, res) => {
 });
 
 router.post('/create', authUser, checkCreateOrderRelease, validate, OrderReleaseController.createOrderRelease);
-router.get('/get-all-order-release', OrderReleaseController.getAllOrderRelease);
+router.get('/get-all-order-release', authUser, OrderReleaseController.getAllOrderRelease);
+router.post('/filter-order-release', authUser, OrderReleaseController.filterOrderRelease);
 
 module.exports = router;

@@ -15,6 +15,10 @@ const Product = db.Product;
 const Unit = db.Unit;
 const Warehouse = db.Warehouse;
 const Employee = db.Employee;
+const BaseUnitProduct = db.BaseUnitProduct;
+const { Op, fn, col, where } = require('sequelize');
+
+const LIMIT_PAGE = 5;
 
 class OrderReleaseService {
     // post /create
@@ -171,7 +175,7 @@ class OrderReleaseService {
             }
         });
     }
-    async getAllOrderRelease(warehouseID) {
+    async getAllOrderRelease(warehouseID, page = 1) {
         return new Promise(async (resolve, reject) => {
             try {
                 const warehouse = await Warehouse.findOne({ where: { warehouseID } });
@@ -202,9 +206,35 @@ class OrderReleaseService {
                                     model: OrderReleaseBatchBoxDetail,
                                     as: 'orderReleaseBatchBoxDetails',
                                 },
+                                {
+                                    model: Batch,
+                                    as: 'batch',
+                                    include: [
+                                        {
+                                            model: Product,
+                                            as: 'product',
+                                            attributes: ['productID', 'productName'],
+                                            include: [
+                                                {
+                                                    model: BaseUnitProduct,
+                                                    as: 'baseUnitProducts',
+                                                    attributes: ['baseUnitProductID', 'baseUnitName'],
+                                                },
+                                            ],
+                                        },
+                                        {
+                                            model: Unit,
+                                            as: 'unit',
+                                            attributes: ['unitName'],
+                                        },
+                                    ],
+                                },
                             ],
                         },
                     ],
+                    order: [['createdAt', 'DESC']],
+                    limit: LIMIT_PAGE,
+                    offset: (page - 1) * LIMIT_PAGE,
                 });
                 resolve({
                     status: 'OK',
@@ -214,6 +244,105 @@ class OrderReleaseService {
                 });
             } catch (err) {
                 console.error('Lấy danh sách đơn xuất kho lỗi:', err);
+                reject({
+                    status: 'ERROR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err.message,
+                });
+            }
+        });
+    }
+    async filterOrderRelease(data) {
+        return new Promise(async (resolve, reject) => {
+            let whereOption = {};
+            if (data.orderReleaseID) whereOption.orderReleaseID = data.orderReleaseID;
+            if (data.createdAt) {
+                whereOption = {
+                    ...whereOption,
+                    [Op.and]: [
+                        ...(whereOption[Op.and] || []),
+                        where(fn('DATE', col('OrderRelease.createdAt')), '=', data.createdAt),
+                    ],
+                };
+            }
+            try {
+                if (!data.warehouseID) {
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Vui lòng đính kèm mã kho',
+                    });
+                }
+                const warehouse = await Warehouse.findOne({ where: { warehouseID: data.warehouseID } });
+                if (!warehouse)
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Kho không tồn tại',
+                    });
+                const orderReleases = await OrderRelease.findAll({
+                    where: { ...whereOption },
+                    include: [
+                        {
+                            model: Employee,
+                            as: 'employees',
+                            attributes: ['employeeID', 'employeeName'],
+                            where: {
+                                ...(data.createdBy ? { employeeName: { [Op.like]: `%${data.createdBy}%` } } : {}),
+                            },
+                        },
+                        {
+                            model: Customer,
+                            as: 'customers',
+                            attributes: ['customerID', 'customerName'],
+                            where: {
+                                ...(data.customerName ? { customerName: { [Op.like]: `%${data.customerName}%` } } : {}),
+                            },
+                        },
+                        {
+                            model: OrderReleaseDetail,
+                            as: 'orderReleaseDetails',
+                            include: [
+                                {
+                                    model: OrderReleaseBatchBoxDetail,
+                                    as: 'orderReleaseBatchBoxDetails',
+                                },
+                                {
+                                    model: Batch,
+                                    as: 'batch',
+                                    include: [
+                                        {
+                                            model: Product,
+                                            as: 'product',
+                                            attributes: ['productID', 'productName'],
+                                            include: [
+                                                {
+                                                    model: BaseUnitProduct,
+                                                    as: 'baseUnitProducts',
+                                                    attributes: ['baseUnitProductID', 'baseUnitName'],
+                                                },
+                                            ],
+                                        },
+                                        {
+                                            model: Unit,
+                                            as: 'unit',
+                                            attributes: ['unitName'],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                    order: [['createdAt', 'DESC']],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    data: orderReleases,
+                    message: 'Lấy danh sách đơn xuất kho thành công',
+                });
+            } catch (err) {
+                console.error('Lọc đơn xuất kho lỗi:', err);
                 reject({
                     status: 'ERROR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
