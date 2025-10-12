@@ -1,9 +1,14 @@
-const { Op, where, fn, col } = require('sequelize');
+const { Op, where, fn, col, Sequelize } = require('sequelize');
 const db = require('../../models');
 const InventoryCheck = db.InventoryCheck;
 const InventoryCheckDetail = db.InventoryCheckDetail;
 const Product = db.Product;
 const Employee = db.Employee;
+const BatchBox = db.BatchBox;
+const Batch = db.Batch;
+const Box = db.Box;
+const Unit = db.Unit;
+const Floor = db.Floor;
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -19,21 +24,32 @@ class InventoryCheckService {
             const LIMIT_PAGE = 5;
             try {
                 const response = await InventoryCheck.findAll({
-                    where: {
-                        warehouseID,
-                    },
+                    where: { warehouseID },
                     include: [
-                        {
-                            model: Employee,
-                            as: 'employee',
-                        },
+                        { model: Employee, as: 'employee' },
                         {
                             model: InventoryCheckDetail,
                             as: 'details',
                             include: [
                                 {
-                                    model: Product,
-                                    as: 'product',
+                                    model: BatchBox,
+                                    as: 'batchBoxByBatch',
+                                    attribute: ['quantity'],
+                                    include: [
+                                        {
+                                            model: Batch,
+                                            as: 'batch',
+                                            include: [
+                                                { model: Product, as: 'product' },
+                                                { model: Unit, as: 'unit' },
+                                            ],
+                                        },
+                                        {
+                                            model: Box,
+                                            as: 'box',
+                                            include: [{ model: Floor, as: 'floor' }],
+                                        },
+                                    ],
                                 },
                             ],
                         },
@@ -42,6 +58,7 @@ class InventoryCheckService {
                     offset: (page - 1) * LIMIT_PAGE,
                     limit: LIMIT_PAGE,
                 });
+
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
@@ -49,6 +66,8 @@ class InventoryCheckService {
                     data: response,
                 });
             } catch (err) {
+                console.log(err);
+
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
@@ -57,12 +76,15 @@ class InventoryCheckService {
             }
         });
     }
-    filterInventoryCheck({ warehouseID, inventoryCheckID, status, createdAt, employeeName, page = 1 }) {
+    filterInventoryCheck({ warehouseID, inventoryCheckID, status, checkStatus, createdAt, employeeName, page = 1 }) {
         return new Promise(async (resolve, reject) => {
             const queryEmployee = {};
             const filterOptions = {};
             if (status) {
                 filterOptions.status = status;
+            }
+            if (checkStatus) {
+                filterOptions.checkStatus = checkStatus;
             }
             if (inventoryCheckID) {
                 filterOptions.inventoryCheckID = inventoryCheckID;
@@ -98,8 +120,24 @@ class InventoryCheckService {
                             as: 'details',
                             include: [
                                 {
-                                    model: Product,
-                                    as: 'product',
+                                    model: BatchBox,
+                                    as: 'batchBoxByBatch',
+                                    attribute: ['quantity'],
+                                    include: [
+                                        {
+                                            model: Batch,
+                                            as: 'batch',
+                                            include: [
+                                                { model: Product, as: 'product' },
+                                                { model: Unit, as: 'unit' },
+                                            ],
+                                        },
+                                        {
+                                            model: Box,
+                                            as: 'box',
+                                            include: [{ model: Floor, as: 'floor' }],
+                                        },
+                                    ],
                                 },
                             ],
                         },
@@ -128,13 +166,14 @@ class InventoryCheckService {
         return new Promise(async (resolve, reject) => {
             const transaction = await db.sequelize.transaction();
             try {
-                const { inventoryCheckID, employeeID, warehouseID, status, details } = data;
+                const { inventoryCheckID, employeeID, warehouseID, checkStatus, details } = data;
                 const newInventoryCheck = await InventoryCheck.create(
                     {
                         inventoryCheckID,
                         employeeID,
                         warehouseID,
-                        status,
+                        status: 'PENDING',
+                        checkStatus,
                     },
                     { transaction },
                 );
@@ -148,17 +187,30 @@ class InventoryCheckService {
                 const createdInventoryCheck = await InventoryCheck.findOne({
                     where: { inventoryCheckID: newInventoryCheck.inventoryCheckID },
                     include: [
-                        {
-                            model: Employee,
-                            as: 'employee',
-                        },
+                        { model: Employee, as: 'employee' },
                         {
                             model: InventoryCheckDetail,
                             as: 'details',
                             include: [
                                 {
-                                    model: Product,
-                                    as: 'product',
+                                    model: BatchBox,
+                                    as: 'batchBoxByBatch',
+                                    attribute: ['quantity'],
+                                    include: [
+                                        {
+                                            model: Batch,
+                                            as: 'batch',
+                                            include: [
+                                                { model: Product, as: 'product' },
+                                                { model: Unit, as: 'unit' },
+                                            ],
+                                        },
+                                        {
+                                            model: Box,
+                                            as: 'box',
+                                            include: [{ model: Floor, as: 'floor' }],
+                                        },
+                                    ],
                                 },
                             ],
                         },
@@ -173,6 +225,82 @@ class InventoryCheckService {
                 });
             } catch (err) {
                 await transaction.rollback();
+                console.log(err);
+
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+
+    updateInventoryCheck(data) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                const { inventoryCheckID, status } = data;
+                await InventoryCheck.update({ status }, { where: { inventoryCheckID }, transaction });
+
+                if (status === 'COMPLETED') {
+                    const details = await InventoryCheckDetail.findAll({
+                        where: { inventoryCheckID },
+                        include: [
+                            {
+                                model: BatchBox,
+                                as: 'batchBoxByBatch',
+                                attributes: ['quantity'],
+                                include: [
+                                    {
+                                        model: Batch,
+                                        as: 'batch',
+                                        include: [
+                                            { model: Product, as: 'product' },
+                                            { model: Unit, as: 'unit' },
+                                        ],
+                                    },
+                                    {
+                                        model: Box,
+                                        as: 'box',
+                                        include: [{ model: Floor, as: 'floor' }],
+                                    },
+                                ],
+                            },
+                        ],
+                    });
+
+                    for (const detail of details) {
+                        const discrepancyQuantity = detail.discrepancyQuantity;
+                        const batchBox = detail.batchBoxByBatch;
+
+                        await BatchBox.update(
+                            { quantity: batchBox.quantity + discrepancyQuantity },
+                            { where: { batchID: batchBox.batch.batchID, boxID: batchBox.box.boxID }, transaction },
+                        );
+
+                        await Batch.update(
+                            { remainAmount: batchBox.batch.remainAmount + discrepancyQuantity },
+                            { where: { batchID: batchBox.batch.batchID }, transaction },
+                        );
+
+                        const amountChange = discrepancyQuantity * batchBox.batch.unit.conversionQuantity;
+                        await Product.update(
+                            { amount: batchBox.batch.product.amount + amountChange },
+                            { where: { productID: batchBox.batch.product.productID }, transaction },
+                        );
+                    }
+                }
+
+                await transaction.commit();
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Cập nhật phiếu kiểm kê thành công',
+                });
+            } catch (err) {
+                await transaction.rollback();
+                console.log(err);
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,

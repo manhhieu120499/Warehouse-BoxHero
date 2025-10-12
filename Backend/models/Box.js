@@ -50,6 +50,7 @@ module.exports = (sequelize, Sequelize) => {
             otherKey: 'batchID',
             as: 'batches',
         });
+        Box.hasMany(models.BatchBox, { foreignKey: 'boxID', as: 'batchBoxes' });
     };
 
     return Box;
