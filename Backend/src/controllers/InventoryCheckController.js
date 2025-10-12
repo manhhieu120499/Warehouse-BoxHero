@@ -19,6 +19,15 @@ class InventoryCheckController {
         }
     }
 
+    async updateInventoryCheck(req, res) {
+        try {
+            const { statusHttp, ...response } = await InventoryCheckService.updateInventoryCheck(req.body);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json([err.message]);
+        }
+    }
+
     async filterInventoryCheck(req, res) {
         try {
             const { statusHttp, ...response } = await InventoryCheckService.filterInventoryCheck(req.query);

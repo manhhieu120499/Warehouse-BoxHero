@@ -22,5 +22,10 @@ module.exports = (sequelize, Sequelize) => {
         },
     );
 
+    BatchBox.associate = (models) => {
+        BatchBox.belongsTo(models.Batch, { foreignKey: 'batchID', as: 'batch' });
+        BatchBox.belongsTo(models.Box, { foreignKey: 'boxID', as: 'box' });
+    };
+
     return BatchBox;
 };

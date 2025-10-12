@@ -12,7 +12,11 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 allowNull: false,
             },
-            productID: {
+            batchID: {
+                type: Sequelize.STRING,
+                allowNull: false,
+            },
+            boxID: {
                 type: Sequelize.STRING,
                 allowNull: false,
             },
@@ -41,8 +45,26 @@ module.exports = (sequelize, Sequelize) => {
     );
 
     InventoryCheckDetail.associate = (models) => {
-        InventoryCheckDetail.belongsTo(models.InventoryCheck, { foreignKey: 'inventoryCheckID' });
-        InventoryCheckDetail.belongsTo(models.Product, { foreignKey: 'productID', as: 'product' });
+        InventoryCheckDetail.belongsTo(models.InventoryCheck, {
+            foreignKey: 'inventoryCheckID',
+            as: 'inventoryCheck',
+        });
+
+        // Liên kết đến BatchBox bằng batchID
+        InventoryCheckDetail.belongsTo(models.BatchBox, {
+            foreignKey: 'batchID',
+            targetKey: 'batchID',
+            as: 'batchBoxByBatch',
+            constraints: false,
+        });
+
+        // Liên kết đến BatchBox bằng boxID
+        InventoryCheckDetail.belongsTo(models.BatchBox, {
+            foreignKey: 'boxID',
+            targetKey: 'boxID',
+            as: 'batchBoxByBox',
+            constraints: false,
+        });
     };
 
     return InventoryCheckDetail;

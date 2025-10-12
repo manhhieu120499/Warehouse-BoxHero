@@ -7,6 +7,7 @@ const {
     getAllInventoryChecks,
     createInventoryCheck,
     filterInventoryCheck,
+    updateInventoryCheck,
 } = require('../validates/inventoryCheck.validation');
 router.get('/', (req, res) => {
     return res.send('InventoryCheckRouter Router is working!');
@@ -26,6 +27,14 @@ router.post(
     validate,
     authUserIsManager,
     InventoryCheckController.createInventoryCheck,
+);
+
+router.post(
+    '/update-inventory-checks',
+    updateInventoryCheck,
+    validate,
+    authUserIsManager,
+    InventoryCheckController.updateInventoryCheck,
 );
 
 router.get(
