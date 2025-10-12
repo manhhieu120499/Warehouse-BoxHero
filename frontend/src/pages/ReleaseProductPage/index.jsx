@@ -5,28 +5,31 @@ import { MyTable, Button, Modal, Select, ModelFilter, PaginationUI } from '../..
 import { ClipboardClock, Eye, PlusCircle, FileMinus, Search, RotateCcw, SquareKanban, Plus } from 'lucide-react';
 import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import Tippy from '@tippyjs/react';
-import { fetchProduct } from '../../services/product.service';
+//import { fetchProduct } from '../../services/product.service';
 import ProductDTO from '../../dtos/ProductDTO';
 import ProposalStatus from '../../components/ProposalStatus';
 import CreateExportProductDialog from './CreateExportProductDialog';
 import request from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
+import ModalOrderReleaseDetail from './ModalOrderReleaseDetail';
+import { filterOrderRelease } from '../../services/order.service';
 
 const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyle);
 
 const ReleaseProductPage = () => {
-    const [productList, setProductList] = useState([]);
+    //const [productList, setProductList] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedRow, setSelectedRow] = useState([]);
     const [filterProposalRelease, setFilterProposalRelease] = useState({
-        proposalID: '',
+        orderReleaseID: '',
         receiverName: '',
         employeeNameRelease: '',
         createdAt: '',
     });
     const [showModalCreateReleaseProposal, setShowModalCreateReleaseProposal] = useState(false);
     const [orderReleaseList, setOrderReleaseList] = useState([]);
+    const [showOrderReleaseDetail, setShowOrderReleaseDetail] = useState(false);
 
     const handleNextPage = () => {
         setCurrentPage((prev) => prev + 1);
@@ -43,8 +46,8 @@ const ReleaseProductPage = () => {
             label: 'Mã phiếu',
             dataIndex: 'orderReleaseID',
             key: 'orderReleaseID',
-            // setValue: (value) => setFilterProposalRelease({ ...filterProposalRelease, proposalID: value }),
-            // value: filterProposalRelease.productID,
+            setValue: (value) => setFilterProposalRelease({ ...filterProposalRelease, orderReleaseID: value }),
+            value: filterProposalRelease.orderReleaseID,
         },
         {
             id: 2,
@@ -52,16 +55,16 @@ const ReleaseProductPage = () => {
             type: 'date',
             dataIndex: 'createdAt',
             key: 'createdAt',
-            // setValue: (value) => setFilterProposalRelease({ ...filterProposalRelease, createdAt: value }),
-            // value: filterProposalRelease.createdAt,
+            setValue: (value) => setFilterProposalRelease({ ...filterProposalRelease, createdAt: value }),
+            value: filterProposalRelease.createdAt,
         },
         {
             id: 3,
             label: 'Tên người tạo',
             dataIndex: 'employeeName',
             key: 'employeeName',
-            // setValue: (value) => setFilterProposalRelease({ ...filterProposalRelease, employeeNameRelease: value }),
-            // value: filterProposalRelease.employeeNameRelease,
+            setValue: (value) => setFilterProposalRelease({ ...filterProposalRelease, employeeNameRelease: value }),
+            value: filterProposalRelease.employeeNameRelease,
             render: (_, record) => <span>{record.employee.employeeName}</span>,
         },
         {
@@ -69,8 +72,8 @@ const ReleaseProductPage = () => {
             label: 'Tên người nhận',
             dataIndex: 'customerName',
             key: 'customerName',
-            // setValue: (value) => setFilterProposalRelease({ ...filterProposalRelease, receiverName: value }),
-            //value: filterProposalRelease.receiverName,
+            setValue: (value) => setFilterProposalRelease({ ...filterProposalRelease, receiverName: value }),
+            value: filterProposalRelease.receiverName,
             render: (_, record) => <span>{record.customer.customerName}</span>,
         },
     ];
@@ -80,6 +83,13 @@ const ReleaseProductPage = () => {
             title: 'Mã phiếu xuất',
             dataIndex: 'orderReleaseID',
             key: 'orderReleaseID',
+        },
+        {
+            title: 'Ngày lập',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            render: (text) => <span>{text.split('T')[0]}</span>,
+            width: '15%',
         },
         {
             title: 'Người tạo',
@@ -107,7 +117,13 @@ const ReleaseProductPage = () => {
             key: 'action',
             render: (text, record) => {
                 return (
-                    <div className={cxGlb('action-table')}>
+                    <div
+                        className={cxGlb('action-table')}
+                        onClick={() => {
+                            setSelectedRow(record);
+                            setShowOrderReleaseDetail(true);
+                        }}
+                    >
                         <Button primary medium>
                             <span>Xem chi tiết</span>
                         </Button>
@@ -119,15 +135,32 @@ const ReleaseProductPage = () => {
 
     const handleSubmitFilter = async () => {
         if (Object.keys(filterProposalRelease).every((key) => filterProposalRelease[key] == '')) return;
+        try {
+            let params = {};
+            if (filterProposalRelease.orderReleaseID) params.orderReleaseID = filterProposalRelease.orderReleaseID;
+            if (filterProposalRelease.createdAt) params.createdAt = filterProposalRelease.createdAt;
+            if (filterProposalRelease.employeeNameRelease)
+                params.employeeName = filterProposalRelease.employeeNameRelease;
+            if (filterProposalRelease.receiverName) params.customerName = filterProposalRelease.receiverName;
+
+            const res = await filterOrderRelease(params);
+            setOrderReleaseList(res);
+        } catch (err) {
+            console.log(err);
+        }
     };
 
     const handleResetFilter = () => {
+        // tránh spam request
+        if (Object.keys(filterProposalRelease).every((key) => filterProposalRelease[key] == '')) return;
         setFilterProposalRelease({
-            proposalID: '',
+            orderReleaseID: '',
             createdAt: '',
             employeeNameRelease: '',
             receiverName: '',
         });
+        setCurrentPage(1);
+        fetchOrderRelease(currentPage);
     };
 
     // useEffect(() => {
@@ -147,44 +180,20 @@ const ReleaseProductPage = () => {
     //     fetchData();
     // }, []);
 
-    const dataDemo = [
-        {
-            key: 'EXP-001',
-            proposalID: 'EXP-001',
-            createdAt: '2025-09-27',
-            employeeName: 'Nguyễn Văn A',
-            receiverName: 'Công ty ABC',
-            status: 'PENDING',
-        },
-        {
-            key: 'EXP-002',
-            proposalID: 'EXP-002',
-            createdAt: '2025-09-26',
-            employeeName: 'Trần Thị B',
-            receiverName: 'Khách hàng XYZ',
-            status: 'REFUSE',
-        },
-        {
-            key: 'EXP-003',
-            proposalID: 'EXP-003',
-            createdAt: '2025-09-25',
-            employeeName: 'Lê Văn C',
-            receiverName: 'Đối tác DEF',
-            status: 'COMPLETED',
-        },
-    ];
-
-    const fetchOrderRelease = async () => {
+    const fetchOrderRelease = async (page = 1) => {
         try {
             const warehouse = parseToken('warehouse');
             const token = parseToken('tokenUser');
-            const res = await request.get('/api/order-release/get-all-order-release?warehouseID=WH1', {
-                headers: {
-                    token: `Bearer ${token.accessToken}`,
-                    employeeID: token.employeeID,
-                    warehouseID: warehouse.warehouseID,
+            const res = await request.get(
+                `/api/order-release/get-all-order-release?warehouseID=${warehouse.warehouseID}&page=${page}`,
+                {
+                    headers: {
+                        token: `Bearer ${token.accessToken}`,
+                        employeeID: token.employeeID,
+                        warehouseID: warehouse.warehouseID,
+                    },
                 },
-            });
+            );
             console.log('res', res);
             setOrderReleaseList(res.data.data || []);
         } catch (err) {
@@ -193,8 +202,9 @@ const ReleaseProductPage = () => {
     };
 
     useEffect(() => {
-        fetchOrderRelease();
-    }, []);
+        fetchOrderRelease(currentPage);
+    }, [currentPage]);
+
     return (
         <div className={cx('wrapper-release-product')}>
             <ModelFilter
@@ -236,17 +246,16 @@ const ReleaseProductPage = () => {
                     isOpen={showModalCreateReleaseProposal}
                     onClose={() => {
                         setShowModalCreateReleaseProposal(false);
-                        setSelectedRow([]);
                     }}
                     fetchData={fetchOrderRelease}
-                    // productSelectedList={productList
-                    //     .filter((item) => selectedRow.includes(item.key))
-                    //     .map((item) => ({
-                    //         productID: item.sku,
-                    //         productName: item.productName,
-                    //         requiredQuantity: 1,
-                    //         batches: [],
-                    //     }))}
+                />
+            )}
+
+            {showOrderReleaseDetail && (
+                <ModalOrderReleaseDetail
+                    isOpen={showOrderReleaseDetail}
+                    onClose={() => setShowOrderReleaseDetail(false)}
+                    orderReleaseItem={selectedRow} // phiếu được chọn
                 />
             )}
         </div>

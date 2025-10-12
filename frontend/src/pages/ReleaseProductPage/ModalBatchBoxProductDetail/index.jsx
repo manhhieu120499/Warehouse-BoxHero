@@ -14,6 +14,7 @@ const ModalBatchBoxProductDetail = ({ isOpen, onClose, batchID, productID }) => 
         if (!batchID || !productID || !batchBoxListStore) return;
         const key = `${productID}-${batchID}`;
         const existRow = batchBoxListStore[key];
+        console.log('existRow', existRow);
         if (!existRow) return;
         setBatchBoxList(existRow);
     }, []);
@@ -51,8 +52,8 @@ const ModalBatchBoxProductDetail = ({ isOpen, onClose, batchID, productID }) => 
         },
         {
             title: 'Số lượng lấy', // ← Input để nhập số lượng lấy
-            dataIndex: 'amountGet',
-            key: 'amountGet',
+            dataIndex: 'quantityExported',
+            key: 'quantityExported',
             width: '15%',
             render: (text) => <p className={cx('cell-number')}>{text}</p>,
         },

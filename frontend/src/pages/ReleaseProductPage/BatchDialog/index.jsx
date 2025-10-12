@@ -406,6 +406,11 @@ const BatchDialog = ({ product, isOpen, onClose }) => {
                         <Button
                             success
                             onClick={() => {
+                                const checkQuantity = selectedBatch.some((it) => it.quantity > 0);
+                                if (!checkQuantity) {
+                                    toast.error('Vui lòng nhập số lượng xuất cho lô hàng', styleMessage);
+                                    return;
+                                }
                                 // update batch to store
                                 dispatch(addBatchProductList({ key: product.productID, value: selectedBatch }));
 

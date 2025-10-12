@@ -58,3 +58,25 @@ export const getProductById = async (productID, warehouseID) => {
         return err;
     }
 };
+
+export const fetchAllProductCanExport = async (status = 'AVAILABLE') => {
+    try {
+        const token = parseToken('tokenUser');
+        const res = await request.post(
+            '/api/product/filter-option',
+            {
+                status,
+            },
+            {
+                headers: {
+                    token: `Bearer ${token.accessToken}`,
+                    employeeid: token.employeeID,
+                },
+            },
+        );
+        return res?.data?.data || [];
+    } catch (err) {
+        console.log(err);
+        return err;
+    }
+};

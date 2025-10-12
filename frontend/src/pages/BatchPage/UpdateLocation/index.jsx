@@ -238,17 +238,7 @@ const UpdateLocation = ({ isOpen, onClose, shelvesData, batches, fetchData }) =>
                         </div>
                     </div>
                     <div className={cx('action')}>
-<<<<<<< Updated upstream
                         <Button primary onClick={handleUpdateLocation}>
-=======
-                        <Button
-                            primary
-                            onClick={() => {
-                                toast.success('Cập nhật vị trí thành công', styleMessage);
-                                handleOnclose();
-                            }}
-                        >
->>>>>>> Stashed changes
                             Cập nhật vị trí
                         </Button>
                     </div>
