@@ -130,5 +130,13 @@ const publicRoute = [
         layout: DefaultLayout,
     },
 ];
+const publicRouteWithAdmin = [
+    ...publicRoute,
+    {
+        page: ApprovePage,
+        path: '/proposal-list',
+        layout: DefaultLayout,
+    },
+];
 
-export { publicRoute };
+export { publicRoute, publicRouteWithAdmin };

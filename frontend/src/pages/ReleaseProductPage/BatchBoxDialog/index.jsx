@@ -1,0 +1,191 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import classNames from 'classnames/bind';
+import styles from './BatchBoxDialog.module.scss';
+import MyTable from '../../../components/MyTable';
+import { Button, Input, Modal } from '../../../components';
+import { Search } from 'lucide-react';
+import InputBase from '../../../components/InputBase';
+import { getBoxesByBatchID } from '../../../services/box.service';
+import toast from 'react-hot-toast';
+import { styleMessage } from '../../../constants';
+import { useDispatch, useSelector } from 'react-redux';
+import { addLocationInBatchProductList } from '../../../lib/redux/batchProduct/BatchProduct';
+
+const cx = classNames.bind(styles);
+
+// Props: isOpen, onClose, onConfirm, initialData (array of batches)
+const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, requireQuantity }) => {
+    const batchBoxProductList = useSelector((state) => state.BatchProductSlice.batchBoxProductList);
+    console.log(batchBoxProductList);
+    const [query, setQuery] = useState('');
+    const [page, setPage] = useState(1);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [rows, setRows] = useState([]);
+    const dispatch = useDispatch();
+
+    console.log(rows);
+
+    const columns = useMemo(
+        () => [
+            {
+                title: 'Mã box',
+                dataIndex: 'boxID',
+                key: 'boxID',
+                width: '15%',
+            },
+            {
+                title: 'Tên box',
+                dataIndex: 'boxName',
+                key: 'boxName',
+            },
+            {
+                title: 'Vị trí',
+                dataIndex: 'location',
+                key: 'location',
+                width: '25%',
+                render: (_, record) => <span>{record.boxFloor}</span>,
+            },
+            {
+                title: 'Số lượng hiện có',
+                dataIndex: 'available',
+                key: 'available',
+                align: 'center',
+                width: '15%',
+                render: (_, record) => <span>{record.amountAvailable}</span>,
+            },
+            {
+                title: 'Số lượng xuất',
+                dataIndex: 'qty',
+                key: 'qty',
+                align: 'center',
+                render: (_, record) => (
+                    <input
+                        type="number"
+                        min={0}
+                        max={record.amountAvailable}
+                        value={record.qty || 0}
+                        onChange={(e) => {
+                            const v = e.target.value === '' ? '' : Number(e.target.value);
+                            setRows((prev) => prev.map((r) => (r.key === record.key ? { ...r, qty: v } : r)));
+                        }}
+                        className={cx('qty-input')}
+                        disabled={!selectedRowKeys.includes(record.boxID) || record.amountAvailable === 0}
+                    />
+                ),
+                width: '15%',
+            },
+        ],
+        [selectedRowKeys],
+    );
+
+    const rowSelection = {
+        type: 'checkbox',
+        selectedRowKeys,
+        onChange: (keys) => setSelectedRowKeys(keys),
+    };
+
+    const handleConfirm = () => {
+        const totalBoxQuantity = rows
+            .filter((r) => selectedRowKeys.includes(r.boxID))
+            .reduce((total, cur) => total + (cur.qty || 0), 0);
+        const boxSelectedListToExport = rows
+            .filter((r) => selectedRowKeys.includes(r.boxID))
+            .map((box) => ({ ...box, quantityExported: box.qty }));
+        if (!selectedRowKeys.length) {
+            toast.error(`Vui lòng chọn ít nhất 1 ô để xuất`, styleMessage);
+            return;
+        }
+        if (totalBoxQuantity > requireQuantity || totalBoxQuantity < requireQuantity) {
+            toast.error(`Số lượng xuất phải đúng bằng ${requireQuantity}`, styleMessage);
+            return;
+        }
+
+        dispatch(
+            addLocationInBatchProductList({
+                key: product.productID,
+                batchID: batch.batchID,
+                newLocation: boxSelectedListToExport,
+            }),
+        );
+        onClose();
+    };
+
+    const handleSearchBoxOfBatch = (searchValue) => {
+        setQuery(searchValue);
+    };
+
+    const handleFetchAllBoxForBatch = async (batchID) => {
+        try {
+            const res = await getBoxesByBatchID(batchID);
+            const formatBatch = res.map((box) => ({
+                key: box.boxID,
+                boxID: box.boxID,
+                boxName: box.boxName,
+                boxFloor: box.floorID,
+                amountAvailable: box.batch_boxes.quantity,
+                amountGet: 0,
+                status: box.status,
+            }));
+            const boxSelected = batchBoxProductList[`${product.productID}-${batch.batchID}`] || [];
+            const boxSelectedIDs = boxSelected.map((box) => box.boxID);
+            const applyBatchBoxQuantity = formatBatch.map((box) =>
+                boxSelectedIDs.includes(box.boxID)
+                    ? {
+                          ...box,
+                          qty: boxSelected.find((b) => b.boxID === box.boxID)?.quantityExported || 0,
+                      }
+                    : box,
+            );
+            setSelectedRowKeys(boxSelectedIDs);
+            setRows(applyBatchBoxQuantity); // box data
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    const handleCloseBatchBoxDialog = () => {
+        setSelectedRowKeys([]);
+        onClose();
+    };
+
+    useEffect(() => {
+        if (!batch?.batchID) return;
+        handleFetchAllBoxForBatch(batch.batchID);
+    }, [batch?.batchID]);
+
+    return (
+        <Modal isOpenInfo={isOpen} onClose={onClose} showButtonClose={false}>
+            <div className={cx('wrapper-batch-dialog')}>
+                <div className={cx('header-batch-dialog-wrapper')}>
+                    <p className={cx('header-batch-dialog')}>Danh sách lô hàng cho sản phẩm</p>
+                    <InputBase
+                        placeholder="Tìm kiếm theo mã ô"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onClick={() => handleSearchBoxOfBatch(query)}
+                    />
+                </div>
+
+                <MyTable
+                    data={rows}
+                    columns={columns}
+                    pagination
+                    rowSelection={rowSelection}
+                    currentPage={page}
+                    scroll={{ y: 300 }}
+                />
+
+                <div className={cx('button-batch-dialog')}>
+                    <Button success onClick={handleConfirm}>
+                        <span>Xác nhận</span>
+                    </Button>
+                    <Button primary onClick={handleCloseBatchBoxDialog}>
+                        <span>Đóng</span>
+                    </Button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
+export default BatchBoxDialog;

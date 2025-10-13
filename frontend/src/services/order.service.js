@@ -130,3 +130,43 @@ export const validatePayloadCreateReceiptMissing = (payload) => {
     }
     return true;
 };
+
+export const saveOrderRelease = async (payload) => {
+    try {
+        const token = parseToken('tokenUser');
+        const res = await request.post('api/order-release/create', payload, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+                warehouseID: token.warehouseID,
+            },
+        });
+        return res;
+    } catch (err) {
+        throw new Error(err.response.data);
+    }
+};
+
+export const filterOrderRelease = async (params) => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const res = await request.post(
+            '/api/order-release/filter-order-release',
+            {
+                ...params,
+                warehouseID: warehouse.warehouseID,
+            },
+            {
+                headers: {
+                    token: `Bearer ${token.accessToken}`,
+                    employeeID: token.employeeID,
+                    warehouseID: warehouse.warehouseID,
+                },
+            },
+        );
+        return res.data.data;
+    } catch (err) {
+        throw new Error(err.response.data);
+    }
+};

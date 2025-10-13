@@ -29,3 +29,25 @@ export const getBoxDetails = async (warehouseID, boxID) => {
         return err;
     }
 };
+
+export const getBoxesByBatchID = async (batchID) => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const res = await request.get(`/api/batch-box/get-all-box-by-batch-id`, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+                warehouseID: warehouse.warehouseID,
+            },
+            params: {
+                batchID: batchID,
+            },
+        });
+        return res?.data?.boxes || [];
+    } catch (err) {
+        toast.error(err.message, styleMessage);
+        console.log(err);
+        return err;
+    }
+};

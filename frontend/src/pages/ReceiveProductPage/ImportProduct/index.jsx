@@ -13,6 +13,7 @@ import { fetchOrderMissing } from '../../../services/order.service';
 import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import { Circle, Download } from 'lucide-react';
 import ModelProposalDetail from '../../ApprovePage/ModelProposalDetail';
+import { post } from '../../../utils/httpRequest';
 
 const cxGlobal = classNames.bind(globalStyle);
 const cx = classNames.bind(styles);
@@ -105,7 +106,8 @@ const ImportProduct = () => {
                             primary
                             medium
                             onClick={() => {
-                                setSelectedRow(record.key);
+                                console.log(record);
+                                setProposalSelected(record || null);
                                 setShowDetailProposal(true);
                             }}
                         >
@@ -308,6 +310,28 @@ const ImportProduct = () => {
         });
     };
 
+    const handleSearch = async () => {
+        if (!Object.keys(filterProposal).some((key) => filterProposal[key])) return;
+        try {
+            const token = parseToken('tokenUser');
+            const res = await post(
+                '/api/proposal/filter-proposal',
+                {
+                    proposalID: filterProposal?.proposalID,
+                    createdAt: filterProposal?.createdAt,
+                    status: filterProposal?.status,
+                    employeeName: filterProposal?.employeeName,
+                },
+                token.accessToken,
+                token.employeeID,
+            );
+            //console.log(res);
+            //setProposalPurchaseList(res.proposals || []);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     useEffect(() => {
         const { code, createdAt, employeeName } = filterProposal;
         if (code == '' && createdAt == '' && employeeName == '') {
@@ -388,8 +412,10 @@ const ImportProduct = () => {
             {showDetailProposal && (
                 <ModelProposalDetail
                     isOpen={showDetailProposal}
+                    typeDetail={true}
                     onClose={() => setShowDetailProposal(false)}
-                    proposalDetailID={proposalSelected}
+                    proposalDetailID={proposalSelected.proposalID}
+                    handleSearch={handleSearch}
                 />
             )}
         </div>
