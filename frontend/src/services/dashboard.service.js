@@ -30,3 +30,30 @@ export const getStatisticalInventory = async (type, year) => {
         return err;
     }
 };
+export const getStatisticalImportExport = async (type, year) => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+
+        const res = await request.get(`/api/dashboard/statistical-import-export`, {
+            params: {
+                type,
+                year,
+            },
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+                warehouseID: warehouse.warehouseID,
+            },
+        });
+        return res;
+    } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
+    }
+};
