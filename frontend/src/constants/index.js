@@ -53,7 +53,18 @@ export const formatStatusOrderPurchaseMissing = {
     CANCELED: 'Đã hủy',
 };
 
+export const formatStatusInventoryCheck = {
+    PENDING: 'Chờ phê duyệt',
+    COMPLETED: 'Đã phê duyệt',
+    REFUSE: 'Từ chối',
+};
+
 export const formatStatusOrderPurchaseMissingInventoryCheck = {
+    BALANCED: 'Đủ sản phẩm',
+    DISCREPANCY: 'Chênh lệch',
+};
+
+export const formatStatusInventoryCheckDetail = {
     MATCHED: 'Đủ sản phẩm',
     SHORTAGE: 'Thiếu sản phẩm',
     SURPLUS: 'Dư sản phẩm',

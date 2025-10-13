@@ -3,109 +3,74 @@ import classNames from 'classnames/bind';
 import styles from './CreateCheckDetail.module.scss';
 import { Modal, Button, MyTable } from '../../../components';
 import PopupMessage from '../../../components/PopupMessage';
-import { formatStatusProduct, styleMessage } from '../../../constants';
-import { set } from 'react-hook-form';
+import { formatStatusInventoryCheckDetail, styleMessage } from '../../../constants';
 import { generateCode } from '../../../utils/generate';
 import { useSelector } from 'react-redux';
 import parseToken from '../../../utils/parseToken';
 import request from '../../../utils/httpRequest';
-import { getProductById } from '../../../services/product.service';
 import toast from 'react-hot-toast';
 import Tippy from '@tippyjs/react';
-import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import { Eye } from 'lucide-react';
-import { getAllShelfOfWarehouse } from '../../../services/shelf.service';
 import ShowLocationDetail from '../ShowLocationDetail';
+import { updateInventoryCheck } from '../../../services/inventoryCheck.service';
 
-const cxGlobal = classNames.bind(globalStyle);
 const cx = classNames.bind(styles);
 
-const CreateCheckDetail = ({ isOpen, onClose, inventoryCheckDetail, type = 'create', fetchData, shelvesData }) => {
+const CreateCheckDetail = ({
+    isOpen,
+    onClose,
+    inventoryCheckDetail,
+    type = 'create',
+    fetchData,
+    listBatchBoxCheck,
+    handleOnclose,
+}) => {
     const currentUser = useSelector((state) => state.AuthSlice.user);
-    const [productSearch, setProductSearch] = useState('');
-    const [inventoryCheckDetails, setInventoryCheckDetails] = useState([]);
     const [inventoryCheckId, setInventoryCheckId] = useState('');
     const [note, setNote] = useState('');
-    const [showLocationPopup, setShowLocationPopup] = useState(null);
+    const [listBatchBox, setListBatchBox] = useState();
 
-    useEffect(() => {
-        console.log(inventoryCheckDetails);
-    }, [inventoryCheckDetails]);
-
-    const handleSearchProduct = async () => {
-        // Logic to search for the product in the inventory check details
-        if (type === 'detail') {
-            const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const filteredProduct = inventoryCheckDetail?.details.filter((item) => {
-                const productIdMatch = new RegExp(escapeRegex(productSearch), 'i').test(item.product?.productID ?? '');
-                return productIdMatch;
-            });
-            setInventoryCheckDetails(filteredProduct);
-        } else {
-            const fetchProduct = async () => {
-                const warehouse = parseToken('warehouse');
-                const resProduct = await getProductById(productSearch, warehouse.warehouseID);
-
-                setInventoryCheckDetails((prev) => [
-                    ...prev,
-                    {
-                        actualQuantity: null,
-                        discrepancyQuantity: null,
-                        product: { ...resProduct.data.product },
-                        productID: resProduct.data.product.productID,
-                        systemQuantity: resProduct.data.product.amount,
-                        reason: null,
-                    },
-                ]);
-            };
-            if (productSearch) {
-                const checkProductExist = inventoryCheckDetails.find(
-                    (it) => it.product.productID.toLowerCase() == productSearch.toLowerCase(),
-                );
-
-                if (checkProductExist) {
-                    toast.error('Sản phẩm này đã tồn tại trong danh sách kiểm kê', styleMessage);
-                    return;
-                }
-                await fetchProduct();
-                setProductSearch('');
-            }
-        }
-    };
-
-    const handleActualQuantityChange = (e, productId, systemQuantity) => {
+    const handleActualQuantityChange = (e, index, systemQuantity) => {
         const value = e.target.value;
         const difference = Number(value) - systemQuantity;
-        setInventoryCheckDetails((prevDetails) =>
-            prevDetails.map((item) =>
-                item.product.productID === productId
-                    ? { ...item, actualQuantity: value, discrepancyQuantity: difference }
-                    : item,
+        setListBatchBox((prevDetails) =>
+            prevDetails.map((item, i) =>
+                i === index ? { ...item, actualQuantity: value, discrepancyQuantity: difference } : item,
             ),
         );
     };
 
+    useEffect(() => {
+        if (type === 'create') {
+            const mapConvert = listBatchBoxCheck.flatMap((box) =>
+                box.batches.map((batch) => ({
+                    ...batch,
+                    boxID: box.boxID,
+                    location: box.location,
+                    systemQuantity: batch.batch_boxes.quantity,
+                    actualQuantity: batch.batch_boxes.quantity,
+                    discrepancyQuantity: 0,
+                    reason: '',
+                })),
+            );
+            setListBatchBox(mapConvert);
+        }
+    }, []);
+
     const handleSaveInventoryCheck = async () => {
-        let status = 'MATCHED';
+        let status = 'BALANCED';
         if (!inventoryCheckId) {
             toast.error('Vui lòng nhập mã phiếu kiểm kê', styleMessage);
             return;
         }
-        if (inventoryCheckDetails.length === 0) {
-            toast.error('Vui lòng thêm sản phẩm vào phiếu kiểm kê', styleMessage);
-            return;
-        }
-        for (const item of inventoryCheckDetails) {
-            console.log();
-
+        for (const item of listBatchBox) {
             if (item.actualQuantity === null || item.actualQuantity === undefined) {
                 toast.error('Vui lòng nhập số lượng thực tế cho sản phẩm ' + item.product.productName, styleMessage);
                 return;
             }
-            if (item.discrepancyQuantity < 0 && status === 'MATCHED') {
-                status = 'SHORTAGE';
-            } else if (item.discrepancyQuantity > 0 && status === 'MATCHED') {
-                status = 'SURPLUS';
+            if (item.discrepancyQuantity != 0) {
+                status = 'DISCREPANCY';
+                break;
             }
         }
         const warehouse = parseToken('warehouse');
@@ -116,9 +81,10 @@ const CreateCheckDetail = ({ isOpen, onClose, inventoryCheckDetail, type = 'crea
             employeeID: currentUser.empId,
             warehouseID: warehouse.warehouseID,
             note: note,
-            status: status,
-            details: inventoryCheckDetails.map((item) => ({
-                productID: item.productID,
+            checkStatus: status,
+            details: listBatchBox.map((item) => ({
+                batchID: item.batchID,
+                boxID: item.boxID,
                 systemQuantity: item.systemQuantity,
                 actualQuantity: item.actualQuantity ? Number(item.actualQuantity) : 0,
                 discrepancyQuantity: item.discrepancyQuantity ? Number(item.discrepancyQuantity) : 0,
@@ -126,7 +92,7 @@ const CreateCheckDetail = ({ isOpen, onClose, inventoryCheckDetail, type = 'crea
             })),
         };
         try {
-            const res = await request.post('/api/inventory-check/create-inventory-checks', data, {
+            await request.post('/api/inventory-check/create-inventory-checks', data, {
                 headers: {
                     token: `Bearer ${token.accessToken}`,
                     employeeID: token.employeeID,
@@ -135,6 +101,7 @@ const CreateCheckDetail = ({ isOpen, onClose, inventoryCheckDetail, type = 'crea
             });
             toast.success('Tạo phiếu kiểm kê thành công', styleMessage);
             onClose();
+            handleOnclose();
             fetchData();
         } catch (err) {
             toast.error(
@@ -145,9 +112,27 @@ const CreateCheckDetail = ({ isOpen, onClose, inventoryCheckDetail, type = 'crea
         }
     };
 
-    useEffect(() => {
-        setInventoryCheckDetails(inventoryCheckDetail?.details || []);
-    }, [inventoryCheckDetail]);
+    const handleBlur = (e) => {
+        const value = e.target.value;
+        const numberValue = Number(value);
+
+        if (value === '' || numberValue < 0 || !Number.isInteger(numberValue)) {
+            toast.error('Số lượng thực tế không được để trống, nhỏ hơn 0, hoặc không nguyên!', styleMessage);
+
+            e.target.focus();
+
+            e.target.select();
+        }
+    };
+
+    const handleUpdateStatus = async (status, inventoryCheckID) => {
+        const res = await updateInventoryCheck(status, inventoryCheckID);
+        if (res.data.status === 'OK') {
+            toast.success('Cập nhật trạng thái phiếu kiểm kê thành công', styleMessage);
+            onClose();
+            fetchData();
+        }
+    };
 
     return (
         <Modal isOpenInfo={isOpen} onClose={onClose} showButtonClose={false}>
@@ -156,6 +141,28 @@ const CreateCheckDetail = ({ isOpen, onClose, inventoryCheckDetail, type = 'crea
                     <div className={cx('header-check')}>
                         <h4>Thông tin phiếu kiểm kê</h4>
                         <div className={cx('headerActions')}>
+                            {type === 'detail' && inventoryCheckDetail?.status === 'PENDING' && (
+                                <>
+                                    <Button
+                                        error
+                                        className={cx('btn-generate')}
+                                        onClick={() =>
+                                            handleUpdateStatus('REFUSE', inventoryCheckDetail?.inventoryCheckID)
+                                        }
+                                    >
+                                        Từ chối
+                                    </Button>
+                                    <Button
+                                        success
+                                        className={cx('btn-generate')}
+                                        onClick={() =>
+                                            handleUpdateStatus('COMPLETED', inventoryCheckDetail?.inventoryCheckID)
+                                        }
+                                    >
+                                        Phê duyệt
+                                    </Button>
+                                </>
+                            )}
                             <Button primary borderRadiusMedium onClick={onClose}>
                                 <span>Đóng</span>
                             </Button>
@@ -227,7 +234,7 @@ const CreateCheckDetail = ({ isOpen, onClose, inventoryCheckDetail, type = 'crea
                             <input
                                 type="text"
                                 id="note"
-                                value={type === 'create' ? note : inventoryCheckDetail?.note}
+                                value={type === 'create' ? note : inventoryCheckDetail?.note || 'Không có ghi chú'}
                                 onChange={(e) => setNote(e.target.value)}
                                 placeholder="Nhập ghi chú"
                                 disabled={type === 'detail'}
@@ -236,88 +243,125 @@ const CreateCheckDetail = ({ isOpen, onClose, inventoryCheckDetail, type = 'crea
                     </div>
                 </div>
 
-                <div className={cx('filter-check', 'container-check')}>
-                    <h4>Tìm kiếm sản phẩm cần kiểm kê</h4>
-                    <div className={cx('form-group')}>
-                        <input
-                            type="text"
-                            id="productSearch"
-                            value={productSearch}
-                            placeholder="Nhập mã sản phẩm"
-                            onChange={(e) => setProductSearch(e.target.value)}
-                        />
-                        <Button primary className={cx('btn-search')} onClick={handleSearchProduct}>
-                            Tìm kiếm
-                        </Button>
-                    </div>
-                </div>
-
                 <div className={cx('table-check', 'container-check')}>
                     <div className={cx('title-table')}>
                         <h4>Danh sách hàng hóa kiểm kê</h4>
                     </div>
-                    <table className={cx('table')}>
-                        <thead>
-                            <tr>
-                                <th className={cx('productID')}>Mã sản phẩm</th>
-                                <th className={cx('productName')}>Tên sản phẩm</th>
-                                <th className={cx('note')}>Trạng thái</th>
-                                <th className={cx('num')}>Tồn hệ thống</th>
-                                <th className={cx('num')}>Tồn thực tế</th>
-                                <th className={cx('num')}>Chênh lệch</th>
-                                {type === 'create' && <th className={cx('action')}>Xem chi tiết</th>}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {inventoryCheckDetails?.map((item, index) => (
-                                <tr key={index}>
-                                    <td className={cx('productID')}>{item.productID}</td>
-                                    <td className={cx('productName')}>{item.product.productName}</td>
-                                    <td className={cx('note')}>{formatStatusProduct[item.product.status]}</td>
-                                    <td className={cx('num')}>{item.systemQuantity}</td>
-                                    <td className={cx('num')}>
-                                        {type === 'detail' ? (
-                                            item.actualQuantity
-                                        ) : (
-                                            <input
-                                                type="number"
-                                                min={0}
-                                                value={item.actualQuantity || 0}
-                                                onChange={(e) =>
-                                                    handleActualQuantityChange(e, item.productID, item.systemQuantity)
-                                                }
-                                            />
-                                        )}
-                                    </td>
-                                    <td className={cx('num')}>{Math.abs(item.discrepancyQuantity)}</td>
-                                    {type === 'create' && (
-                                        <td className={cx('action')}>
-                                            <Tippy content={'Xem danh sách vị trí'} placement="bottom-end">
-                                                <button
-                                                    className={cxGlobal('action-table-icon')}
-                                                    onClick={() => {
-                                                        setShowLocationPopup(item);
-                                                    }}
-                                                >
-                                                    <Eye size={20} />
-                                                </button>
-                                            </Tippy>
-                                        </td>
-                                    )}
+                    <div className={cx('tableWrap')}>
+                        <table className={cx('table')}>
+                            <thead>
+                                <tr>
+                                    <th className={cx('location')}>Vị trí</th>
+                                    <th className={cx('batchID')}>Mã lô</th>
+                                    <th className={cx('productName')}>Tên sản phẩm</th>
+                                    <th className={cx('unit')}>Đơn vị tính</th>
+                                    {type === 'detail' && <th className={cx('status')}>Trạng thái</th>}
+                                    <th className={cx('num')}>Tồn hệ thống</th>
+                                    <th className={cx('num')}>Tồn thực tế</th>
+                                    <th className={cx('num')}>Chênh lệch</th>
+                                    <th className={cx('note')}>Ghi chú</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {type === 'create' &&
+                                    listBatchBox?.map((batchBoxCheck, index) => (
+                                        <tr key={index}>
+                                            <td className={cx('location')}>{batchBoxCheck.location}</td>
+                                            <td className={cx('batchID')}>{batchBoxCheck.batchID}</td>
+                                            <td className={cx('productName')}>{batchBoxCheck.product.productName}</td>
+                                            <td className={cx('unit')}>{batchBoxCheck.unit.unitName}</td>
+                                            <td className={cx('num')}>{batchBoxCheck.systemQuantity}</td>
+                                            <td className={cx('num')}>
+                                                {type === 'create' ? (
+                                                    <input
+                                                        type="number"
+                                                        value={batchBoxCheck.actualQuantity}
+                                                        onChange={(e) =>
+                                                            handleActualQuantityChange(
+                                                                e,
+                                                                index,
+                                                                batchBoxCheck.systemQuantity,
+                                                            )
+                                                        }
+                                                        onBlur={(e) => handleBlur(e)}
+                                                        min={0}
+                                                    />
+                                                ) : (
+                                                    batchBoxCheck.actualQuantity
+                                                )}
+                                            </td>
+                                            <td
+                                                className={cx([
+                                                    'num',
+                                                    Math.abs(batchBoxCheck.discrepancyQuantity) !== 0 && 'highlight',
+                                                ])}
+                                            >
+                                                {Math.abs(batchBoxCheck.discrepancyQuantity)}
+                                            </td>
+                                            <td className={cx('note')}>
+                                                {type === 'create' ? (
+                                                    <input
+                                                        type="text"
+                                                        value={batchBoxCheck.reason}
+                                                        onChange={(e) => {
+                                                            const reason = e.target.value;
+                                                            setListBatchBox((prevList) =>
+                                                                prevList.map((item, idx) =>
+                                                                    idx === index ? { ...item, reason } : item,
+                                                                ),
+                                                            );
+                                                        }}
+                                                        placeholder="Nhập ghi chú"
+                                                    />
+                                                ) : (
+                                                    batchBoxCheck.reason
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                {type === 'detail' &&
+                                    inventoryCheckDetail?.details.map((detail, index) => {
+                                        const location = `${detail.batchBoxByBatch.box.floor.shelf.shelfName} - ${detail.batchBoxByBatch.box.floor.floorName} - ${detail.batchBoxByBatch.box.boxName}`;
+                                        return (
+                                            <tr key={index}>
+                                                <td className={cx('location')}>{location}</td>
+
+                                                <td className={cx('batchID')}>
+                                                    {detail.batchBoxByBatch.batch.batchID}
+                                                </td>
+                                                <td className={cx('productName')}>
+                                                    {detail.batchBoxByBatch.batch.product.productName}
+                                                </td>
+                                                <td className={cx('unit')}>
+                                                    {detail.batchBoxByBatch.batch.unit.unitName}
+                                                </td>
+                                                <td
+                                                    className={cx([
+                                                        'status',
+                                                        Math.abs(detail.discrepancyQuantity) !== 0 && 'highlight',
+                                                    ])}
+                                                >
+                                                    {formatStatusInventoryCheckDetail[detail.status]}
+                                                </td>
+                                                <td className={cx('num')}>{detail.systemQuantity}</td>
+                                                <td className={cx('num')}>{detail.actualQuantity}</td>
+                                                <td
+                                                    className={cx([
+                                                        'num',
+                                                        Math.abs(detail.discrepancyQuantity) !== 0 && 'highlight',
+                                                    ])}
+                                                >
+                                                    {Math.abs(detail.discrepancyQuantity)}
+                                                </td>
+                                                <td className={cx('note')}>{detail.reason || 'Không có ghi chú'}</td>
+                                            </tr>
+                                        );
+                                    })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            {showLocationPopup != null && (
-                <ShowLocationDetail
-                    item={showLocationPopup}
-                    isOpen={true}
-                    onClose={() => setShowLocationPopup(null)}
-                    shelvesData={shelvesData}
-                />
-            )}
         </Modal>
     );
 };

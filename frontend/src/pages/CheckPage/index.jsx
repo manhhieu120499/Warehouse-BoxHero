@@ -8,8 +8,8 @@ import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import ModelProposalDetail from '@/pages/ApprovePage/ModelProposalDetail';
 import { getAllInventoryCheck, getFilterInventoryCheck } from '../../services/inventoryCheck.service';
 import parseToken from '../../utils/parseToken';
-import { formatStatusOrderPurchaseMissingInventoryCheck } from '../../constants';
-import { getAllShelfOfWarehouse } from '../../services/shelf.service';
+import { formatStatusInventoryCheck, formatStatusOrderPurchaseMissingInventoryCheck } from '../../constants';
+import ShowLocationDetail from './ShowLocationDetail';
 
 const cxGlobal = classNames.bind(globalStyle);
 const cx = classNames.bind(styles);
@@ -19,7 +19,6 @@ const ImportProduct = () => {
     const [showCreateInventoryCheck, setShowCreateInventoryCheck] = useState(false);
     const [listInventoryCheck, setListInventoryCheck] = useState([]);
     const [inventoryCheckDetail, setInventoryCheckDetail] = useState('');
-    const [shelvesData, setShelvesData] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
 
     const handleNextPage = () => {
@@ -36,6 +35,8 @@ const ImportProduct = () => {
     }, [currentPage]);
 
     const fetchData = async (currentPage) => {
+        console.log('fetch data');
+
         const warehouseID = parseToken('warehouse').warehouseID;
         const res = await getAllInventoryCheck(warehouseID, currentPage);
         if (res.status == 200) {
@@ -43,27 +44,8 @@ const ImportProduct = () => {
         }
     };
 
-    const fetchShelfData = async () => {
-        const token = parseToken('tokenUser');
-        const warehouse = parseToken('warehouse');
-
-        const headers = {
-            token: `Bearer ${token.accessToken}`,
-            employeeID: token.employeeID,
-            warehouseID: warehouse.warehouseID,
-        };
-        const data = await getAllShelfOfWarehouse({
-            warehouseID: warehouse.warehouseID,
-            headers,
-        });
-        if (data.status === 'OK') {
-            setShelvesData(data.data);
-        }
-    };
-
     useEffect(() => {
         fetchData();
-        fetchShelfData();
     }, []);
 
     useEffect(() => {
@@ -73,6 +55,7 @@ const ImportProduct = () => {
     const [filterInventoryCheck, setFilterInventoryCheck] = useState({
         inventoryCheckID: '',
         status: 'ALL',
+        checkStatus: 'ALL',
         createdAt: '',
         employeeName: '',
     });
@@ -106,7 +89,20 @@ const ImportProduct = () => {
                 return (
                     <div className={cx('status-proposal')}>
                         <div className={cx('status-indicator', record.status)}></div>
-                        <p>{formatStatusOrderPurchaseMissingInventoryCheck[record.status]}</p>
+                        <p>{formatStatusInventoryCheck[record.status]}</p>
+                    </div>
+                );
+            },
+        },
+        {
+            title: 'Kiểm kê thực tế',
+            dataIndex: 'checkStatus',
+            key: 'checkStatus',
+            render: (index, record) => {
+                return (
+                    <div className={cx('status-proposal')}>
+                        <div className={cx('status-indicator', record.checkStatus)}></div>
+                        <p>{formatStatusOrderPurchaseMissingInventoryCheck[record.checkStatus]}</p>
                     </div>
                 );
             },
@@ -172,19 +168,38 @@ const ImportProduct = () => {
                     value: 'ALL',
                 },
                 {
-                    name: 'Đủ sản phẩm',
-                    value: 'MATCHED',
+                    name: 'Chờ phê duyệt',
+                    value: 'PENDING',
                 },
                 {
-                    name: 'Thiếu sản phẩm',
-                    value: 'SHORTAGE',
+                    name: 'Đã phê duyệt',
+                    value: 'COMPLETED',
                 },
                 {
-                    name: 'Dư sản phẩm',
-                    value: 'SURPLUS',
+                    name: 'Từ chối',
+                    value: 'REFUSE',
                 },
             ],
             setValue: (value) => setFilterInventoryCheck({ ...filterInventoryCheck, status: value }),
+        },
+        {
+            label: 'Kiểm kê thực tế',
+            value: filterInventoryCheck.checkStatus,
+            option: [
+                {
+                    name: 'Tất cả',
+                    value: 'ALL',
+                },
+                {
+                    name: 'Đủ sản phẩm',
+                    value: 'BALANCED',
+                },
+                {
+                    name: 'Chênh lệch',
+                    value: 'DISCREPANCY',
+                },
+            ],
+            setValue: (value) => setFilterInventoryCheck({ ...filterInventoryCheck, checkStatus: value }),
         },
     ];
 
@@ -192,13 +207,34 @@ const ImportProduct = () => {
         const warehouse = parseToken('warehouse');
         const warehouseID = warehouse.warehouseID;
         let status = '';
+        let checkStatus = '';
         if (filterInventoryCheck.status === 'ALL') {
             status = '';
         } else {
             status = filterInventoryCheck.status;
         }
-        const res = await getFilterInventoryCheck({ ...filterInventoryCheck, warehouseID, currentPage, status });
-        if (res.data.status == 'OK') {
+        if (filterInventoryCheck.checkStatus === 'ALL') {
+            checkStatus = '';
+        } else {
+            checkStatus = filterInventoryCheck.checkStatus;
+        }
+        console.log({
+            ...filterInventoryCheck,
+            warehouseID,
+            currentPage,
+            status,
+            checkStatus,
+        });
+
+        const res = await getFilterInventoryCheck({
+            ...filterInventoryCheck,
+            warehouseID,
+            currentPage,
+            status,
+            checkStatus,
+        });
+
+        if (res?.data?.status == 'OK') {
             setListInventoryCheck(res.data.data);
         }
     };
@@ -207,6 +243,7 @@ const ImportProduct = () => {
         setFilterInventoryCheck({
             inventoryCheckID: '',
             status: 'ALL',
+            checkStatus: 'ALL',
             createdAt: '',
             employeeName: '',
         });
@@ -252,16 +289,16 @@ const ImportProduct = () => {
                     inventoryCheckDetail={inventoryCheckDetail}
                     isOpen={showDetailInventoryCheck}
                     onClose={() => setShowDetailInventoryCheck(false)}
+                    fetchData={fetchData}
                     type="detail"
                 />
             )}
 
             {showCreateInventoryCheck && (
-                <CreateCheckDetail
-                    shelvesData={shelvesData}
+                <ShowLocationDetail
                     fetchData={fetchData}
-                    isOpen={showCreateInventoryCheck}
-                    onClose={() => setShowCreateInventoryCheck(false)}
+                    isOpen={true}
+                    onClose={() => setShowCreateInventoryCheck(null)}
                 />
             )}
         </div>

@@ -99,6 +99,24 @@
     }
 }
 
+.tableWrap {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: auto;
+
+    /* Tùy chỉnh scrollbar */
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+}
+
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -111,27 +129,35 @@
         font-size: 1.3rem;
     }
 
-    th.stt {
-        width: 150px;
+    th.location {
+        width: 200px;
+    }
+    th.batchID {
+        width: 70px;
     }
     th.productID {
         width: 150px;
     }
     th.productName {
-        width: 250px;
+        width: 300px;
     }
     th.unit {
-        width: 200px;
+        width: 93px;
+    }
+    th.status {
+        width: 184px;
     }
     th.num {
-        width: 150px;
+        width: 101px;
     }
     th.note {
-        width: 280px;
-    }
-    th.action {
-        width: 180px;
         text-align: center;
+        width: 300px;
+    }
+
+    td.highlight {
+        color: red;
+        font-weight: bold;
     }
 
     th {

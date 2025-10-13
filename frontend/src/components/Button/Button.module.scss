@@ -18,6 +18,9 @@
     &.disabled {
         opacity: 0.5;
         pointer-events: none;
+        &:hover {
+            cursor: default !important;
+        }
     }
 }
 
@@ -66,7 +69,7 @@
 
 .error {
     background-color: var(--error);
-    color: var(--white)
+    color: var(--white);
 }
 
 .text {
@@ -75,9 +78,9 @@
     }
 }
 
-.active{
+.active {
     background-color: var(--active-tab);
-    color: var(--white)
+    color: var(--white);
 }
 
 //Button size

@@ -30,10 +30,41 @@ export const getAllInventoryCheck = async (warehouseID, currentPage) => {
         return err;
     }
 };
+export const updateInventoryCheck = async (status, inventoryCheckID) => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+
+        const res = await request.post(
+            `/api/inventory-check/update-inventory-checks`,
+            {
+                warehouseID: warehouse.warehouseID,
+                status: status,
+                inventoryCheckID: inventoryCheckID,
+            },
+            {
+                headers: {
+                    token: `Bearer ${token.accessToken}`,
+                    employeeID: token.employeeID,
+                },
+            },
+        );
+        return res;
+    } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
+    }
+};
 export const getFilterInventoryCheck = async ({
     warehouseID,
     inventoryCheckID,
     status,
+    checkStatus,
     createdAt,
     employeeName,
     currentPage,
@@ -52,6 +83,7 @@ export const getFilterInventoryCheck = async ({
                 warehouseID: warehouseID,
                 inventoryCheckID: inventoryCheckID,
                 status: status,
+                checkStatus: checkStatus,
                 createdAt: createdAt,
                 employeeName: employeeName,
                 page: currentPage,
