@@ -15,6 +15,14 @@ class DashboardController {
             return res.status(e.statusHttp).json(e);
         }
     }
+    async getStatisticalImportExport(req, res) {
+        try {
+            const { statusHttp, ...response } = await DashboardService.getStatisticalImportExport(req.query);
+            return res.status(statusHttp).json(response);
+        } catch (e) {
+            return res.status(e.statusHttp).json(e);
+        }
+    }
 }
 
 module.exports = new DashboardController();
