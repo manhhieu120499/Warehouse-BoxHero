@@ -11,7 +11,7 @@ const createInventoryCheck = [
         .isString()
         .withMessage('Trạng thái phải là một chuỗi')
         .bail()
-        .isIn(['MATCHED', 'SHORTAGE', 'SURPLUS'])
+        .isIn(['BALANCED', 'DISCREPANCY'])
         .withMessage('Trạng thái không hợp lệ'),
     body('details')
         .isArray()
@@ -54,7 +54,7 @@ const filterInventoryCheck = [
         .bail(),
     query('checkStatus')
         .optional()
-        .isIn(['MATCHED', 'SHORTAGE', 'SURPLUS', ''])
+        .isIn(['BALANCED', 'DISCREPANCY', ''])
         .withMessage('Trạng thái kiểm kê thực tế không hợp lệ')
         .bail(),
     query('warehouseID').notEmpty().withMessage('Mã kho là bắt buộc').bail(),

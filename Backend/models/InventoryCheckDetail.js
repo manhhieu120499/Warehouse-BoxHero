@@ -37,6 +37,11 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.TEXT,
                 allowNull: true,
             },
+            status: {
+                type: Sequelize.ENUM('MATCHED', 'SHORTAGE', 'SURPLUS'),
+                allowNull: false,
+                defaultValue: 'MATCHED',
+            },
         },
         {
             tableName: 'inventory_check_detail',

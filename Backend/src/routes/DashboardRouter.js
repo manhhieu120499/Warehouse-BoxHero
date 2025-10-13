@@ -5,7 +5,7 @@ const { getStatisticalInventoryValidation } = require('../validates/dashboard.va
 const validate = require('../validates/validate');
 
 router.get(
-    '/dashboard/statistical-inventory',
+    '/statistical-inventory',
     getStatisticalInventoryValidation,
     validate,
     DashboardController.getStatisticalInventory,

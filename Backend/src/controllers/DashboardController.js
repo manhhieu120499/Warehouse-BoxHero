@@ -9,14 +9,10 @@ const HTTP_OK = process.env.HTTP_OK;
 class DashboardController {
     async getStatisticalInventory(req, res) {
         try {
-            const { statusHttp, ...response } = await DashboardService.getStatisticalInventory();
+            const { statusHttp, ...response } = await DashboardService.getStatisticalInventory(req.query);
             return res.status(statusHttp).json(response);
         } catch (e) {
-            console.log(e);
-            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
-                status: 'ERR',
-                message: [e.message],
-            });
+            return res.status(e.statusHttp).json(e);
         }
     }
 }

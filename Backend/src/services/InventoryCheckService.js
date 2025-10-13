@@ -9,6 +9,7 @@ const Batch = db.Batch;
 const Box = db.Box;
 const Unit = db.Unit;
 const Floor = db.Floor;
+const Shelf = db.Shelf;
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -34,6 +35,21 @@ class InventoryCheckService {
                                 {
                                     model: BatchBox,
                                     as: 'batchBoxByBatch',
+                                    required: false,
+                                    on: {
+                                        [Op.and]: [
+                                            db.sequelize.where(
+                                                db.sequelize.col('details.batchID'),
+                                                '=',
+                                                db.sequelize.col('details->batchBoxByBatch.batchID'),
+                                            ),
+                                            db.sequelize.where(
+                                                db.sequelize.col('details.boxID'),
+                                                '=',
+                                                db.sequelize.col('details->batchBoxByBatch.boxID'),
+                                            ),
+                                        ],
+                                    },
                                     attribute: ['quantity'],
                                     include: [
                                         {
@@ -47,7 +63,9 @@ class InventoryCheckService {
                                         {
                                             model: Box,
                                             as: 'box',
-                                            include: [{ model: Floor, as: 'floor' }],
+                                            include: [
+                                                { model: Floor, as: 'floor', include: [{ model: Shelf, as: 'shelf' }] },
+                                            ],
                                         },
                                     ],
                                 },
@@ -71,7 +89,7 @@ class InventoryCheckService {
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    message: err,
+                    message: 'Lỗi hệ thống',
                 });
             }
         });
@@ -122,6 +140,21 @@ class InventoryCheckService {
                                 {
                                     model: BatchBox,
                                     as: 'batchBoxByBatch',
+                                    required: false,
+                                    on: {
+                                        [Op.and]: [
+                                            db.sequelize.where(
+                                                db.sequelize.col('details.batchID'),
+                                                '=',
+                                                db.sequelize.col('details->batchBoxByBatch.batchID'),
+                                            ),
+                                            db.sequelize.where(
+                                                db.sequelize.col('details.boxID'),
+                                                '=',
+                                                db.sequelize.col('details->batchBoxByBatch.boxID'),
+                                            ),
+                                        ],
+                                    },
                                     attribute: ['quantity'],
                                     include: [
                                         {
@@ -153,10 +186,12 @@ class InventoryCheckService {
                     data: response,
                 });
             } catch (err) {
+                console.log(err);
+
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    message: err,
+                    message: 'Lỗi hệ thống',
                 });
             }
         });
@@ -178,7 +213,17 @@ class InventoryCheckService {
                     { transaction },
                 );
 
-                const inventoryCheckDetails = details.map((detail) => ({
+                const inventoryDetailConvert = details.map((item) => {
+                    let status = 'MATCHED';
+                    if (item.discrepancyQuantity > 0) {
+                        status = 'SURPLUS';
+                    } else if (item.discrepancyQuantity < 0) {
+                        status = 'SHORTAGE';
+                    }
+                    return { ...item, status };
+                });
+
+                const inventoryCheckDetails = inventoryDetailConvert.map((detail) => ({
                     ...detail,
                     inventoryCheckID: newInventoryCheck.inventoryCheckID,
                 }));
@@ -230,7 +275,7 @@ class InventoryCheckService {
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    message: err,
+                    message: 'Lỗi hệ thống',
                 });
             }
         });
@@ -250,6 +295,21 @@ class InventoryCheckService {
                             {
                                 model: BatchBox,
                                 as: 'batchBoxByBatch',
+                                required: false,
+                                on: {
+                                    [Op.and]: [
+                                        db.sequelize.where(
+                                            db.sequelize.col('InventoryCheckDetail.batchID'),
+                                            '=',
+                                            db.sequelize.col('batchBoxByBatch.batchID'),
+                                        ),
+                                        db.sequelize.where(
+                                            db.sequelize.col('InventoryCheckDetail.boxID'),
+                                            '=',
+                                            db.sequelize.col('batchBoxByBatch.boxID'),
+                                        ),
+                                    ],
+                                },
                                 attributes: ['quantity'],
                                 include: [
                                     {
@@ -274,19 +334,19 @@ class InventoryCheckService {
                         const discrepancyQuantity = detail.discrepancyQuantity;
                         const batchBox = detail.batchBoxByBatch;
 
-                        await BatchBox.update(
-                            { quantity: batchBox.quantity + discrepancyQuantity },
+                        await BatchBox.increment(
+                            { quantity: discrepancyQuantity },
                             { where: { batchID: batchBox.batch.batchID, boxID: batchBox.box.boxID }, transaction },
                         );
 
-                        await Batch.update(
-                            { remainAmount: batchBox.batch.remainAmount + discrepancyQuantity },
+                        await Batch.increment(
+                            { remainAmount: discrepancyQuantity },
                             { where: { batchID: batchBox.batch.batchID }, transaction },
                         );
 
                         const amountChange = discrepancyQuantity * batchBox.batch.unit.conversionQuantity;
-                        await Product.update(
-                            { amount: batchBox.batch.product.amount + amountChange },
+                        await Product.increment(
+                            { amount: amountChange },
                             { where: { productID: batchBox.batch.product.productID }, transaction },
                         );
                     }
@@ -301,10 +361,11 @@ class InventoryCheckService {
             } catch (err) {
                 await transaction.rollback();
                 console.log(err);
+
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    message: err,
+                    message: 'Lỗi hệ thống',
                 });
             }
         });
