@@ -27,9 +27,9 @@ module.exports = (sequelize, Sequelize) => {
             },
 
             checkStatus: {
-                type: Sequelize.ENUM('MATCHED', 'SHORTAGE', 'SURPLUS'),
+                type: Sequelize.ENUM('BALANCED', 'DISCREPANCY'),
                 allowNull: false,
-                defaultValue: 'MATCHED',
+                defaultValue: 'BALANCED',
             },
         },
         {
