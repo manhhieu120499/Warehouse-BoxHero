@@ -5,6 +5,9 @@ const { checkCreateOrderPurchase, checkUpdateStatusOrderPurchase } = require('..
 const validate = require('../validates/validate');
 const { authUserIsManager, authUser } = require('../middleware/AuthMiddleware');
 
+router.get('/get-all-order-purchase', authUserIsManager, OrderPurchaseController.getAllOrderPurchase);
+router.get('/filter-order-purchase', authUserIsManager, OrderPurchaseController.filterOrderPurchase);
+
 router.post(
     '/create-order-purchase',
     authUserIsManager,
