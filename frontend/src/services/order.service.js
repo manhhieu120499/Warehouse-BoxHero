@@ -82,7 +82,7 @@ export const saveReceipt = async (payload) => {
     }
 };
 
-export const fetchOrderMissing = async (warehouseID, page = 1) => {
+export const fetchOrderMissing = async (warehouseID) => {
     console.log(warehouseID);
     try {
         const token = parseToken('tokenUser');
@@ -101,7 +101,97 @@ export const fetchOrderMissing = async (warehouseID, page = 1) => {
         });
         return res;
     } catch (err) {
-        throw new Error(err);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
+    }
+};
+export const filterOrderMissing = async (params) => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const warehouseID = warehouse.warehouseID;
+
+        const res = await request.get(`/api/order-purchase-missing/filter`, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+                warehouseID: warehouseID,
+            },
+            params: {
+                warehouseID: warehouseID,
+                employeeID: token.employeeID,
+                ...params,
+            },
+        });
+        return res;
+    } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
+    }
+};
+
+export const fetchOrderPurchase = async (page = 1) => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+
+        const res = await request.get(`/api/order-purchase/get-all-order-purchase`, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+                warehouseID: warehouse.warehouseID,
+            },
+            params: {
+                employeeID: token.employeeID,
+                page: page,
+            },
+        });
+        return res;
+    } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
+    }
+};
+
+export const filterOrderPurchase = async (filter) => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+
+        const res = await request.get(`/api/order-purchase/filter-order-purchase`, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+                warehouseID: warehouse.warehouseID,
+            },
+            params: {
+                ...filter,
+            },
+        });
+        return res;
+    } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
     }
 };
 

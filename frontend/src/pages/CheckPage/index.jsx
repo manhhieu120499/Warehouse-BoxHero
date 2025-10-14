@@ -10,6 +10,7 @@ import { getAllInventoryCheck, getFilterInventoryCheck } from '../../services/in
 import parseToken from '../../utils/parseToken';
 import { formatStatusInventoryCheck, formatStatusOrderPurchaseMissingInventoryCheck } from '../../constants';
 import ShowLocationDetail from './ShowLocationDetail';
+import { Plus } from 'lucide-react';
 
 const cxGlobal = classNames.bind(globalStyle);
 const cx = classNames.bind(styles);
@@ -264,6 +265,7 @@ const ImportProduct = () => {
                     onClick={() => {
                         setShowCreateInventoryCheck(true);
                     }}
+                    leftIcon={<Plus size={16} />}
                 >
                     <span>Tạo phiếu kiểm kê</span>
                 </Button>

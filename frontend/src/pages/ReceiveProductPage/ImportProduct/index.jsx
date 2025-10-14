@@ -2,38 +2,32 @@
 import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ImportProduct.module.scss';
-import { formatStatusProposal, formatStatusOrderPurchaseMissing } from '../../../constants';
+import { formatStatusOrderPurchase, formatTypeOrderPurchase } from '../../../constants';
 import { Button, ModelFilter, MyTable, PaginationUI } from '../../../components';
-import InputBase from '../../../components/InputBase';
-import { fetchFilterProposal, fetchProposalMissingOrderPurchase } from '../../../services/proposal.service';
-import parseToken from '../../../utils/parseToken';
-import CreateImportReceiptDialog from '../CreateImportReceiptDialog';
-import CreateImportReceiptMissingDialog from '../CreateImportReceiptMissingDialog';
-import { fetchOrderMissing } from '../../../services/order.service';
 import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
-import { Circle, Download } from 'lucide-react';
+import { Circle, Download, Plus } from 'lucide-react';
 import ModelProposalDetail from '../../ApprovePage/ModelProposalDetail';
-import { post } from '../../../utils/httpRequest';
+import { fetchOrderPurchase, filterOrderPurchase } from '../../../services/order.service';
+import OrderPurchaseDetail from '../OrderPurchaseDetail';
+import ModelCreateOrderPurchase from '../ModelCreateOrderPurchase';
 
 const cxGlobal = classNames.bind(globalStyle);
 const cx = classNames.bind(styles);
 
 const ImportProduct = () => {
-    const [option, setOption] = useState('proposal-suggest');
-
-    const [suggestListProposal, setSuggestListProposal] = useState([]);
-    const [missingListProposal, setMissingListProposal] = useState([]);
+    const [orderPurchaseList, setOrderPurchaseList] = useState([]);
+    const [typeFilter, setTypeFilter] = useState('ALL');
+    const [orderPurchaseDetail, setOrderPurchaseDetail] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedRow, setSelectedRow] = useState(null);
-    const [showModalCreate, setShowModalCreate] = useState(false);
-    const [proposalSelected, setProposalSelected] = useState(null);
-    const [showModalCreateMissing, setShowModalCreateMissing] = useState(false);
-    const [showDetailProposal, setShowDetailProposal] = useState(false);
+    const [showCreateOrderPurchase, setShowCreateOrderPurchase] = useState(false);
 
-    const [filterProposal, setFilterProposal] = useState({
+    const [filter, setFilter] = useState({
         code: '',
         createdAt: '',
         employeeName: '',
+        type: 'ALL',
+        originalOrderPurchaseID: '',
+        proposalID: '',
     });
 
     const handleNextPage = () => {
@@ -46,85 +40,6 @@ const ImportProduct = () => {
     };
 
     const columnsDefineSuggestProposal = [
-        {
-            title: 'Mã phiếu đề xuất',
-            dataIndex: 'proposalID',
-            key: 'proposalID',
-        },
-        {
-            title: 'Ngày tạo',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            render: (_, record) => <p>{record?.createdAt?.slice(0, 10)}</p>,
-        },
-        {
-            title: 'Nhân viên lập phiếu',
-            dataIndex: 'employeeIDCreate',
-            key: 'employeeIDCreate',
-            render: (_, record) => {
-                return <p>{record?.employeeCreate?.employeeName}</p>;
-            },
-        },
-        {
-            title: 'Người phê duyệt',
-            dataIndex: 'approverID',
-            key: 'approverID',
-            render: (_, record) => {
-                return <p>{record?.approver?.employeeName}</p>;
-            },
-        },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
-            render: (index, record) => {
-                return (
-                    <div className={cx('status-proposal')}>
-                        <div className={cx('status-indicator', record.status)}></div>
-                        <p>{formatStatusProposal[index]}</p>
-                    </div>
-                );
-            },
-        },
-        {
-            title: 'Hành động',
-            dataIndex: 'action',
-            key: 'action',
-            render: (text, record) => {
-                return (
-                    <div className={cxGlobal('action-table')}>
-                        <Button
-                            success
-                            medium
-                            onClick={() => {
-                                setSelectedRow(record.key);
-                            }}
-                        >
-                            <span>Nhập kho</span>
-                        </Button>
-                        <Button
-                            primary
-                            medium
-                            onClick={() => {
-                                console.log(record);
-                                setProposalSelected(record || null);
-                                setShowDetailProposal(true);
-                            }}
-                        >
-                            <span>Xem chi tiết</span>
-                        </Button>
-                    </div>
-                );
-            },
-        },
-    ];
-
-    const columnsDefineMissingProposal = [
-        {
-            title: 'Mã phiếu thiếu',
-            dataIndex: 'orderPurchaseMissingID',
-            key: 'orderPurchaseMissingID',
-        },
         {
             title: 'Mã phiếu nhập',
             dataIndex: 'orderPurchaseID',
@@ -141,16 +56,27 @@ const ImportProduct = () => {
             dataIndex: 'employeeIDCreate',
             key: 'employeeIDCreate',
             render: (_, record) => {
-                return <p>{record?.orderPurchase?.employee?.employeeName}</p>;
+                return <p>{record?.employee?.employeeName}</p>;
             },
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            render: (status) => {
-                if (option.missingProposal) return formatStatusOrderPurchaseMissing[status];
-                else return formatStatusProposal[status];
+            render: (index, record) => {
+                return (
+                    <div className={cx('status-proposal')}>
+                        <p>{formatStatusOrderPurchase[record.status]}</p>
+                    </div>
+                );
+            },
+        },
+        {
+            title: 'Loại phiếu',
+            dataIndex: 'type',
+            key: 'type',
+            render: (index, record) => {
+                return <p>{formatTypeOrderPurchase[record.type]}</p>;
             },
         },
         {
@@ -161,15 +87,12 @@ const ImportProduct = () => {
                 return (
                     <div className={cxGlobal('action-table')}>
                         <Button
-                            success
+                            primary
                             medium
                             onClick={() => {
-                                setSelectedRow(record.key);
+                                setOrderPurchaseDetail(record);
                             }}
                         >
-                            <span>Nhập bổ sung</span>
-                        </Button>
-                        <Button primary medium>
                             <span>Xem chi tiết</span>
                         </Button>
                     </div>
@@ -178,68 +101,26 @@ const ImportProduct = () => {
         },
     ];
 
-    // fetch danh sách phiếu đề xuất của kho
-    const handleFetchProposalMissingOrderPurchase = () => {
-        fetchProposalMissingOrderPurchase()
-            .then((res) => {
-                console.log(res);
-                const formatData = res.proposals.map((it) => ({
-                    key: it.proposalID,
-                    ...it,
-                }));
-                setSuggestListProposal(formatData || []);
-            })
-            .catch((err) => console.log(err));
-    };
+    const fetchData = async () => {
+        const res = await fetchOrderPurchase(currentPage);
 
-    // fetch danh sách phiếu thiếu của đơn đã nhập
-    const handleFetchOrderMissing = () => {
-        const warehouse = parseToken('warehouse');
-        fetchOrderMissing(warehouse.warehouseID, currentPage)
-            .then((res) => {
-                const formatData = res.data.data.map((it) => ({
-                    key: it.orderPurchaseMissingID,
-                    ...it,
-                }));
-                setMissingListProposal(formatData || []);
-            })
-            .catch((err) => console.log(err));
-    };
-
-    // useEffect(() => {
-    //     if (option == 'proposal-suggest') handleFetchProposalMissingOrderPurchase();
-    //     else handleFetchOrderMissing();
-    // }, [option, currentPage]);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [option]);
-
-    useEffect(() => {
-        if (!selectedRow) return;
-        let indexProposal =
-            option != 'proposal-suggest'
-                ? missingListProposal.findIndex((it) => it.orderPurchaseMissingID == selectedRow)
-                : suggestListProposal.findIndex((it) => it.proposalID == selectedRow);
-        console.log(indexProposal);
-        if (indexProposal == -1) return;
-        if (option == 'proposal-suggest') {
-            setProposalSelected(suggestListProposal[indexProposal]);
-            setShowModalCreate(true);
-        } else {
-            setProposalSelected(missingListProposal[indexProposal]);
-            setShowModalCreateMissing(true);
+        if (res.data?.status === 'OK') {
+            setOrderPurchaseList(res.data.data || []);
         }
-    }, [selectedRow]);
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     const columnsFilter = [
         {
             id: 1,
-            label: 'Mã phiếu đề xuất',
+            label: 'Mã phiếu nhập',
             dataIndex: 'orderPurchaseID',
             key: 'orderPurchaseID',
-            setValue: (value) => setFilterProposal({ ...filterProposal, code: value }),
-            value: filterProposal.code,
+            setValue: (value) => setFilter({ ...filter, code: value }),
+            value: filter.code,
         },
         {
             id: 2,
@@ -247,175 +128,151 @@ const ImportProduct = () => {
             dataIndex: 'createdAt',
             key: 'createdAt',
             type: 'date',
-            setValue: (value) => setFilterProposal({ ...filterProposal, createdAt: value }),
-            value: filterProposal.createdAt,
+            setValue: (value) => setFilter({ ...filter, createdAt: value }),
+            value: filter.createdAt,
         },
         {
             id: 3,
             label: 'Tên nhân viên lập phiếu',
             dataIndex: 'employeeName',
             key: 'employeeName',
-            setValue: (value) => setFilterProposal({ ...filterProposal, employeeName: value }),
-            value: filterProposal.employeeName,
+            setValue: (value) => setFilter({ ...filter, employeeName: value }),
+            value: filter.employeeName,
         },
     ];
+
+    const columnsFilterMissing = [
+        {
+            id: 4,
+            label: 'Mã phiếu nhập gốc',
+            dataIndex: 'originalOrderPurchaseID',
+            key: 'originalOrderPurchaseID',
+            setValue: (value) => setFilter({ ...filter, originalOrderPurchaseID: value }),
+            value: filter.originalOrderPurchaseID,
+        },
+    ];
+
+    const columnsFilterProposal = [
+        {
+            id: 4,
+            label: 'Mã phiếu đề xuất',
+            dataIndex: 'proposalID',
+            key: 'proposalID',
+            setValue: (value) => setFilter({ ...filter, proposalID: value }),
+            value: filter.proposalID,
+        },
+    ];
+
+    const handleChangeTypeFilter = (value) => {
+        setTypeFilter(value);
+        setFilter({ ...filter, type: value });
+    };
 
     const selectInput = [
         {
             label: 'Loại phiếu',
+            value: filter.type,
             option: [
                 {
-                    name: 'Phiếu đề xuất',
-                    value: 'proposal-suggest',
+                    name: 'Tất cả',
+                    value: 'ALL',
                 },
                 {
-                    name: 'Phiếu thiếu',
-                    value: 'proposal-missing',
+                    name: 'Phiếu nhập mới',
+                    value: 'NORMAL',
+                },
+                {
+                    name: 'Phiếu bổ sung',
+                    value: 'SUPPLEMENT',
                 },
             ],
-            setValue: (value) => setOption(value),
+            setValue: (value) => handleChangeTypeFilter(value),
         },
     ];
 
     const handleSubmitFilter = async () => {
-        if (Object.keys(filterProposal).every((key) => filterProposal[key] == '')) return;
-        if (option == 'proposal-suggest') {
-            try {
-                const resultFilter = await fetchFilterProposal({
-                    ...filterProposal,
-                    proposalID: filterProposal.code,
-                });
-                setSuggestListProposal(resultFilter?.proposals || []);
-            } catch (err) {
-                console.log(err);
-            }
-        } else {
-            try {
-                const resultFilter = await fetchFilterProposal({
-                    ...filterProposal,
-                    orderPurchaseMissingID: filterProposal.code,
-                });
-                console.log(resultFilter);
-            } catch (err) {
-                console.log(err);
-            }
+        if (Object.keys(filter).every((key) => filter[key] == '')) return;
+        const filterParams = { ...filter };
+        if (filter.type === 'ALL') {
+            delete filterParams.type;
+        } else if (filter.type === 'NORMAL') {
+            delete filterParams.originalOrderPurchaseID;
+        } else if (filter.type === 'SUPPLEMENT') {
+            delete filterParams.proposalID;
+        }
+        const res = await filterOrderPurchase({ ...filterParams, page: currentPage });
+        if (res.data?.status === 'OK') {
+            console.log(res.data);
+
+            setOrderPurchaseList(res.data.data || []);
         }
     };
 
     const handleResetFilter = () => {
-        setFilterProposal({
+        setFilter({
             code: '',
             createdAt: '',
             employeeName: '',
+            type: 'ALL',
+            originalOrderPurchaseID: '',
+            proposalID: '',
         });
+        fetchData();
+        setTypeFilter('ALL');
     };
-
-    const handleSearch = async () => {
-        if (!Object.keys(filterProposal).some((key) => filterProposal[key])) return;
-        try {
-            const token = parseToken('tokenUser');
-            const res = await post(
-                '/api/proposal/filter-proposal',
-                {
-                    proposalID: filterProposal?.proposalID,
-                    createdAt: filterProposal?.createdAt,
-                    status: filterProposal?.status,
-                    employeeName: filterProposal?.employeeName,
-                },
-                token.accessToken,
-                token.employeeID,
-            );
-            //console.log(res);
-            //setProposalPurchaseList(res.proposals || []);
-        } catch (err) {
-            console.log(err);
-        }
-    };
-
-    useEffect(() => {
-        const { code, createdAt, employeeName } = filterProposal;
-        if (code == '' && createdAt == '' && employeeName == '') {
-            if (option == 'proposal-suggest') handleFetchProposalMissingOrderPurchase();
-            else handleFetchOrderMissing();
-        }
-    }, [filterProposal, option, currentPage]);
 
     return (
         <div className={cx('wrapper-import-product')}>
             <ModelFilter
                 className={cx('header-filter')}
-                columns={columnsFilter}
+                columns={
+                    typeFilter == 'ALL'
+                        ? columnsFilter
+                        : typeFilter === 'SUPPLEMENT'
+                        ? [...columnsFilter, ...columnsFilterMissing]
+                        : [...columnsFilter, ...columnsFilterProposal]
+                }
                 selectInput={selectInput}
                 handleSubmitFilter={handleSubmitFilter}
                 handleResetFilters={handleResetFilter}
-            />
-
-            {/** danh sách phiếu đề xuất hoặc phiếu thiếu */}
-            {option == 'proposal-suggest' && (
-                <div className={cx('view-list-proposal')}>
-                    <div className={cx('table-header')}>
-                        '<p className={cx('table-title')}>Danh sách phiếu đề xuất</p>
-                    </div>
-
-                    <MyTable data={suggestListProposal} columns={columnsDefineSuggestProposal} />
-                    <div className={cx('pagination-table')}>
-                        <PaginationUI
-                            currentPage={currentPage}
-                            handleNextPage={handleNextPage}
-                            handlePrevPage={handlePrevPage}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {option == 'proposal-missing' && (
-                <div className={cx('view-list-proposal')}>
-                    <div className={cx('table-header')}>
-                        '<p className={cx('table-title')}>Danh sách phiếu nhập thiếu</p>
-                    </div>
-
-                    <MyTable data={missingListProposal} columns={columnsDefineMissingProposal} />
-                    <div className={cx('pagination-table')}>
-                        <PaginationUI
-                            currentPage={currentPage}
-                            handleNextPage={handleNextPage}
-                            handlePrevPage={handlePrevPage}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {showModalCreate && (
-                <CreateImportReceiptDialog
-                    isOpen={showModalCreate}
-                    onClose={() => {
-                        setSelectedRow([]);
-                        setShowModalCreate(false);
+            >
+                <Button
+                    primary
+                    onClick={() => {
+                        setShowCreateOrderPurchase(true);
                     }}
-                    proposalItem={proposalSelected}
-                    handleFetchProposalMissingOrderPurchase={handleFetchProposalMissingOrderPurchase}
+                    leftIcon={<Plus size={16} />}
+                >
+                    <span>Tạo phiếu nhập</span>
+                </Button>
+            </ModelFilter>
+
+            <div className={cx('view-list-proposal')}>
+                <div className={cx('table-header')}>
+                    '<p className={cx('table-title')}>Danh sách phiếu nhập</p>
+                </div>
+
+                <MyTable data={orderPurchaseList} columns={columnsDefineSuggestProposal} />
+                <div className={cx('pagination-table')}>
+                    <PaginationUI
+                        currentPage={currentPage}
+                        handleNextPage={handleNextPage}
+                        handlePrevPage={handlePrevPage}
+                    />
+                </div>
+            </div>
+            {orderPurchaseDetail && (
+                <OrderPurchaseDetail
+                    orderPurchaseDetail={orderPurchaseDetail}
+                    isOpen={orderPurchaseDetail != null}
+                    onClose={() => setOrderPurchaseDetail(null)}
                 />
             )}
-
-            {showModalCreateMissing && (
-                <CreateImportReceiptMissingDialog
-                    isOpen={showModalCreateMissing}
-                    onClose={() => {
-                        setSelectedRow([]);
-                        setShowModalCreateMissing(false);
-                    }}
-                    orderPurchaseMissing={proposalSelected}
-                    handleFetchOrderMissing={handleFetchOrderMissing}
-                />
-            )}
-
-            {showDetailProposal && (
-                <ModelProposalDetail
-                    isOpen={showDetailProposal}
-                    typeDetail={true}
-                    onClose={() => setShowDetailProposal(false)}
-                    proposalDetailID={proposalSelected.proposalID}
-                    handleSearch={handleSearch}
+            {showCreateOrderPurchase && (
+                <ModelCreateOrderPurchase
+                    isOpen={showCreateOrderPurchase}
+                    onClose={() => setShowCreateOrderPurchase(false)}
+                    fetchData={fetchData}
                 />
             )}
         </div>

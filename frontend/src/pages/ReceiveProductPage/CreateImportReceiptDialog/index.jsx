@@ -301,7 +301,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                             <table className={cx('table')}>
                                 <thead>
                                     <tr>
-                                        <th>STT</th>
+                                        <th className={cx('stt')}>STT</th>
                                         <th>Mã sản phẩm</th>
                                         <th>Tên sản phẩm</th>
                                         <th>Đơn vị tính</th>
@@ -321,7 +321,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                         productListImport.map((it, idx) => {
                                             return (
                                                 <tr key={idx}>
-                                                    <td>{idx + 1}</td>
+                                                    <td className={cx('stt')}>{idx + 1}</td>
 
                                                     <td>
                                                         <input
