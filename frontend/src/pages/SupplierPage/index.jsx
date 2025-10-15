@@ -49,7 +49,7 @@ const SupplierPage = () => {
         phoneNumber: '',
         email: '',
     });
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
 
     // product state
     const productPageSize = 10;
@@ -72,7 +72,7 @@ const SupplierPage = () => {
                     employeeid: tokenUser.employeeID,
                 },
             });
-         
+
             const formatProductsData = response.data.products.map((item) => {
                 return {
                     key: item.productID,
@@ -224,18 +224,6 @@ const SupplierPage = () => {
                                 }}
                             >
                                 <PencilIcon size={20} />
-                            </button>
-                        </Tippy>
-                        <Tippy content={'Xóa'} placement="bottom-end">
-                            <button
-                                className={cxGlobal('action-table-icon')}
-                                style={{ color: 'red' }}
-                                onClick={() => {
-                                    setSupplierId(record.supplierId);
-                                    setShowPopupConfirm(true);
-                                }}
-                            >
-                                <Trash2 size={20} />
                             </button>
                         </Tippy>
                     </div>
@@ -571,7 +559,7 @@ const SupplierPage = () => {
                                         const productDetail = new ProductDetailDTO({ ...rest, listBatch: formatBatch });
                                         //navigate(`/products?productID=${record.productID}`);
                                         navigate('/products', { state: productDetail });
-                                        dispatch(removeItemDrop(2))
+                                        dispatch(removeItemDrop(2));
                                     } catch (err) {
                                         console.log(err);
                                     }

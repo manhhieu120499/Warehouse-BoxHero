@@ -215,7 +215,7 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
                 </div>
                 {boxID && <h4 className={cx('box-detail-content')}>Nội dung chi tiết ô</h4>}
                 {!boxID && <h4 className={cx('box-detail-content')}>Danh sách sản phẩm trong kho tạm</h4>}
-                <div className={cx('tableWrap')}>
+                <div className={cx(['tableWrap', !boxID && 'tableWrapNoBox'])}>
                     <table className={cx('table')}>
                         <thead>
                             <tr>
@@ -234,30 +234,33 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
                             </tr>
                         </thead>
                         <tbody>
-                            {batches?.map((batch, index) => (
-                                <tr key={index}>
-                                    {!boxID && (
-                                        <td>
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedBatches
-                                                    .map((item) => item.batchID)
-                                                    .includes(batch.batchID)}
-                                                onChange={() => handleCheckboxChange(batch)}
-                                            />
+                            {/* only chose batches with batch.batch_boxes?.quantity > 0 */}
+                            {batches
+                                ?.filter((batch) => batch.batch_boxes?.quantity > 0 || !boxID)
+                                .map((batch, index) => (
+                                    <tr key={index}>
+                                        {!boxID && (
+                                            <td>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedBatches
+                                                        .map((item) => item.batchID)
+                                                        .includes(batch.batchID)}
+                                                    onChange={() => handleCheckboxChange(batch)}
+                                                />
+                                            </td>
+                                        )}
+                                        <td className={cx('stt')}>{batch.batchID}</td>
+                                        <td className={cx('productID')}>{batch.product.productID}</td>
+                                        <td className={cx('productName')}>{batch.product.productName}</td>
+                                        <td className={cx('unit')}>{batch.unit.unitName}</td>
+                                        <td className={cx('num')}>
+                                            {boxID ? batch.batch_boxes?.quantity : batch.remainAmount}
                                         </td>
-                                    )}
-                                    <td className={cx('stt')}>{batch.batchID}</td>
-                                    <td className={cx('productID')}>{batch.product.productID}</td>
-                                    <td className={cx('productName')}>{batch.product.productName}</td>
-                                    <td className={cx('unit')}>{batch.unit.unitName}</td>
-                                    <td className={cx('num')}>
-                                        {boxID ? batch.batch_boxes?.quantity : batch.remainAmount}
-                                    </td>
-                                    <td className={cx('note')}>{convertDateVN(batch.manufactureDate)}</td>
-                                    <td className={cx('note')}>{convertDateVN(batch.expiryDate)}</td>
-                                </tr>
-                            ))}
+                                        <td className={cx('note')}>{convertDateVN(batch.manufactureDate)}</td>
+                                        <td className={cx('note')}>{convertDateVN(batch.expiryDate)}</td>
+                                    </tr>
+                                ))}
                         </tbody>
                     </table>
                 </div>

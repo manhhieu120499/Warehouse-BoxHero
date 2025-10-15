@@ -80,3 +80,9 @@ export const formatStatusInventoryCheckDetail = {
     SHORTAGE: 'Thiếu sản phẩm',
     SURPLUS: 'Dư sản phẩm',
 };
+
+export const typeTransaction = {
+    PURCHASE: 'Nhập hàng',
+    RELEASE: 'Xuất hàng',
+    INVENTORY_CHECK: 'Kiểm kê hàng',
+};
