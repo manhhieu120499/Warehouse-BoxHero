@@ -19,7 +19,12 @@ import {
     Cell,
 } from 'recharts';
 import { Button } from '@/components';
-import { getStatisticalImportExport, getStatisticalInventory } from '../../services/dashboard.service';
+import {
+    getProductLowMinStock,
+    getStaticPercentUseWarehouse,
+    getStatisticalImportExport,
+    getStatisticalInventory,
+} from '../../services/dashboard.service';
 import { formatStatusProduct } from '../../constants';
 import MyTable from '../../components/MyTable';
 
@@ -177,11 +182,13 @@ const Dashboard = () => {
             title: 'Tên nhóm sản phẩm',
             dataIndex: 'skgu',
             key: 'skgu',
+            render: (text, record) => <p className={cx('sku-product')}>{record.category.categoryName}</p>,
         },
         {
             title: 'Mã sản phẩm',
             dataIndex: 'sku',
             key: 'sku',
+            render: (text, record) => <p className={cx('sku-product')}>{record.productID}</p>,
         },
         {
             title: 'Tên sản phẩm',
@@ -192,13 +199,13 @@ const Dashboard = () => {
             title: 'Tồn kho tối thiểu',
             dataIndex: 'minStock',
             key: 'minStock',
-            render: (text) => <p className={cx('min-stock-product')}>{text}</p>,
+            render: (text) => <p className={cx('cell-number')}>{text}</p>,
         },
         {
             title: 'Tổng lượng tồn kho',
             dataIndex: 'totalStock',
             key: 'totalStock',
-            render: (text) => <p className={cx('total-stock-product')}>{text}</p>,
+            render: (text, record) => <p className={cx('cell-number')}>{record.amount}</p>,
         },
         {
             title: 'Trạng thái',
@@ -207,6 +214,88 @@ const Dashboard = () => {
             render: (text) => <p className={cx('status-product')}>{formatStatusProduct[text]}</p>,
         },
     ];
+
+    const [productList, setProductList] = useState([]);
+    const [filterReportProduct, setFilterReportProduct] = useState('productRelease');
+
+    useEffect(() => {
+        async function filterReportProductFunc(keyword) {
+            switch (keyword) {
+                case 'productRelease': {
+                    setProductList([
+                        {
+                            productID: 'SP3',
+                            productName: 'Sữa tiệt trùng vinamilk',
+                            amount: 20,
+                            minStock: 10,
+                            status: 'AVAILABLE',
+                            category: { categoryID: 'CA3', categoryName: 'Sữa tươi' },
+                        },
+                        {
+                            productID: 'SP4',
+                            productName: 'Sữa TH TrueMilk',
+                            amount: 30,
+                            minStock: 10,
+                            status: 'AVAILABLE',
+                            category: { categoryID: 'CA1', categoryName: 'Sữa tươi' },
+                        },
+                    ]);
+                    break;
+                }
+                case 'productOld': {
+                    setProductList([
+                        {
+                            productID: 'SP6',
+                            productName: 'Sữa đậu nành Việt Nam Vinasoy',
+                            amount: 50,
+                            minStock: 100,
+                            status: 'AVAILABLE',
+                            category: { categoryID: 'CA3', categoryName: 'Sữa tươi' },
+                        },
+                        {
+                            productID: 'SP7',
+                            productName: 'Sữa đậu nành fami',
+                            amount: 30,
+                            minStock: 80,
+                            status: 'AVAILABLE',
+                            category: { categoryID: 'CA1', categoryName: 'Sữa hộp' },
+                        },
+                    ]);
+                    break;
+                }
+                case 'productLow': {
+                    try {
+                        const res = await getProductLowMinStock();
+                        setProductList(res || []);
+                    } catch (err) {
+                        console.log(err);
+                    }
+                    break;
+                }
+            }
+        }
+        filterReportProductFunc(filterReportProduct);
+    }, [filterReportProduct]);
+    const [percentUseWarehouse, setPercentUseWarehouse] = useState([]);
+
+    useEffect(() => {
+        async function fetchPercentUseWarehouse() {
+            try {
+                const res = await getStaticPercentUseWarehouse();
+
+                const remainKey = 'totalRemain';
+                const usedKey = 'percentUsed';
+                setPercentUseWarehouse([
+                    { ...res[usedKey], value: res[usedKey].percent },
+                    { ...res[remainKey], value: res[remainKey].percent },
+                ]);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        fetchPercentUseWarehouse();
+    }, []);
 
     return (
         <div className={cx('wrapper-dashboard')}>
@@ -217,10 +306,7 @@ const Dashboard = () => {
                 <ResponsiveContainer width="100%" height={320}>
                     <PieChart>
                         <Pie
-                            data={[
-                                { name: 'Đã sử dụng', value: 75 },
-                                { name: 'Còn trống', value: 25 },
-                            ]}
+                            data={percentUseWarehouse}
                             cx="50%"
                             cy="50%"
                             labelLine={false}
@@ -244,11 +330,11 @@ const Dashboard = () => {
                     <h3>Thống kê sản phẩm:</h3>
                     <select
                         className={cx('select-time')}
-                        // value={timeInventoryImportExportAndInventory}
-                        // onChange={(e) => setTimeInventoryImportExportAndInventory(e.target.value)}
+                        value={filterReportProduct}
+                        onChange={(e) => setFilterReportProduct(e.target.value)}
                     >
                         <option value="productRelease">Sản phẩm xuất nhiều</option>
-                        <option value="productOld">Sản phẩm tồn lâu</option>
+                        <option value="productOld">Sản phẩm xuất ít</option>
                         <option value="productLow">Sản phẩm tồn kho thấp</option>
                     </select>
                 </div>
@@ -256,9 +342,9 @@ const Dashboard = () => {
                     <MyTable
                         className={cx('my-table')}
                         columns={tableColumns}
-                        // data={productList}
-                        //pageSize={5}
-                        //pagination
+                        data={productList}
+                        pageSize={5}
+                        pagination
                         // onChangePage={handleOnChange}
                         //currentPage={currentPage}
                     />

@@ -7,9 +7,10 @@ class ProductDetailDTO {
         this.des = data.description;
         this.price = new Intl.NumberFormat('vi-VN').format(data.price);
         this.minStock = data.minStock;
+        this.baseUnitName = data?.baseUnitName || '';
         this.qrcode = data.qrcode;
         this.listBatch = data.listBatch;
-        this.total = data.listBatch.reduce((s, item) => s + item.totalProductRemain, 0)
+        this.total = data.listBatch.reduce((s, item) => s + item.totalProductRemain, 0);
     }
 }
 

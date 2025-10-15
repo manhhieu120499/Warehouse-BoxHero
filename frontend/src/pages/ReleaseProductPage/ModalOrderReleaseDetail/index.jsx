@@ -38,11 +38,15 @@ const ModalOrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem }) => {
             render: (text) => <p className={cx('cell-number')}>{text}</p>,
         },
         {
-            title: '',
+            title: 'Thao tác',
             dataIndex: 'actions',
             key: 'actions',
             render: (_, record) => (
-                <div className={cxGlb('action-table')} onClick={() => setOrderDetailSelected(record)}>
+                <div
+                    className={cxGlb('action-table')}
+                    onClick={() => setOrderDetailSelected(record)}
+                    style={{ cursor: 'pointer' }}
+                >
                     <Tippy content="Xem chi tiết" placement="right">
                         <Eye size={20} />
                     </Tippy>

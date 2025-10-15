@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
 import classNames from 'classnames/bind';
 import styles from './CreateExportProductDialog.module.scss';
-import { Modal, Button, MyTable } from '../../../components';
-import { Trash2 } from 'lucide-react';
+import { Modal, Button } from '../../../components';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearAllBatchProductList } from '../../../lib/redux/batchProduct/BatchProduct';
 import toast from 'react-hot-toast';
@@ -21,7 +20,7 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData }) => {
     const batchOfProducts = useSelector((state) => state.BatchProductSlice.batchProductList);
     const batchBoxOfProducts = useSelector((state) => state.BatchProductSlice.batchBoxProductList);
     const currentUser = useSelector((state) => state.AuthSlice.user);
-    console.log('currentUser', currentUser);
+
     const [formData, setFormData] = useState({
         receiptCode: '',
         createdDate: new Date().toISOString().split('T')[0],
@@ -139,11 +138,13 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData }) => {
     };
 
     const handleResetForm = () => {
-        setFormData({
+        setFormData((prev) => ({
+            ...prev,
             receiptCode: '',
             customerID: '',
+            customerName: '',
             note: '',
-        });
+        }));
         setProductListSelected([]);
         dispatch(clearAllBatchProductList());
         handleNextView(0);

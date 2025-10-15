@@ -4,7 +4,7 @@ import classNames from 'classnames/bind';
 import styles from './ProductPage.module.scss';
 import MyTable from '../../components/MyTable';
 import Tippy from '@tippyjs/react';
-import { Eye, PencilIcon } from 'lucide-react';
+import { Eye, PencilIcon, Plus } from 'lucide-react';
 import { ProductDetail, ProductEdit, ModelFilter, Button } from '@/components';
 import { useDispatch, useSelector } from 'react-redux';
 import { startLoading, stopLoading } from '../../lib/redux/loading/slice';
@@ -17,6 +17,7 @@ import ProductDetailDTO from '../../dtos/ProductDetailDTO';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { formatStatusProduct, styleMessage } from '../../constants';
 import PaginationUI from '@/components/PaginationUI';
+import ModalProductCreate from '../../components/ModalProductCreate';
 
 const cx = classNames.bind(styles);
 
@@ -58,6 +59,7 @@ const ProductPage = () => {
     const query = new URLSearchParams(location.search);
     const productID = query.get('productID');
     const dispatch = useDispatch();
+    const [showModalCreateProduct, setShowModalCreateProduct] = useState(false);
 
     const handleOnChange = useCallback((page, pageSize) => {
         setCurrentPage(page);
@@ -87,7 +89,12 @@ const ProductPage = () => {
                 const batch = new BatchDTO(item);
                 return { ...batch };
             });
-            const productDetail = new ProductDetailDTO({ ...rest, listBatch: formatBatch });
+            const productDetail = new ProductDetailDTO({
+                ...rest,
+                listBatch: formatBatch,
+                baseUnitName: rest.baseUnitProducts?.baseUnitName,
+            });
+            console.log('productDetail', productDetail);
             setProductData(productDetail);
         } catch (err) {
             console.log(err);
@@ -146,10 +153,17 @@ const ProductPage = () => {
             key: 'productName',
         },
         {
+            title: 'Đơn vị tính',
+            dataIndex: 'unitName',
+            key: 'unitName',
+            render: (text, record) => <p className={cx('unit-name-product')}>{record.baseUnitName}</p>,
+        },
+        {
             title: 'Tồn kho tối thiểu',
             dataIndex: 'minStock',
             key: 'minStock',
             render: (text) => <p className={cx('min-stock-product')}>{text}</p>,
+            width: '15%',
         },
         {
             title: 'Trạng thái',
@@ -198,10 +212,12 @@ const ProductPage = () => {
                     employeeid: tokenUser.employeeID,
                 },
             });
+            //console.log('fetch', result);
             const formatProducts = result.data.products.map((item) => {
                 const product = new ProductDTO(item);
-                return { ...product };
+                return { ...product, ...item.baseUnitProducts };
             });
+            console.log('fetch', formatProducts);
             setProductList(formatProducts);
         } catch (err) {
             console.log('fetch err', err);
@@ -299,7 +315,11 @@ const ProductPage = () => {
                 columns={columnsModelFilter}
                 handleSubmitFilter={handleSearch}
                 handleResetFilters={handleResetFilterProduct}
-            ></ModelFilter>
+            >
+                <Button primary medium onClick={() => setShowModalCreateProduct(true)} leftIcon={<Plus size={20} />}>
+                    <span>Tạo sản phẩm</span>
+                </Button>
+            </ModelFilter>
             <h1>Danh sách sản phẩm</h1>
             <MyTable
                 className={cx('my-table')}
@@ -332,6 +352,13 @@ const ProductPage = () => {
                     data={productData}
                     onClose={() => setAction({ productId: null, actionName: null })}
                     handleUpdateProduct={handleUpdateProduct}
+                />
+            )}
+            {showModalCreateProduct && (
+                <ModalProductCreate
+                    isOpen={!!showModalCreateProduct}
+                    onClose={() => setShowModalCreateProduct(false)}
+                    prefectProductList={fetchProducts}
                 />
             )}
         </div>

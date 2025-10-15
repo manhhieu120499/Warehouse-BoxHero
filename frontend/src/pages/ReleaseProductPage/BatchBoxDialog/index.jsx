@@ -23,7 +23,7 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
     const [rows, setRows] = useState([]);
     const dispatch = useDispatch();
 
-    console.log(rows);
+    const [disabledKeys, setDisabledKeys] = useState([]);
 
     const columns = useMemo(
         () => [
@@ -66,7 +66,7 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
                         value={record.qty || 0}
                         onChange={(e) => {
                             const v = e.target.value === '' ? '' : Number(e.target.value);
-                            setRows((prev) => prev.map((r) => (r.key === record.key ? { ...r, qty: v } : r)));
+                            handleQuantityChange(v, record);
                         }}
                         className={cx('qty-input')}
                         disabled={!selectedRowKeys.includes(record.boxID) || record.amountAvailable === 0}
@@ -78,10 +78,34 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
         [selectedRowKeys],
     );
 
+    const getTotalSelectedQty = (data, selected) =>
+        data.filter((r) => selected.includes(r.boxID)).reduce((sum, r) => sum + (r.qty || 0), 0);
+
+    const handleQuantityChange = (value, record) => {
+        const newRows = rows.map((r) => (r.boxID === record.boxID ? { ...r, qty: value } : r));
+        setRows(newRows);
+
+        const totalQty = getTotalSelectedQty(newRows, selectedRowKeys);
+
+        if (totalQty === requireQuantity) {
+            setSelectedRowKeys([record.boxID]);
+
+            setDisabledKeys(newRows.filter((r) => r.boxID !== record.boxID).map((r) => r.boxID));
+        } else if (totalQty < requireQuantity) {
+            setDisabledKeys([]);
+        }
+    };
+
+    const isRowDisabled = (record) => disabledKeys.includes(record.boxID);
+
     const rowSelection = {
         type: 'checkbox',
         selectedRowKeys,
         onChange: (keys) => setSelectedRowKeys(keys),
+        getCheckboxProps: (record) => ({
+            disabled: isRowDisabled(record),
+        }),
+        getCheckboxPropsDependencies: [rows, selectedRowKeys],
     };
 
     const handleConfirm = () => {
@@ -172,7 +196,7 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
                     pagination
                     rowSelection={rowSelection}
                     currentPage={page}
-                    scroll={{ y: 300 }}
+                    scroll={{ y: 200 }}
                 />
 
                 <div className={cx('button-batch-dialog')}>

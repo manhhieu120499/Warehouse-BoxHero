@@ -255,11 +255,11 @@ const Sidebar = () => {
                     path: '/check-inventory',
                 },
 
-                {
-                    title: 'Quản lý khu vực',
-                    iconName: Columns3,
-                    path: '/zone',
-                },
+                // {
+                //     title: 'Quản lý khu vực',
+                //     iconName: Columns3,
+                //     path: '/zone',
+                // },
                 {
                     title: 'Quản lý kệ',
                     iconName: Package,

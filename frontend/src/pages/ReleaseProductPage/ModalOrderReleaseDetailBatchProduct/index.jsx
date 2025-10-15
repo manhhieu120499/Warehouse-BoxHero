@@ -48,8 +48,8 @@ const ModalOrderReleaseDetailBatchProduct = ({ item, isOpen, onClose }) => {
     useEffect(() => {
         if (!item) return;
         const formatBatchList = item.batchOfProductExported.map((info) => {
-            console.log(info);
-            const uom = info.batch.unit.unitName.split('-')[1].trim();
+            console.log('info', info);
+            const uom = info.batch.unit.conversionQuantity;
             return {
                 batchID: info.batch.batchID,
                 manufactureDate: info.batch.manufactureDate,

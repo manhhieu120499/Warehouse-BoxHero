@@ -263,6 +263,7 @@ const ProductDetail = ({ data, classname, onClose }) => {
                             />
                             <RowItem firstTitle="Mô tả" firstValue={data.des} />
                             <RowItem firstTitle="Mã nhà cung cấp" firstValue={data.supplierId} />
+                            <RowItem firstTitle="Đơn vị cơ bản" firstValue={data.baseUnitName} />
                         </div>
                     </div>
                     <div className={cx('batch')}>

@@ -137,6 +137,7 @@ const ReceiveProductMissingPage = () => {
                     warehouseID: warehouse.warehouseID,
                 },
             });
+            console.log('missing', res.data.data);
             setReceiverPurchaseList(res.data.data);
             setPage(page);
         } catch (err) {
@@ -149,22 +150,25 @@ const ReceiveProductMissingPage = () => {
             const token = parseToken('tokenUser');
             const warehouse = parseToken('warehouse');
             const filterParam = {};
-            if(filterReceiverPurchase.proposalID) filterParam.orderPurchaseMissingID = filterReceiverPurchase.proposalID;
-            if(filterReceiverPurchase.createdAt) filterParam.createdAt = filterReceiverPurchase.createdAt;
-            if(filterReceiverPurchase.status) filterParam.status = filterReceiverPurchase.status === "Đang xử lý" ? "PENDING" : filterReceiverPurchase.status;
-            if(filterReceiverPurchase.employeeName) filterParam.employeeName = filterReceiverPurchase.employeeName;
+            if (filterReceiverPurchase.proposalID)
+                filterParam.orderPurchaseMissingID = filterReceiverPurchase.proposalID;
+            if (filterReceiverPurchase.createdAt) filterParam.createdAt = filterReceiverPurchase.createdAt;
+            if (filterReceiverPurchase.status)
+                filterParam.status =
+                    filterReceiverPurchase.status === 'Đang xử lý' ? 'PENDING' : filterReceiverPurchase.status;
+            if (filterReceiverPurchase.employeeName) filterParam.employeeName = filterReceiverPurchase.employeeName;
 
             const params = { ...filterParam, warehouseID: warehouse.warehouseID };
             const res = await request.get(`/api/order-purchase-missing/filter`, {
                 params,
                 headers: {
                     token: `Beare ${token.accessToken}`,
-                    employeeid: token.employeeID
-                }
-            })
-            console.log(res.data)
-            setReceiverPurchaseList(res.data.data || [])
-        }catch(err) {   
+                    employeeid: token.employeeID,
+                },
+            });
+            console.log(res.data);
+            setReceiverPurchaseList(res.data.data || []);
+        } catch (err) {
             console.log(err);
             fetchProposals(1);
         }

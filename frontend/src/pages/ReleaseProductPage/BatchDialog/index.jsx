@@ -229,8 +229,12 @@ const BatchDialog = ({ product, isOpen, onClose }) => {
                         : it,
                 )
                 .sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+            // ưu tiên những lô đã chọn lên đầu
+            const batchPriority = updateData.filter((it) => batchIDList.includes(it.batchID));
+            const batchNormal = updateData.filter((it) => !batchIDList.includes(it.batchID));
+
             setSelectedBatch(batchOfProductSelected);
-            setBatchProductList(updateData);
+            setBatchProductList([...batchPriority, ...batchNormal]);
         } catch (err) {
             console.log(err);
         }

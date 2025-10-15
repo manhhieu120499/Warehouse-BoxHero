@@ -2,6 +2,7 @@ import toast from 'react-hot-toast';
 import request from '../utils/httpRequest';
 import parseToken from '../utils/parseToken';
 import { styleMessage } from '../constants';
+import { uploadImage } from '../utils/uploadImage';
 export const fetchProduct = async (page = 1) => {
     try {
         // call api
@@ -77,6 +78,34 @@ export const fetchAllProductCanExport = async (status = 'AVAILABLE') => {
         return res?.data?.data || [];
     } catch (err) {
         console.log(err);
+        return err;
+    }
+};
+
+export const createProduct = async (data) => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const image = await uploadImage(data.image);
+        const res = await request.post(
+            '/api/product/create-product',
+            { ...data, image },
+            {
+                headers: {
+                    token: `Bearer ${token.accessToken}`,
+                    employeeID: token.employeeID,
+                    warehouseID: warehouse.warehouseID,
+                },
+            },
+        );
+        return res;
+    } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
         return err;
     }
 };

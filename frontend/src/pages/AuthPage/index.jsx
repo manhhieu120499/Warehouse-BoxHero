@@ -62,12 +62,12 @@ const tableColumns = [
         dataIndex: 'warehouseId',
         key: 'warehouseId',
     },
-    {
-        title: 'Chức vụ',
-        dataIndex: 'empRole',
-        key: 'empRole',
-        render: (_, record) => <p>{record.empRole.map((item) => formatRole[item.roleName]).join(',')}</p>,
-    },
+    // {
+    //     title: 'Chức vụ',
+    //     dataIndex: 'empRole',
+    //     key: 'empRole',
+    //     render: (_, record) => <p>{record.empRole.map((item) => formatRole[item.roleName]).join(',')}</p>,
+    // },
     {
         title: 'Trạng thái',
         dataIndex: 'empStatus',
