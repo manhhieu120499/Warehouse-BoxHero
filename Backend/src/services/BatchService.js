@@ -430,7 +430,16 @@ class BatchService {
                 }
                 const batches = await Batch.findAll({
                     where: { productID, warehouseID },
-                    include: [{ model: Unit, as: 'unit', attributes: ['unitID', 'unitName'] }],
+                    include: [
+                        { model: Unit, as: 'unit', attributes: ['unitID', 'unitName'] },
+                        {
+                            model: Box,
+                            as: 'boxes',
+                            attributes: ['boxID', 'boxName'],
+                            through: { attributes: [] },
+                            required: true,
+                        },
+                    ],
                 });
                 resolve({
                     status: 'OK',

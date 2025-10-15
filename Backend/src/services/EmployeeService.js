@@ -189,6 +189,7 @@ class EmployeeService {
                     message: 'Cập nhật thông tin nhân viên thành công',
                 });
             } catch (err) {
+                console.log(err);
                 await transaction.rollback();
                 reject({
                     status: 'ERR',
@@ -204,12 +205,12 @@ class EmployeeService {
                 let where = {
                     [Op.and]: [
                         { employeeID: { [Op.ne]: adminId } }, // loại bỏ employeeID request
-                  ],
-                }
+                    ],
+                };
                 if (keyword.employeeID) where.employeeID = { [Op.like]: `%${keyword.employeeID}%` };
                 if (keyword.phoneNumber) where.phoneNumber = { [Op.like]: `%${keyword.phoneNumber}%` };
                 if (keyword.status) where.status = keyword.status;
-                console.log(where)
+                console.log(where);
                 const resultSearch = await Employee.findAll({
                     where,
                     include: [
@@ -230,11 +231,11 @@ class EmployeeService {
                     const formatResultSearch = [];
                     resultSearch.forEach((emp) => {
                         const { account, ...response } = emp.toJSON();
-                         const {roles, ...responseAccount} = account
-                         formatResultSearch.push({
+                        const { roles, ...responseAccount } = account;
+                        formatResultSearch.push({
                             ...response,
-                            roles
-                         })
+                            roles,
+                        });
                     });
                     resolve({
                         status: 'OK',

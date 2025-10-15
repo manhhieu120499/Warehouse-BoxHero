@@ -1,6 +1,11 @@
 const { fn, col, literal, Op } = require('sequelize');
 const db = require('../../models/index');
 const ProductBaseline = db.ProductBaseline;
+const Warehouse = db.Warehouse;
+const Box = db.Box;
+const Product = db.Product;
+const Category = db.Category;
+const Batch = db.Batch;
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -10,6 +15,8 @@ const HTTP_NOT_FOUND = process.env.HTTP_NOT_FOUND;
 const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
 const HTTP_UNAUTHORIZED = process.env.HTTP_UNAUTHORIZED;
 const HTTP_INTERNAL_SERVER_ERROR = process.env.HTTP_INTERNAL_SERVER_ERROR;
+
+const LIMIT_TOP_PRODUCT = 5;
 
 class DashboardService {
     async getStatisticalInventory({ type, year }) {
@@ -248,6 +255,162 @@ class DashboardService {
                 }
             } catch (e) {
                 console.log(e);
+                return reject({
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    status: 'ERR',
+                    message: 'Lỗi hệ thống',
+                });
+            }
+        });
+    }
+    async getStatisticalPercentUsedWarehouse(data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const { warehouseID } = data;
+                const existWarehouse = await Warehouse.findOne({ where: { warehouseID } });
+                if (!existWarehouse) {
+                    return reject({
+                        statusHttp: HTTP_NOT_FOUND,
+                        status: 'ERR',
+                        message: 'Kho hàng không tồn tại',
+                    });
+                }
+
+                const result = await Box.findAll({
+                    attributes: [
+                        [fn('SUM', col('remainingAcreage')), 'totalRemaining'],
+                        [fn('SUM', col('maxAcreage')), 'totalMax'],
+                    ],
+                    raw: true,
+                });
+                const { totalRemaining, totalMax } = result[0];
+
+                resolve({
+                    statusHttp: HTTP_OK,
+                    status: 'OK',
+                    message: 'Thống kê kho hàng',
+                    data: {
+                        totalRemain: { name: 'Còn trống', percent: (totalRemaining / totalMax).toFixed(2) * 100 },
+                        percentUsed: {
+                            name: 'Đã sử dụng',
+                            percent: totalMax ? ((totalMax - totalRemaining) / totalMax).toFixed(2) * 100 : 0,
+                        },
+                    },
+                });
+            } catch (err) {
+                console.log(err);
+                return reject({
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    status: 'ERR',
+                    message: 'Lỗi hệ thống',
+                });
+            }
+        });
+    }
+    // Thống kê sản phẩm xuất kho nhiều nhất (top 5)
+    async getStaticTopProductExportInWarehouse() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const result = await ExportDetail.findAll({
+                    include: [
+                        {
+                            model: Batch,
+                            attributes: ['batchID', 'productID'],
+                            include: [
+                                {
+                                    model: Product,
+                                    attributes: ['productID', 'productName'],
+                                },
+                            ],
+                        },
+                    ],
+                    attributes: [
+                        [Sequelize.col('Batch.Product.productID'), 'productID'],
+                        [Sequelize.fn('SUM', Sequelize.col('exportQty')), 'totalExportQty'],
+                    ],
+                    group: ['Batch.Product.productID', 'Batch.Product.productName'],
+                    order: [[Sequelize.literal('totalExportQty'), 'DESC']],
+                    limit: 1,
+                    //raw: true,
+                });
+            } catch (err) {
+                console.log(err);
+                return reject({
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    status: 'ERR',
+                    message: 'Lỗi hệ thống',
+                });
+            }
+        });
+    }
+    async getStaticProductHasLowStock(data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const { page = 1 } = data;
+                const result = await Product.findAll({
+                    where: {
+                        amount: {
+                            [Op.lte]: col('minStock'),
+                        },
+                    },
+                    include: [
+                        {
+                            model: Category,
+                            as: 'category',
+                            attributes: ['categoryID', 'categoryName'],
+                        },
+                    ],
+
+                    order: [['amount', 'ASC']],
+                    // limit: 5,
+                    // offset: (page - 1) * LIMIT_TOP_PRODUCT,
+                    //raw: true, // trải phẳng object
+                });
+                resolve({
+                    statusHttp: HTTP_OK,
+                    status: 'OK',
+                    message: 'Thống kê sản phẩm sắp hết hàng',
+                    data: result,
+                });
+            } catch (err) {
+                console.log(err);
+                return reject({
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    status: 'ERR',
+                    message: 'Lỗi hệ thống',
+                });
+            }
+        });
+    }
+    async getAllProductOld() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const leastExportedProducts = await Product.findAll({
+                    attributes: [
+                        'productID',
+                        'productName',
+                        [fn('SUM', col('Batch.OrderReleaseDetails.quantityExported')), 'totalExported'],
+                    ],
+                    include: [
+                        {
+                            model: Batch,
+                            as: 'Batches',
+                            attributes: [],
+                            include: [
+                                {
+                                    model: OrderReleaseDetail,
+                                    as: 'OrderReleaseDetails',
+                                    attributes: [],
+                                },
+                            ],
+                        },
+                    ],
+                    group: ['Product.productID'],
+                    order: [[literal('totalExported'), 'ASC']], // xuất ít nhất → sắp xếp tăng
+                    limit: 5, // lấy 10 sản phẩm xuất ít nhất
+                });
+            } catch (err) {
+                console.log(err);
                 return reject({
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
                     status: 'ERR',
