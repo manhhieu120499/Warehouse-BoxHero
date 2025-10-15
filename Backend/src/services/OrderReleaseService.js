@@ -6,6 +6,7 @@ const HTTP_INTERNAL_SERVER_ERROR = process.env.HTTP_INTERNAL_SERVER_ERROR;
 const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
 const OrderRelease = db.OrderRelease;
 const OrderReleaseDetail = db.OrderReleaseDetail;
+const ProductQuantityLog = db.ProductQuantityLog;
 const Customer = db.Customer;
 const Batch = db.Batch;
 const Box = db.Box;
@@ -27,8 +28,6 @@ class OrderReleaseService {
             const transaction = await db.sequelize.transaction();
             try {
                 const { orderReleaseID, customerID, employeeID, warehouseID, note, orderReleaseDetails } = data;
-
-                console.log(1);
 
                 // check customer
                 const customer = await Customer.findOne({ where: { customerID } });
@@ -135,6 +134,15 @@ class OrderReleaseService {
                                 transaction,
                             },
                         );
+                        // update remainingAcreage of box
+                        const updateRemainingAcreageBox = await Box.update(
+                            {
+                                remainingAcreage:
+                                    box.remainingAcreage +
+                                    boxDetail.quantityExported * unit.width * unit.length * unit.height,
+                            },
+                            { where: { boxID: boxDetail.boxID }, transaction },
+                        );
                         listResponseBoxDetails.push(resp);
                     }
                     listResponseOrderReleaseDetails.push({
@@ -154,6 +162,21 @@ class OrderReleaseService {
                             where: { productID: element.productID },
                             transaction,
                         },
+                    );
+
+                    // update product quantity log
+                    await ProductQuantityLog.create(
+                        {
+                            actionType: 'RELEASE',
+                            quantityChange: Number.parseInt(element.quantityExported) * unit.conversionQuantity,
+                            previousAmount: product.amount,
+                            newAmount:
+                                product.amount - Number.parseInt(element.quantityExported) * unit.conversionQuantity,
+                            referenceID: orderReleaseID,
+                            note: `Xuất kho từ đơn ${orderReleaseID}`,
+                            productID: product.productID,
+                        },
+                        { transaction },
                     );
                 }
 

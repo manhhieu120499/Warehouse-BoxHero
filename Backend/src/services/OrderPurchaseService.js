@@ -1,6 +1,7 @@
-const { where, Op, fn, col } = require('sequelize');
+const { where, Op, fn, col, Sequelize } = require('sequelize');
 const db = require('../../models/index');
 const Batch = db.Batch;
+const ProductQuantityLog = db.ProductQuantityLog;
 const OrderPurchaseDetail = db.OrderPurchaseDetail;
 const Product = db.Product;
 const OrderPurchaseMissing = db.OrderPurchaseMissing;
@@ -259,6 +260,17 @@ class OrderPurchaseService {
                         });
                     }
 
+                    // check unit exists
+                    const unitFind = await Unit.findOne({ where: { unitID: orderPurchaseDetail.unitID } });
+
+                    if (!unitFind) {
+                        return resolve({
+                            statusHttp: HTTP_BAD_REQUEST,
+                            status: 'ERR',
+                            message: 'Đơn vị không tồn tại',
+                        });
+                    }
+
                     // check product exists
                     const productID = orderPurchaseDetail.productID;
                     const productFind = await Product.findOne({ where: { productID } });
@@ -271,6 +283,32 @@ class OrderPurchaseService {
                         });
                     }
 
+                    // update amount product
+                    const amountConvert = unitFind.conversionQuantity * orderPurchaseDetail.actualQuantity;
+                    await Product.update(
+                        {
+                            amount: Sequelize.literal(`amount + ${amountConvert}`),
+                        },
+                        {
+                            where: { productID: orderPurchaseDetail.productID },
+                            transaction,
+                        },
+                    );
+
+                    // update product quantity log
+                    await ProductQuantityLog.create(
+                        {
+                            actionType: 'PURCHASE',
+                            quantityChange: amountConvert,
+                            previousAmount: productFind.amount,
+                            newAmount: productFind.amount + amountConvert,
+                            referenceID: orderPurchaseID,
+                            note: `Nhập kho từ đơn ${orderPurchaseID}`,
+                            productID: productID,
+                        },
+                        { transaction },
+                    );
+
                     // check supplier exists
                     const supplierFind = await Supplier.findOne({
                         where: { supplierID: orderPurchaseDetail.supplierID },
@@ -281,17 +319,6 @@ class OrderPurchaseService {
                             statusHttp: HTTP_BAD_REQUEST,
                             status: 'ERR',
                             message: 'Nhà cung cấp không tồn tại',
-                        });
-                    }
-
-                    // check unit exists
-                    const unitFind = await Unit.findOne({ where: { unitID: orderPurchaseDetail.unitID } });
-
-                    if (!unitFind) {
-                        return resolve({
-                            statusHttp: HTTP_BAD_REQUEST,
-                            status: 'ERR',
-                            message: 'Đơn vị không tồn tại',
                         });
                     }
 
