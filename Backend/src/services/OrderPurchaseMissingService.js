@@ -7,6 +7,7 @@ const OrderPurchase = db.OrderPurchase;
 const Product = db.Product;
 const Employee = db.Employee;
 const Unit = db.Unit;
+const Supplier = db.Supplier;
 const dotenv = require('dotenv');
 const { Op, where, fn, col } = require('sequelize');
 
@@ -62,7 +63,9 @@ class OrderPurchaseMissingService {
     filterOrderPurchaseMissing(query) {
         return new Promise(async (resolve, reject) => {
             try {
-                const { warehouseID, employeeID, employeeName, createdAt, ...rest } = query;
+                const { orderPurchaseMissingID, warehouseID, employeeID, employeeName, createdAt, ...rest } = query;
+                const filter = {};
+                if (orderPurchaseMissingID) filter.orderPurchaseMissingID = orderPurchaseMissingID;
                 const queryEmployee = {};
                 if (employeeID) {
                     queryEmployee.employeeID = employeeID;
@@ -82,6 +85,7 @@ class OrderPurchaseMissingService {
                 // sort createdAt desc
                 const orderPurchaseMissingFind = await OrderPurchaseMissing.findAll({
                     where: {
+                        ...filter,
                         ...rest,
                         ...date,
                     },
@@ -118,6 +122,10 @@ class OrderPurchaseMissingService {
                                                 {
                                                     model: Unit,
                                                     as: 'unit',
+                                                },
+                                                {
+                                                    model: Supplier,
+                                                    as: 'supplier',
                                                 },
                                             ],
                                         },

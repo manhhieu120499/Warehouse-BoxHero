@@ -1,5 +1,7 @@
+const { where, Op, fn, col, Sequelize } = require('sequelize');
 const db = require('../../models/index');
 const Batch = db.Batch;
+const ProductQuantityLog = db.ProductQuantityLog;
 const OrderPurchaseDetail = db.OrderPurchaseDetail;
 const Product = db.Product;
 const OrderPurchaseMissing = db.OrderPurchaseMissing;
@@ -7,9 +9,9 @@ const OrderPurchaseMissingDetail = db.OrderPurchaseMissingDetail;
 const Proposal = db.Proposal;
 const OrderPurchase = db.OrderPurchase;
 const Unit = db.Unit;
-const BatchBox = db.BatchBox;
 const Supplier = db.Supplier;
 const Warehouse = db.Warehouse;
+const Employee = db.Employee;
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -20,10 +22,115 @@ const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
 const HTTP_UNAUTHORIZED = process.env.HTTP_UNAUTHORIZED;
 
 class OrderPurchaseService {
+    getAllOrderPurchase({ page = 1 }) {
+        return new Promise(async (resolve, reject) => {
+            const LIMIT_PAGE = 5;
+            try {
+                const response = await OrderPurchase.findAll({
+                    order: [['createdAt', 'DESC']],
+                    include: [
+                        { model: Employee, as: 'employee' },
+                        { model: Warehouse, as: 'warehouse' },
+                        {
+                            model: OrderPurchaseDetail,
+                            as: 'orderPurchaseDetail',
+                            include: [
+                                {
+                                    model: Batch,
+                                    as: 'batch',
+                                    include: [
+                                        { model: Product, as: 'product' },
+                                        { model: Unit, as: 'unit' },
+                                        { model: Supplier, as: 'supplier' },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                    limit: LIMIT_PAGE,
+                    offset: (page - 1) * LIMIT_PAGE,
+                });
+                resolve({
+                    statusHttp: HTTP_OK,
+                    status: 'OK',
+                    message: 'Lấy danh sách đơn nhập hàng thành công',
+                    data: response,
+                });
+            } catch (e) {
+                console.log(e);
+                reject(e);
+            }
+        });
+    }
+    filterOrderPurchase({ page = 1, code, createdAt, employeeName, type, originalOrderPurchaseID, proposalID }) {
+        return new Promise(async (resolve, reject) => {
+            const queryEmployee = {};
+            const filterOptions = {};
+            const date = {};
+            if (code) {
+                filterOptions.orderPurchaseID = code;
+            }
+            if (createdAt)
+                date.createdAt = {
+                    [Op.and]: [
+                        where(fn('DATE', col('OrderPurchase.createdAt')), {
+                            [Op.eq]: createdAt, // ngày bắt đầu
+                        }),
+                    ],
+                };
+            if (employeeName) {
+                queryEmployee.employeeName = { [Op.like]: `%${employeeName}%` };
+            }
+            if (type) {
+                filterOptions.type = type;
+            }
+            if (originalOrderPurchaseID) {
+                filterOptions.originalOrderPurchaseID = originalOrderPurchaseID;
+            }
+            if (proposalID) {
+                filterOptions.proposalID = proposalID;
+            }
+            const LIMIT_PAGE = 5;
+            try {
+                const response = await OrderPurchase.findAll({
+                    where: { ...filterOptions, ...date },
+                    order: [['createdAt', 'DESC']],
+                    include: [
+                        { model: Employee, as: 'employee', where: queryEmployee },
+                        { model: Warehouse, as: 'warehouse' },
+                        {
+                            model: OrderPurchaseDetail,
+                            as: 'orderPurchaseDetail',
+                            include: [
+                                {
+                                    model: Batch,
+                                    as: 'batch',
+                                    include: [
+                                        { model: Product, as: 'product' },
+                                        { model: Unit, as: 'unit' },
+                                        { model: Supplier, as: 'supplier' },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                    limit: LIMIT_PAGE,
+                    offset: (page - 1) * LIMIT_PAGE,
+                });
+                resolve({
+                    statusHttp: HTTP_OK,
+                    status: 'OK',
+                    message: 'Lấy danh sách đơn nhập hàng thành công',
+                    data: response,
+                });
+            } catch (e) {
+                console.log(e);
+                reject(e);
+            }
+        });
+    }
     createOrderPurchase(newOrder) {
         return new Promise(async (resolve, reject) => {
-            console.log('newOrder', newOrder);
-
             const transaction = await db.sequelize.transaction();
             try {
                 const {
@@ -153,6 +260,17 @@ class OrderPurchaseService {
                         });
                     }
 
+                    // check unit exists
+                    const unitFind = await Unit.findOne({ where: { unitID: orderPurchaseDetail.unitID } });
+
+                    if (!unitFind) {
+                        return resolve({
+                            statusHttp: HTTP_BAD_REQUEST,
+                            status: 'ERR',
+                            message: 'Đơn vị không tồn tại',
+                        });
+                    }
+
                     // check product exists
                     const productID = orderPurchaseDetail.productID;
                     const productFind = await Product.findOne({ where: { productID } });
@@ -165,6 +283,32 @@ class OrderPurchaseService {
                         });
                     }
 
+                    // update amount product
+                    const amountConvert = unitFind.conversionQuantity * orderPurchaseDetail.actualQuantity;
+                    await Product.update(
+                        {
+                            amount: Sequelize.literal(`amount + ${amountConvert}`),
+                        },
+                        {
+                            where: { productID: orderPurchaseDetail.productID },
+                            transaction,
+                        },
+                    );
+
+                    // update product quantity log
+                    await ProductQuantityLog.create(
+                        {
+                            actionType: 'PURCHASE',
+                            quantityChange: amountConvert,
+                            previousAmount: productFind.amount,
+                            newAmount: productFind.amount + amountConvert,
+                            referenceID: orderPurchaseID,
+                            note: `Nhập kho từ đơn ${orderPurchaseID}`,
+                            productID: productID,
+                        },
+                        { transaction },
+                    );
+
                     // check supplier exists
                     const supplierFind = await Supplier.findOne({
                         where: { supplierID: orderPurchaseDetail.supplierID },
@@ -175,17 +319,6 @@ class OrderPurchaseService {
                             statusHttp: HTTP_BAD_REQUEST,
                             status: 'ERR',
                             message: 'Nhà cung cấp không tồn tại',
-                        });
-                    }
-
-                    // check unit exists
-                    const unitFind = await Unit.findOne({ where: { unitID: orderPurchaseDetail.unitID } });
-
-                    if (!unitFind) {
-                        return resolve({
-                            statusHttp: HTTP_BAD_REQUEST,
-                            status: 'ERR',
-                            message: 'Đơn vị không tồn tại',
                         });
                     }
 

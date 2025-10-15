@@ -5,6 +5,7 @@ const InventoryCheckDetail = db.InventoryCheckDetail;
 const Product = db.Product;
 const Employee = db.Employee;
 const BatchBox = db.BatchBox;
+const ProductQuantityLog = db.ProductQuantityLog;
 const Batch = db.Batch;
 const Box = db.Box;
 const Unit = db.Unit;
@@ -349,6 +350,32 @@ class InventoryCheckService {
                             { amount: amountChange },
                             { where: { productID: batchBox.batch.product.productID }, transaction },
                         );
+                        const acreage =
+                            batchBox.batch.unit.width *
+                            batchBox.batch.unit.length *
+                            batchBox.batch.unit.height *
+                            -discrepancyQuantity;
+
+                        if (amountChange !== 0) {
+                            // update product quantity log
+                            await ProductQuantityLog.create(
+                                {
+                                    actionType: 'INVENTORY_CHECK',
+                                    quantityChange: Math.abs(amountChange),
+                                    previousAmount: batchBox.batch.product.amount,
+                                    newAmount: batchBox.batch.product.amount + amountChange,
+                                    referenceID: inventoryCheckID,
+                                    note: `Điều chỉnh số lượng từ đơn kiểm kê ${inventoryCheckID}`,
+                                    productID: batchBox.batch.product.productID,
+                                },
+                                { transaction },
+                            );
+
+                            await Box.increment(
+                                { remainingAcreage: acreage },
+                                { where: { boxID: batchBox.box.boxID }, transaction },
+                            );
+                        }
                     }
                 }
 

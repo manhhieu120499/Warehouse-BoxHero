@@ -53,11 +53,11 @@ module.exports = (sequelize, Sequelize) => {
 
     OrderPurchase.associate = (models) => {
         OrderPurchase.belongsTo(models.Employee, { foreignKey: 'employeeID', as: 'employee' });
-        OrderPurchase.belongsTo(models.Warehouse, { foreignKey: 'warehouseID' });
+        OrderPurchase.belongsTo(models.Warehouse, { foreignKey: 'warehouseID', as: 'warehouse' });
         // OrderPurchase.belongsTo(models.OrderReturn, { foreignKey: 'orderReturnID' });
         OrderPurchase.belongsTo(models.Proposal, { foreignKey: 'proposalID', as: 'proposal' });
 
-        OrderPurchase.hasMany(models.OrderPurchaseDetail, { foreignKey: 'orderPurchaseID' });
+        OrderPurchase.hasMany(models.OrderPurchaseDetail, { foreignKey: 'orderPurchaseID', as: 'orderPurchaseDetail' });
 
         // 🔥 join với OrderPurchaseMissing
         OrderPurchase.hasMany(models.OrderPurchaseMissing, { foreignKey: 'orderPurchaseID' });
