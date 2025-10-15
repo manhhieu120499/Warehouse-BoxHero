@@ -225,7 +225,7 @@ class OrderReleaseService {
                                         {
                                             model: Unit,
                                             as: 'unit',
-                                            attributes: ['unitName'],
+                                            attributes: ['unitName', 'conversionQuantity'],
                                         },
                                     ],
                                 },
@@ -326,7 +326,7 @@ class OrderReleaseService {
                                         {
                                             model: Unit,
                                             as: 'unit',
-                                            attributes: ['unitName'],
+                                            attributes: ['unitName', 'conversionQuantity'],
                                         },
                                     ],
                                 },

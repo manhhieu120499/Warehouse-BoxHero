@@ -4,7 +4,7 @@
 module.exports = {
     async up(queryInterface, Sequelize) {
         // Xoá khóa chính cũ
-        // await queryInterface.removeConstraint('proposal_details', 'PRIMARY');
+        await queryInterface.removeConstraint('proposal_details', 'PRIMARY');
 
         // Đổi kiểu dữ liệu proposalDetailID
         await queryInterface.changeColumn('proposal_details', 'proposalDetailID', {

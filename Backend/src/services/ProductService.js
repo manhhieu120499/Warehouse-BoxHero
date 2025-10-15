@@ -18,6 +18,7 @@ const HTTP_NOT_FOUND = process.env.HTTP_NOT_FOUND;
 const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
 const HTTP_UNAUTHORIZED = process.env.HTTP_UNAUTHORIZED;
 const HTTP_INTERNAL_SERVER_ERROR = process.env.HTTP_INTERNAL_SERVER_ERROR;
+const HTTP_DUPLICATE = process.env.HTTP_DUPLICATE;
 
 class ProductService {
     findProductById(productID, warehouseID) {
@@ -31,6 +32,11 @@ class ProductService {
                         {
                             model: Batch,
                             as: 'batches',
+                        },
+                        {
+                            model: BaseUnitProduct,
+                            as: 'baseUnitProducts',
+                            attributes: ['baseUnitProductID', 'baseUnitName'],
                         },
                     ],
                 });
@@ -154,6 +160,11 @@ class ProductService {
                             as: 'category',
                             attributes: ['categoryID', 'categoryName'],
                         },
+                        {
+                            model: BaseUnitProduct,
+                            as: 'baseUnitProducts',
+                            attributes: ['baseUnitProductID', 'baseUnitName'],
+                        },
                     ],
                     offset: (page - 1) * LIMIT_PAGE,
                     limit: LIMIT_PAGE,
@@ -264,6 +275,53 @@ class ProductService {
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách sản phẩm thành công',
                     data: products,
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+    async createProduct(data) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                const existProduct = await Product.findOne({
+                    where: { productID: data.productID },
+                });
+                if (existProduct) {
+                    return resolve({
+                        status: 'ERR',
+                        statusHttp: HTTP_DUPLICATE,
+                        message: 'Sản phẩm đã tồn tại',
+                    });
+                }
+                const newProduct = await Product.create(
+                    {
+                        productID: data.productID,
+                        productName: data.productName,
+                        categoryID: data.categoryID,
+                        minStock: data.minStock,
+                        status: data.status,
+                        baseUnitProductID: data.baseUnitProductID,
+                        amount: 0,
+                        qrCode: '1',
+                        price: data?.price || 25000,
+                        image: data?.image || '',
+                        description: data?.description || '',
+                    },
+                    { transaction },
+                );
+                await transaction.commit();
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Tạo sản phẩm thành công',
+                    data: newProduct,
                 });
             } catch (err) {
                 console.error(err);

@@ -23,6 +23,32 @@ class DashboardController {
             return res.status(e.statusHttp).json(e);
         }
     }
+    async getStatisticalPercentUsedWarehouse(req, res) {
+        try {
+            const { statusHttp, ...response } = await DashboardService.getStatisticalPercentUsedWarehouse(req.query);
+            return res.status(statusHttp).json(response);
+        } catch (e) {
+            return res.status(e.statusHttp).json(e);
+        }
+    }
+    async getStatisticalMinStockProduct(req, res) {
+        try {
+            const { statusHttp, ...response } = await DashboardService.getStaticProductHasLowStock(req.query);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            console.log(err);
+            return res.status(err.statusHttp).json(err);
+        }
+    }
+    async getStatisticalProductOld(req, res) {
+        try {
+            const { statusHttp, ...response } = await DashboardService.getAllProductOld(req.query);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            console.log(err);
+            return res.status(err.statusHttp).json(err);
+        }
+    }
 }
 
 module.exports = new DashboardController();

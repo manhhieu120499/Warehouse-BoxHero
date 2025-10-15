@@ -21,4 +21,14 @@ router.get(
     DashboardController.getStatisticalImportExport,
 );
 
+router.get(
+    '/statistical-percent-used-warehouse',
+    authUserIsManager,
+    DashboardController.getStatisticalPercentUsedWarehouse,
+);
+
+router.get('/statistical-min-stock-product', authUserIsManager, DashboardController.getStatisticalMinStockProduct);
+
+router.get('/statistical-product-old', authUserIsManager, DashboardController.getStatisticalProductOld);
+
 module.exports = router;

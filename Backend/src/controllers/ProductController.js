@@ -55,6 +55,14 @@ class ProductController {
             return res.status(err.statusHttp).json(err);
         }
     }
+    async createProduct(req, res) {
+        try {
+            const { statusHttp, ...response } = await ProductService.createProduct(req.body);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
 }
 
 module.exports = new ProductController();
