@@ -7,7 +7,7 @@ import { post } from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
 import { formatStatusProposal } from '../../constants';
 import Tippy from '@tippyjs/react';
-import { Eye } from 'lucide-react';
+import { Eye, Plus } from 'lucide-react';
 import ModelProposalDetail from './ModelProposalDetail';
 import { convertDateVN } from '../../common';
 import ProposalStatus from '../../components/ProposalStatus';
@@ -223,6 +223,7 @@ const ApprovePage = () => {
                         setTypeDetail(false);
                         setShowModalDetail(true);
                     }}
+                    leftIcon={<Plus size={16} />}
                 >
                     <span>Tạo phiếu đề xuất</span>
                 </Button>

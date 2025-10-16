@@ -4,7 +4,7 @@ import classNames from 'classnames/bind';
 import styles from './ProductPage.module.scss';
 import MyTable from '../../components/MyTable';
 import Tippy from '@tippyjs/react';
-import { Eye, PencilIcon, Plus } from 'lucide-react';
+import { Eye, PencilIcon, Plus, HistoryIcon } from 'lucide-react';
 import { ProductDetail, ProductEdit, ModelFilter, Button } from '@/components';
 import { useDispatch, useSelector } from 'react-redux';
 import { startLoading, stopLoading } from '../../lib/redux/loading/slice';
@@ -18,6 +18,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { formatStatusProduct, styleMessage } from '../../constants';
 import PaginationUI from '@/components/PaginationUI';
 import ModalProductCreate from '../../components/ModalProductCreate';
+import ProductHistory from '../../components/ProductHistory';
 
 const cx = classNames.bind(styles);
 
@@ -83,8 +84,8 @@ const ProductPage = () => {
                     warehouseid: currentUser.warehouseId ? currentUser.warehouseId : null,
                 },
             });
-            //console.log(res.data);
             const { batches, ...rest } = res.data.product;
+
             const formatBatch = batches.map((item) => {
                 const batch = new BatchDTO(item);
                 return { ...batch };
@@ -113,6 +114,13 @@ const ProductPage = () => {
         setAction({
             productId,
             actionName: 'edit',
+        });
+    };
+
+    const handleShowHistory = (productId) => {
+        setAction({
+            productId,
+            actionName: 'history',
         });
     };
 
@@ -192,6 +200,11 @@ const ProductPage = () => {
                                 onClick={() => handleShowEditProduct(record.sku)}
                             >
                                 <PencilIcon size={20} />
+                            </button>
+                        </Tippy>
+                        <Tippy content={'Lịch sử'} placement="bottom-end">
+                            <button className={cx('action-table-icon')} onClick={() => handleShowHistory(record.sku)}>
+                                <HistoryIcon size={20} />
                             </button>
                         </Tippy>
                     </div>
@@ -359,6 +372,12 @@ const ProductPage = () => {
                     isOpen={!!showModalCreateProduct}
                     onClose={() => setShowModalCreateProduct(false)}
                     prefectProductList={fetchProducts}
+                />
+            )}
+            {action.productId && action.actionName === 'history' && (
+                <ProductHistory
+                    data={action.productId}
+                    onClose={() => setAction({ productId: null, actionName: null })}
                 />
             )}
         </div>

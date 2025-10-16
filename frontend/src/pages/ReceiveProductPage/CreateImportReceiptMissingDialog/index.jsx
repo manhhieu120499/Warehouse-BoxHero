@@ -104,7 +104,9 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
                 unitName: it?.orderPurchaseDetail?.batch?.unit?.unitName,
             };
             productItem.requestAmount = it?.missingQuantity;
+            productItem.realAmount = it?.missingQuantity;
             productItem.supplierID = it?.orderPurchaseDetail?.batch?.supplierID;
+            productItem.supplierName = it?.orderPurchaseDetail?.batch?.supplier?.supplierName;
             return productItem;
         });
         setProductListImport(listProduct);
@@ -199,16 +201,17 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
                             <table className={cx('table')}>
                                 <thead>
                                     <tr>
-                                        <th>STT</th>
-                                        <th>Mã lô</th>
-                                        <th>Ngày sản xuất</th>
-                                        <th>Hạn sử dụng</th>
-                                        <th>Mã nhà cung cấp</th>
+                                        <th className={cx('stt')}>STT</th>
                                         <th>Mã sản phẩm</th>
                                         <th>Tên sản phẩm</th>
                                         <th>Đơn vị tính</th>
+                                        <th>Mã nhà cung cấp</th>
+                                        <th>Tên nhà cung cấp</th>
                                         <th>Số lượng thiếu</th>
-                                        <th>Số lượng nhập bù</th>
+                                        <th>Số lượng bổ sung</th>
+                                        <th>Mã lô</th>
+                                        <th>Ngày sản xuất</th>
+                                        <th>Hạn sử dụng</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -217,36 +220,30 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
                                         productListImport.map((it, idx) => {
                                             return (
                                                 <tr key={idx}>
-                                                    <td>{idx + 1}</td>
+                                                    <td className={cx('stt')}>{idx + 1}</td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập tên sản phẩm"
-                                                            value={it.productName ?? ''}
-                                                            readOnly
-                                                        />
+                                                        <span>{it.productID ?? ''}</span>
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập đơn vị tính"
-                                                            value={it.unit.unitName ?? ''}
-                                                            readOnly
-                                                        />
+                                                        <span>{it.productName ?? ''}</span>
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="number"
-                                                            placeholder="Nhập số lượng"
-                                                            min={1}
-                                                            value={it.requestAmount ?? ''}
-                                                            readOnly
-                                                        />
+                                                        <span>{it.unit.unitName ?? ''}</span>
+                                                    </td>
+
+                                                    <td>
+                                                        <span>{it.supplierID ?? ''}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span>{it.supplierName ?? ''}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span>{it.requestAmount ?? ''}</span>
                                                     </td>
                                                     <td>
                                                         <input
                                                             type="number"
-                                                            placeholder="Nhập số lượng"
+                                                            placeholder="Nhập số lượng bổ sung"
                                                             min={1}
                                                             value={it.realAmount ?? ''}
                                                             onChange={(e) => {
@@ -272,7 +269,7 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
                                                             }}
                                                         />
                                                     </td>
-                                                                     <td>
+                                                    <td>
                                                         <input
                                                             type="text"
                                                             placeholder="Nhập mã lô"
@@ -305,22 +302,6 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
                                                                 updateCellData(idx, it);
                                                             }}
                                                             min={new Date().toISOString().split('T')[0]}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã nhà cung cấp"
-                                                            value={it.supplierID ?? ''}
-                                                            readOnly
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã sản phẩm"
-                                                            value={it.productID ?? ''}
-                                                            readOnly
                                                         />
                                                     </td>
                                                 </tr>

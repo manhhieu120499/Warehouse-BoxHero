@@ -412,7 +412,10 @@ const AuthPage = () => {
         } catch (err) {
             console.log(err);
             // throw err
-            toast.error(err.response.data.messages[0], styleMessage);
+            toast.error(
+                Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+                styleMessage,
+            );
             return;
         }
     };

@@ -1,5 +1,7 @@
+import toast from 'react-hot-toast';
 import request from '../utils/httpRequest';
 import parseToken from '../utils/parseToken';
+import { styleMessage } from '../constants';
 
 export const fetchProposal = async (type = 'warehouse', id, status = 'COMPLETED', page = 1) => {
     try {
@@ -25,7 +27,13 @@ export const fetchProposal = async (type = 'warehouse', id, status = 'COMPLETED'
         );
         return res.data;
     } catch (err) {
-        throw new Error(err);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
     }
 };
 
@@ -46,9 +54,13 @@ export const fetchProposalMissingOrderPurchase = async () => {
         });
         return res.data;
     } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
         console.log(err);
 
-        throw new Error(err);
+        return err;
     }
 };
 
@@ -72,6 +84,12 @@ export const fetchFilterProposal = async (params) => {
         );
         return res.data;
     } catch (err) {
-        throw new Error(err);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
     }
 };

@@ -11,6 +11,7 @@ class ProductDetailDTO {
         this.qrcode = data.qrcode;
         this.listBatch = data.listBatch;
         this.total = data.listBatch.reduce((s, item) => s + item.totalProductRemain, 0);
+        this.amount = data.amount;
     }
 }
 

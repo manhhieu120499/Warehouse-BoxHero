@@ -47,6 +47,17 @@ export const formatStatusProposal = {
     REFUSE: 'Từ chối',
 };
 
+export const formatStatusOrderPurchase = {
+    COMPLETED: 'Đã hoàn thành',
+    INCOMPLETE: 'Chưa hoàn thành',
+    CANCELED: 'Đã huỷ',
+};
+
+export const formatTypeOrderPurchase = {
+    NORMAL: 'Phiếu nhập mới',
+    SUPPLEMENT: 'Phiếu bổ sung',
+};
+
 export const formatStatusOrderPurchaseMissing = {
     PENDING: 'Đang xử lý',
     RESOLVED: 'Đã giải quyết',
@@ -68,4 +79,10 @@ export const formatStatusInventoryCheckDetail = {
     MATCHED: 'Đủ sản phẩm',
     SHORTAGE: 'Thiếu sản phẩm',
     SURPLUS: 'Dư sản phẩm',
+};
+
+export const typeTransaction = {
+    PURCHASE: 'Nhập hàng',
+    RELEASE: 'Xuất hàng',
+    INVENTORY_CHECK: 'Kiểm kê hàng',
 };

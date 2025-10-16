@@ -20,7 +20,7 @@ const RowItem = ({ firstTitle = '', firstValue = '', secondTitle = '', secondVal
                     <span>{firstValue}</span>
                 </div>
             )}
-            {secondTitle && secondValue && (
+            {secondTitle && (
                 <div className={cx('column-info')}>
                     <strong>{secondTitle}:</strong>
                     <span>{secondValue}</span>
@@ -206,6 +206,8 @@ const ProductDetail = ({ data, classname, onClose }) => {
     const [showQRCode, setShowQRCode] = useState(false);
     const qrCodeRef = useRef();
 
+    console.log('data ', data);
+
     const handleOnChange = useCallback((page, pageSize) => {
         setCurrentPage(page);
     }, []);
@@ -259,7 +261,7 @@ const ProductDetail = ({ data, classname, onClose }) => {
                                 firstTitle="Mã sản phẩm"
                                 firstValue={data.sku}
                                 secondTitle="Tổng lượng tồn kho"
-                                secondValue={data?.total || ''}
+                                secondValue={data?.amount || 0}
                             />
                             <RowItem firstTitle="Mô tả" firstValue={data.des} />
                             <RowItem firstTitle="Mã nhà cung cấp" firstValue={data.supplierId} />
