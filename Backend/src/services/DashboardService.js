@@ -290,10 +290,10 @@ class DashboardService {
                     status: 'OK',
                     message: 'Thống kê kho hàng',
                     data: {
-                        totalRemain: { name: 'Còn trống', percent: (totalRemaining / totalMax).toFixed(2) * 100 },
+                        totalRemain: { name: 'Còn trống', percent: (totalRemaining / totalMax) * 100 },
                         percentUsed: {
                             name: 'Đã sử dụng',
-                            percent: totalMax ? ((totalMax - totalRemaining) / totalMax).toFixed(2) * 100 : 0,
+                            percent: totalMax ? ((totalMax - totalRemaining) / totalMax) * 100 : 0,
                         },
                     },
                 });
