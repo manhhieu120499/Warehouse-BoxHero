@@ -44,7 +44,6 @@ const ExportProduct = ({ productListResult, className, setProductListResult }) =
                                 <th>Tên sản phẩm</th>
                                 <th>Chọn lô</th>
                                 <th>Chi tiết lô hàng xuất</th>
-                                <th>Xóa</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -79,16 +78,6 @@ const ExportProduct = ({ productListResult, className, setProductListResult }) =
                                             >
                                                 <span>Xem chi tiết</span>
                                             </Button>
-                                        </td>
-                                        <td>
-                                            <Trash2
-                                                style={{ cursor: 'pointer' }}
-                                                size={16}
-                                                color="red"
-                                                onClick={() => {
-                                                    clearProduct(item.productID);
-                                                }}
-                                            />
                                         </td>
                                     </tr>
                                 ))

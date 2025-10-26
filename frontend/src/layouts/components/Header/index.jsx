@@ -32,7 +32,8 @@ const Header = ({ children }) => {
         '/batch': 'Quản lý lô hàng',
         '/zone': 'Quản lý khu vực',
         '/categories': 'Nhóm sản phẩm',
-        '/proposal-list': 'Danh sách đề xuất',
+        '/proposal-import-list': 'Danh sách đề xuất nhập',
+        '/proposal-export-list': 'Danh sách đề xuất xuất',
     };
 
     const navigate = useNavigate();

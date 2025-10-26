@@ -14,11 +14,12 @@ import Login from './Login';
 import Register from './Register';
 import Customer from './CustomerPage';
 import ProfilePage from './ProfilePage';
-import ProposalPage from "./ProposalPage"
+import ProposalPage from './ProposalPage';
 import BatchPage from './BatchPage';
 import ZonePage from './ZonePage';
-import CategoryPage from './CategoryPage'
+import CategoryPage from './CategoryPage';
 import ApprovePage from './ApprovePage';
+import ApproveReleasePage from './ApproveReleasePage';
 
 export {
     Dashboard,
@@ -41,5 +42,6 @@ export {
     BatchPage,
     ZonePage,
     CategoryPage,
-    ApprovePage
+    ApprovePage,
+    ApproveReleasePage,
 };

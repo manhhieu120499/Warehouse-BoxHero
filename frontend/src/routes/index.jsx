@@ -20,6 +20,7 @@ import {
     ZonePage,
     CategoryPage,
     ApprovePage,
+    ApproveReleasePage,
 } from '../pages';
 import DefaultLayout from '../layouts/DefaultLayout';
 
@@ -126,7 +127,12 @@ const publicRoute = [
     },
     {
         page: ApprovePage,
-        path: '/proposal-list',
+        path: '/proposal-import-list',
+        layout: DefaultLayout,
+    },
+    {
+        page: ApproveReleasePage,
+        path: '/proposal-export-list',
         layout: DefaultLayout,
     },
 ];
@@ -134,7 +140,7 @@ const publicRouteWithAdmin = [
     ...publicRoute,
     {
         page: ApprovePage,
-        path: '/proposal-list',
+        path: '/proposal-import-list',
         layout: DefaultLayout,
     },
 ];

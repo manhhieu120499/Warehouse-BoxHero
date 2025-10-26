@@ -3,6 +3,7 @@
     flex-direction: column;
     background: #f9fafb;
     color: #1f2937;
+    width: 60vw;
 }
 
 /* ---------- HEADER ---------- */
@@ -11,10 +12,11 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 32px;
-    background-color: #fff;
+    background: #fff;
     border-bottom: 1px solid #e5e7eb;
     position: sticky;
     top: -20px;
+    z-index: 10;
 }
 
 .headerLeft {
@@ -97,7 +99,13 @@
 /* ---------- FORM GRID ---------- */
 .grid4 {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.second-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
 }
 
@@ -161,22 +169,16 @@
     }
 
     th.stt {
-        width: 150px;
+        width: 50px;
     }
     th.productID {
-        width: 150px;
+        width: 15%;
     }
     th.productName {
-        width: 250px;
-    }
-    th.unit {
-        width: 200px;
-    }
-    th.num {
-        width: 150px;
+        width: 45%;
     }
     th.note {
-        width: 280px;
+        width: 45%;
     }
 
     th {
@@ -278,4 +280,9 @@
     .icon {
         cursor: pointer;
     }
+}
+
+.readOnly {
+    background-color: rgb(232, 221, 221);
+    pointer-events: none;
 }

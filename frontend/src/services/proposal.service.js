@@ -93,3 +93,122 @@ export const fetchFilterProposal = async (params) => {
         return err;
     }
 };
+
+export const createOrderReleaseProposal = async (data) => {
+    try {
+        const tokenUser = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const res = await request.post('/api/proposal/create-release-proposal', data, {
+            headers: {
+                token: `Bearer ${tokenUser.accessToken}`,
+                employeeID: tokenUser.employeeID,
+                warehouseID: warehouse.warehouseID,
+            },
+        });
+        return res;
+    } catch (err) {
+        console.log(err);
+        throw new Error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
+    }
+};
+
+export const getAllOrderReleaseProposal = async (page = 1, optionFilter = {}) => {
+    try {
+        const tokenUser = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const res = await request.get('/api/proposal/get-release-proposal', {
+            params: {
+                page,
+                ...optionFilter,
+            },
+            headers: {
+                token: `Bearer ${tokenUser.accessToken}`,
+                employeeid: tokenUser.employeeID,
+                warehouseid: warehouse.warehouseID,
+            },
+        });
+        console.log(res);
+        return res.data.data;
+    } catch (err) {
+        console.log(err);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+
+        return err;
+    }
+};
+
+export const getOrderReleaseProposal = async (orderReleaseProposalID) => {
+    try {
+        const tokenUser = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const res = await request.get(`/api/proposal/get-release-proposal-detail/${orderReleaseProposalID}`, {
+            headers: {
+                token: `Bearer ${tokenUser.accessToken}`,
+                employeeid: tokenUser.employeeID,
+                warehouseid: warehouse.warehouseID,
+            },
+        });
+        return res.data.data;
+    } catch (err) {
+        console.log(err);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        return err;
+    }
+};
+
+export const updateStatusOrderReleaseProposal = async (data) => {
+    try {
+        const tokenUser = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const res = await request.post('/api/proposal/approve-release-proposal', data, {
+            headers: {
+                token: `Bearer ${tokenUser.accessToken}`,
+                employeeID: tokenUser.employeeID,
+                warehouseID: warehouse.warehouseID,
+            },
+        });
+        return res;
+    } catch (err) {
+        console.log(err);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        return err;
+    }
+};
+
+export const searchOrderReleaseProposal = async (orderReleaseProposalID, option = {}) => {
+    try {
+        const tokenUser = parseToken('tokenUser');
+        const res = await request.post(
+            '/api/proposal/search-release-proposal',
+            {
+                orderReleaseProposalID,
+                ...option,
+            },
+            {
+                headers: {
+                    token: `Bearer ${tokenUser.accessToken}`,
+                    employeeID: tokenUser.employeeID,
+                },
+            },
+        );
+        return res;
+    } catch (err) {
+        console.log(err);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        return err;
+    }
+};

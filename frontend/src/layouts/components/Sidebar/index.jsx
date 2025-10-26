@@ -211,9 +211,14 @@ const Sidebar = () => {
             iconName: ClipboardMinus,
             subMenu: [
                 {
-                    title: 'DS phiếu đề xuất',
+                    title: 'Phiếu đề xuất nhập',
                     iconName: List,
-                    path: '/proposal-list',
+                    path: '/proposal-import-list',
+                },
+                {
+                    title: 'Phiếu đề xuất xuất',
+                    iconName: List,
+                    path: '/proposal-export-list',
                 },
                 // {
                 //     title: 'Tạo phiếu đề xuất',

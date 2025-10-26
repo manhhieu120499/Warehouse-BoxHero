@@ -13,6 +13,7 @@ import request from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
 import ModalOrderReleaseDetail from './ModalOrderReleaseDetail';
 import { filterOrderRelease } from '../../services/order.service';
+import ModalChooseProposalToExport from './ModalChooseProposalToExport';
 
 const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyle);
@@ -224,6 +225,11 @@ const ReleaseProductPage = () => {
                 </Button>
             </ModelFilter>
 
+            <ModalChooseProposalToExport
+                isOpen={showModalCreateReleaseProposal}
+                onClose={() => setShowModalCreateReleaseProposal(false)}
+            />
+
             {/** danh sách phiếu đề xuất hoặc phiếu thiếu */}
             <div className={cx('view-list-proposal')}>
                 <div className={cx('table-header')}>
@@ -241,15 +247,6 @@ const ReleaseProductPage = () => {
             </div>
 
             {/* Modal tạo phiếu xuất */}
-            {showModalCreateReleaseProposal && (
-                <CreateExportProductDialog
-                    isOpen={showModalCreateReleaseProposal}
-                    onClose={() => {
-                        setShowModalCreateReleaseProposal(false);
-                    }}
-                    fetchData={fetchOrderRelease}
-                />
-            )}
 
             {showOrderReleaseDetail && (
                 <ModalOrderReleaseDetail

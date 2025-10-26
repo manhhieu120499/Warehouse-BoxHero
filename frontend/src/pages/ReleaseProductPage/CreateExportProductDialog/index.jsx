@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import classNames from 'classnames/bind';
 import styles from './CreateExportProductDialog.module.scss';
 import { Modal, Button } from '../../../components';
@@ -9,12 +9,11 @@ import { styleMessage } from '../../../constants';
 import { saveOrderRelease } from '../../../services/order.service';
 import ExportInfoSheet from './ExportInfoSheet';
 import ExportProduct from './ExportProduct';
-import ProductExportList from './ProductExportList';
 import parseToken from '../../../utils/parseToken';
 
 const cx = classNames.bind(styles);
 
-const CreateExportProductDialog = ({ isOpen, onClose, fetchData }) => {
+const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease }) => {
     const token = parseToken('tokenUser');
     const warehouse = parseToken('warehouse');
     const batchOfProducts = useSelector((state) => state.BatchProductSlice.batchProductList);
@@ -29,23 +28,13 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData }) => {
         customerID: '',
         customerName: '',
         note: '',
+        orderReleaseProposalID: proposalRelease ? proposalRelease.orderReleaseProposalID : '',
+        orderReleaseDetails: [],
     });
-    const [step, setStep] = useState(0);
     const contentSliceRef = useRef(null);
     const [productListSelected, setProductListSelected] = useState([]); // danh sách sản phẩm được chọn để export
 
     const dispatch = useDispatch();
-
-    const handleNextView = (position = 1) => {
-        if (!contentSliceRef.current) return;
-        contentSliceRef.current.style.transform = `translateX(-${position * 100}%)`;
-        setStep(position);
-    };
-    const handlePrevView = (position = 0) => {
-        if (!contentSliceRef.current) return;
-        contentSliceRef.current.style.transform = `translateX(-${position * 100}%)`;
-        setStep(position);
-    };
 
     const validate = (payload) => {
         if (!payload.orderReleaseID) {
@@ -108,6 +97,7 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData }) => {
             employeeID: token.employeeID,
             warehouseID: warehouse.warehouseID,
             note: formData.note,
+            orderReleaseProposalID: formData.orderReleaseProposalID,
             orderReleaseDetails: orderReleaseDetails || [],
         };
 
@@ -124,6 +114,7 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData }) => {
                 onClose();
             }
         } catch (err) {
+            console.log('err', err);
             toast.error(err.message, styleMessage);
             return;
         } finally {
@@ -132,7 +123,6 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData }) => {
     };
 
     const handleCloseModal = () => {
-        setStep(0);
         dispatch(clearAllBatchProductList());
         onClose();
     };
@@ -147,61 +137,33 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData }) => {
         }));
         setProductListSelected([]);
         dispatch(clearAllBatchProductList());
-        handleNextView(0);
     };
 
+    // init form data
+    useEffect(() => {
+        console.log('proposalRelease', proposalRelease);
+        if (!proposalRelease) return;
+        setFormData({
+            receiptCode: '',
+            createdDate: new Date().toISOString().split('T')[0],
+            createdBy: currentUser.empName || '',
+            warehouse: warehouse.warehouseName,
+            customerID: proposalRelease?.customer?.customerID || '',
+            customerName: proposalRelease?.customer?.customerName || '',
+            note: proposalRelease?.note || '',
+            orderReleaseProposalID: proposalRelease.orderReleaseProposalID || '',
+            orderReleaseDetails: [],
+        });
+        setProductListSelected(
+            (proposalRelease?.orderReleaseProposalDetails || []).map((item) => ({
+                productID: item.productID,
+                productName: item.productName,
+            })),
+        );
+    }, [proposalRelease]);
+
     return (
-        <Modal
-            isOpenInfo={isOpen}
-            onClose={handleCloseModal}
-            arrButton={[
-                (index) =>
-                    step === 0 && (
-                        <Button
-                            disabled={!formData.receiptCode || !formData.customerName}
-                            primary
-                            medium
-                            onClick={() => handleNextView()}
-                        >
-                            <span>Tiếp tục</span>
-                        </Button>
-                    ),
-                (index) =>
-                    step === 1 && (
-                        <div style={{ display: 'flex', gap: '5px', marginRight: '13px' }}>
-                            <Button primary medium onClick={() => handlePrevView(0)}>
-                                <span>Quay lại</span>
-                            </Button>
-                            <Button
-                                disabled={!formData.receiptCode || !formData.customerName}
-                                primary
-                                medium
-                                onClick={() => {
-                                    if (!productListSelected.length) {
-                                        toast.error('Vui lòng chọn sản phẩm cần xuất', styleMessage);
-                                        return;
-                                    }
-                                    handleNextView(2);
-                                }}
-                            >
-                                <span>Tiếp tục</span>
-                            </Button>
-                        </div>
-                    ),
-                (index) =>
-                    step === 2 && (
-                        <Button primary medium onClick={() => handlePrevView(1)}>
-                            <span>Quay lại</span>
-                        </Button>
-                    ),
-                (index) => (
-                    <Button primary medium onClick={onClose}>
-                        <span>Đóng</span>
-                    </Button>
-                ),
-            ]}
-            showButtonClose={false}
-        >
+        <Modal isOpenInfo={isOpen} onClose={handleCloseModal} showButtonClose={false}>
             <div className={cx('dialog-content-release')}>
                 <header className={cx('dialog-header')}>
                     <h2 className={cx('dialog-title')}>Phiếu xuất kho</h2>
@@ -221,11 +183,6 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData }) => {
                             formData={formData}
                             setFormData={setFormData}
                             className={cx('content-normal-info')}
-                        />
-
-                        <ProductExportList
-                            setProductListResult={setProductListSelected}
-                            productListSelected={productListSelected}
                         />
 
                         <ExportProduct

@@ -276,6 +276,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                 onChange={(e) => updateCell(idx, 'sku', e.target.value)}
                                 placeholder="Mã sản phẩm"
                                 readOnly={typeDetail}
+                                className={cx('readOnly')}
                             />
                         </td>
                         <td>
@@ -284,12 +285,14 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                 onChange={(e) => updateCell(idx, 'name', e.target.value)}
                                 readOnly
                                 placeholder="Tên sản phẩm"
+                                className={cx('readOnly')}
                             />
                         </td>
                         <td>
                             <select
                                 value={typeDetail ? it.unit?.unitID || '' : it.uom || ''}
                                 onChange={(e) => updateCell(idx, 'uom', e.target.value)}
+                                className={cx(typeDetail ? 'readOnly' : '')}
                             >
                                 <option>-- Chọn đơn vị --</option>
                                 {typeDetail ? (
@@ -309,6 +312,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                     if (e.key == '-') e.preventDefault();
                                 }}
                                 readOnly={typeDetail}
+                                className={cx(typeDetail ? 'readOnly' : '')}
                             />
                         </td>
                         <td>
@@ -316,6 +320,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                 value={typeDetail ? it.note || 'Không có ghi chú' : it.note || ''}
                                 onChange={(e) => updateCell(idx, 'note', e.target.value)}
                                 placeholder="Ghi chú"
+                                className={cx(typeDetail ? 'readOnly' : '')}
                             />
                         </td>
                         <td>
@@ -373,6 +378,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                     readOnly={true}
                                     value={typeDetail ? proposalDetail.proposalID || '' : code || ''}
                                     onChange={(e) => setCode(e.target.value)}
+                                    className={cx(typeDetail ? 'readOnly' : '')}
                                 />
                                 {!typeDetail && (
                                     <Button
@@ -388,7 +394,12 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                         </div>
                         <div className={cx('field')}>
                             <label>Ngày tạo phiếu</label>
-                            <input type="date" value={typeDetail ? createdAt : date} readOnly />
+                            <input
+                                type="date"
+                                value={typeDetail ? createdAt : date}
+                                readOnly
+                                className={cx('readOnly')}
+                            />
                         </div>
                         <div className={cx('field')}>
                             <label>Kho nhập</label>
@@ -399,6 +410,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                         : warehouse.warehouseName || ''
                                 }
                                 readOnly
+                                className={cx('readOnly')}
                             />
                         </div>
                         <div className={cx('field')}>
@@ -410,6 +422,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                         : creator.empName || ''
                                 }
                                 readOnly
+                                className={cx('readOnly')}
                             />
                         </div>
                         <div className={cx('field', 'colSpan4')}>
@@ -420,6 +433,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                 value={typeDetail ? proposalDetail.note || 'Không có ghi chú' : reason}
                                 onChange={(e) => setReason(e.target.value)}
                                 readOnly={typeDetail}
+                                className={cx(typeDetail ? 'readOnly' : '')}
                             />
                         </div>
                     </div>
@@ -470,6 +484,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                     <th className={cx('unit')}>Đơn vị tính</th>
                                     <th className={cx('num')}>Số lượng</th>
                                     <th className={cx('note')}>Ghi chú</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
