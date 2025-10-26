@@ -198,7 +198,14 @@ const ApproveReleasePage = () => {
                 </div>
             </div>
 
-            <ModalCreateApproveRelease isOpen={isCreate} onClose={() => setIsCreate(false)} />
+            {/** create approve proposal */}
+            <ModalCreateApproveRelease
+                isOpen={isCreate}
+                onClose={() => setIsCreate(false)}
+                refetchData={() => fetchAllOrderReleaseProposal(page)}
+            />
+
+            {/** approve proposal */}
             <ModalCreateApproveRelease
                 typeDetail={true}
                 isOpen={isProposalSelected}

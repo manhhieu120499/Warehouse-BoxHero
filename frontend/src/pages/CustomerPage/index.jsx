@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import { MyTable, Modal, ModalOrder } from '@/components';
 import styles from './CustomerPage.module.scss';
@@ -6,29 +6,32 @@ import { Eye } from 'lucide-react';
 import Tippy from '@tippyjs/react';
 import globalStyle from '../../components/GlobalStyle/GlobalStyle.module.scss';
 import ModelFilter from '../../components/ModelFilter';
+import { filterCustomer, getAllCustomer } from '../../services/customer.service';
 
 const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle);
 
 const CustomerPage = () => {
     const [page, setPage] = useState(1);
+    const [customerID, setCustomerID] = useState('');
     const [nameFilter, setNameFilter] = useState('');
     const [phoneFilter, setPhoneFilter] = useState('');
     const [emailFilter, setEmailFilter] = useState('');
     const [isOpenInfo, setIsOpenInfo] = useState(false);
+    const [customerList, setCustomerList] = useState([]);
 
     const columns = [
         {
             title: 'Mã KH',
-            dataIndex: 'customerId',
-            key: 'customerId',
+            dataIndex: 'customerID',
+            key: 'customerID',
             width: '10%',
             ellipsis: true,
         },
         {
             title: 'Tên khách hàng',
-            dataIndex: 'name',
-            key: 'name',
+            dataIndex: 'customerName',
+            key: 'customerName',
             width: '20%',
             ellipsis: true,
         },
@@ -77,49 +80,6 @@ const CustomerPage = () => {
         },
     ];
 
-    const data = [
-        {
-            key: '1',
-            customerId: '1',
-            name: 'Alice',
-            phone: '123-456-7890',
-            address: '123 Main St',
-            email: 'alice@example.com',
-        },
-        {
-            key: '2',
-            customerId: '2',
-            name: 'Bob',
-            phone: '987-654-3210',
-            address: '456 Elm St',
-            email: 'bob@example.com',
-        },
-        {
-            key: '3',
-            customerId: '3',
-            name: 'Charlie',
-            phone: '555-555-5555',
-            address: '789 Oak St',
-            email: 'charlie@example.com',
-        },
-        {
-            key: '4',
-            customerId: '4',
-            name: 'David',
-            phone: '444-444-4444',
-            address: '101 Pine St',
-            email: 'david@example.com',
-        },
-        {
-            key: '5',
-            customerId: '5',
-            name: 'Eve',
-            phone: '222-222-2222',
-            address: '202 Maple St',
-            email: 'eve@example.com',
-        },
-    ];
-
     const dataOrderHistory = [
         {
             key: '1',
@@ -150,15 +110,28 @@ const CustomerPage = () => {
         setIsOpenInfo(false);
     };
 
-    const handleSubmitFilter = () => {
-        console.log('Filtering with:', {
-            name: nameFilter,
-            phone: phoneFilter,
-            email: emailFilter,
-        });
+    const handleSubmitFilter = async () => {
+        const optionFilter = {};
+        if (!customerID && !nameFilter && !phoneFilter && !emailFilter) return;
+        if (customerID) optionFilter.customerID = customerID;
+        if (nameFilter) optionFilter.customerName = nameFilter;
+        if (phoneFilter) optionFilter.customerPhone = phoneFilter;
+        if (emailFilter) optionFilter.email = emailFilter;
+        try {
+            const res = await filterCustomer(optionFilter);
+            setCustomerList(res || []);
+        } catch (err) {
+            console.log(err);
+        }
     };
 
     const columnsFilter = [
+        {
+            id: 'customerID',
+            label: 'Mã khách hàng',
+            value: customerID,
+            setValue: setCustomerID,
+        },
         {
             id: 'name',
             label: 'Tên khách hàng',
@@ -179,15 +152,31 @@ const CustomerPage = () => {
         },
     ];
 
+    const fetchListCustomer = async () => {
+        try {
+            const res = await getAllCustomer();
+            setCustomerList(res);
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    useEffect(() => {
+        fetchListCustomer();
+    }, []);
+
     return (
         <div className={cx('wrapper-report')}>
             <div className={cx('header')}>
                 <ModelFilter
                     handleSubmitFilter={handleSubmitFilter}
                     handleResetFilters={() => {
+                        if (!customerID && !nameFilter && !phoneFilter && !emailFilter) return;
+                        setCustomerID('');
                         setNameFilter('');
                         setPhoneFilter('');
                         setEmailFilter('');
+                        fetchListCustomer();
                     }}
                     columns={columnsFilter}
                 />
@@ -196,7 +185,7 @@ const CustomerPage = () => {
                 <MyTable
                     currentPage={page}
                     columns={columns}
-                    data={data}
+                    data={customerList}
                     pagination
                     pageSize={5}
                     onChangePage={onChangePage}

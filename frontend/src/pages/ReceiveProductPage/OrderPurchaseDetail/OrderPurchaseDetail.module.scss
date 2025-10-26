@@ -222,3 +222,98 @@
         justify-content: flex-end;
     }
 }
+
+.tableWrap {
+    width: 100%;
+    overflow-x: auto;
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    margin-bottom: 18px;
+}
+
+.stickyTable {
+    min-width: 1300px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table th,
+.table td {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 1.1rem;
+    white-space: nowrap;
+}
+
+/* Sticky 3 cột đầu cả header và body */
+.stickyCol {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #f1f5f9;
+    box-shadow: 2px 0 4px -2px #e5e7eb;
+}
+
+/* Cột 1: STT */
+.stickyCol1 {
+    min-width: 60px;
+    max-width: 60px;
+    left: 0;
+    z-index: 3;
+}
+
+/* Cột 2: Mã sản phẩm */
+.stickyCol2 {
+    min-width: 120px;
+    max-width: 120px;
+    left: 60px;
+    z-index: 3;
+}
+
+/* Cột 3: Tên sản phẩm */
+.stickyCol3 {
+    min-width: 180px;
+    max-width: 220px;
+    left: 180px; /* 60 + 120 */
+    z-index: 3;
+}
+
+/* Các cột còn lại */
+.table th:not(.stickyCol),
+.table td:not(.stickyCol) {
+    min-width: 120px;
+}
+
+/* Responsive: scroll ngang trên mobile */
+@media (max-width: 768px) {
+    .tableWrap {
+        border-radius: 6px;
+    }
+    .stickyTable {
+        min-width: 900px;
+    }
+    .table th,
+    .table td {
+        font-size: 1rem;
+        padding: 8px 8px;
+    }
+    .stickyCol1 {
+        min-width: 40px;
+        max-width: 40px;
+        left: 0;
+    }
+    .stickyCol2 {
+        min-width: 80px;
+        max-width: 80px;
+        left: 40px;
+    }
+    .stickyCol3 {
+        min-width: 120px;
+        max-width: 140px;
+        left: 120px;
+    }
+}

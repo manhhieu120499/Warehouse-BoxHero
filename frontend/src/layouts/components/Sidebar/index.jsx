@@ -1,36 +1,23 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Sidebar.module.scss';
 import SidebarItem from './SidebarItem';
 import {
-    Settings,
     User,
     LayoutDashboard,
-    ShoppingBasket,
     CircleArrowLeft,
     CircleArrowRight,
     ClipboardMinus,
-    Undo2,
     CalendarCheck,
-    Truck,
     Warehouse,
     Factory,
-    ShieldX,
     Info,
     Users,
-    ShoppingCart,
-    BookMinus,
     Milk,
     Package,
-    FileClock,
-    UserCog,
-    Columns3,
-    File,
-    Target,
-    List,
-    PenLine,
     TruckElectric,
-    CheckLine,
+    ClipboardPlus,
+    Files,
 } from 'lucide-react';
 import logo from '../../../assets/logo_v2.jpg';
 import { useLocation } from 'react-router-dom';
@@ -208,16 +195,16 @@ const Sidebar = () => {
         {
             id: 6,
             title: 'Phiếu đề xuất',
-            iconName: ClipboardMinus,
+            iconName: Files,
             subMenu: [
                 {
                     title: 'Phiếu đề xuất nhập',
-                    iconName: List,
+                    iconName: ClipboardPlus,
                     path: '/proposal-import-list',
                 },
                 {
                     title: 'Phiếu đề xuất xuất',
-                    iconName: List,
+                    iconName: ClipboardMinus,
                     path: '/proposal-export-list',
                 },
                 // {

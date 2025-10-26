@@ -14,139 +14,8 @@ import { formatDate } from '../../../utils/formatDate';
 
 const cx = classNames.bind(styles);
 
-// const mockData = [
-//     {
-//         batchID: 'BA001',
-//         manufactureDate: '2023-10-01',
-//         expiryDate: '2024-10-01',
-//         location: '',
-//         available: 10,
-//         uom: 'Thùng 16',
-//         quantity: 0,
-//     },
-//     {
-//         batchID: 'BA002',
-//         manufactureDate: '2023-10-01',
-//         expiryDate: '2024-10-01',
-//         location: 'Ô 1, kệ A, Tầng 1',
-//         available: 7,
-//         uom: 'Thùng 32',
-//         quantity: 0,
-//     },
-//     {
-//         batchID: 'BA003',
-//         manufactureDate: '2023-10-01',
-//         expiryDate: '2024-10-01',
-//         location: '',
-//         available: 7,
-//         uom: 'Thùng 32',
-//         quantity: 0,
-//     },
-//     {
-//         batchID: 'BA004',
-//         manufactureDate: '2023-10-01',
-//         expiryDate: '2024-10-01',
-//         location: '',
-//         available: 8,
-//         uom: 'Thùng 16',
-//         quantity: 0,
-//     },
-// ];
-
 const BatchDialog = ({ product, isOpen, onClose }) => {
     const [batchProductSelected, setBatchProductSelected] = useState(null);
-    const mockData = [
-        {
-            batchID: 'BA001',
-            manufactureDate: '2023-10-01',
-            expiryDate: '2024-10-01',
-            location: [],
-            available: 10,
-            uom: 'Thùng 16',
-            quantity: 0,
-        },
-        {
-            batchID: 'BA002',
-            manufactureDate: '2023-10-01',
-            expiryDate: '2024-10-01',
-            location: [],
-            available: 7,
-            uom: 'Thùng 32',
-            quantity: 0,
-        },
-        {
-            batchID: 'BA003',
-            manufactureDate: '2023-10-01',
-            expiryDate: '2024-10-01',
-            location: '',
-            available: 7,
-            uom: 'Thùng 32',
-            quantity: 0,
-        },
-        {
-            batchID: 'BA004',
-            manufactureDate: '2023-10-01',
-            expiryDate: '2024-10-01',
-            location: '',
-            available: 8,
-            uom: 'Thùng 16',
-            quantity: 0,
-        },
-        {
-            batchID: 'BA005',
-            manufactureDate: '2023-10-01',
-            expiryDate: '2024-10-01',
-            location: '',
-            available: 8,
-            uom: 'Thùng 16',
-            quantity: 0,
-        },
-        {
-            batchID: 'BA006',
-            manufactureDate: '2023-10-01',
-            expiryDate: '2024-10-01',
-            location: [],
-            available: 8,
-            uom: 'Thùng 16',
-            quantity: 0,
-        },
-        {
-            batchID: 'BA007',
-            manufactureDate: '2023-10-01',
-            expiryDate: '2024-10-01',
-            location: [],
-            available: 8,
-            uom: 'Thùng 16',
-            quantity: 0,
-        },
-        {
-            batchID: 'BA008',
-            manufactureDate: '2023-10-01',
-            expiryDate: '2024-10-01',
-            location: [],
-            available: 8,
-            uom: 'Thùng 16',
-            quantity: 0,
-        },
-        {
-            batchID: 'BA009',
-            manufactureDate: '2023-10-01',
-            expiryDate: '2024-10-01',
-            location: [],
-            available: 8,
-            uom: 'Thùng 16',
-            quantity: 0,
-        },
-        {
-            batchID: 'BA010',
-            manufactureDate: '2023-10-01',
-            expiryDate: '2024-10-01',
-            location: [],
-            available: 8,
-            uom: 'Thùng 16',
-            quantity: 0,
-        },
-    ];
     const batchOfProductStore = useSelector((state) => state.BatchProductSlice.batchProductList);
     const dispatch = useDispatch();
     const batchOfProductSelected = useMemo(() => {
@@ -176,7 +45,6 @@ const BatchDialog = ({ product, isOpen, onClose }) => {
     };
 
     const updateQuantityBatch = (batchID, quantity) => {
-        console.log(selectedBatch);
         const index = selectedBatch.findIndex((item) => item.batchID === batchID);
         if (index === -1) return;
         const updatedBatch = [...selectedBatch];
@@ -245,7 +113,6 @@ const BatchDialog = ({ product, isOpen, onClose }) => {
             prefetchBatchList(product.productID, batchOfProductSelected);
         } else {
             //setBatchProductList(mockData);
-            console.log('Vào');
             handleFetchBatchList(product.productID);
         }
     }, []);

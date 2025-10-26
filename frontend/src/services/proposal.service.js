@@ -129,7 +129,6 @@ export const getAllOrderReleaseProposal = async (page = 1, optionFilter = {}) =>
                 warehouseid: warehouse.warehouseID,
             },
         });
-        console.log(res);
         return res.data.data;
     } catch (err) {
         console.log(err);
@@ -209,6 +208,29 @@ export const searchOrderReleaseProposal = async (orderReleaseProposalID, option 
             Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
             styleMessage,
         );
+        return err;
+    }
+};
+
+export const getAllOrderReleaseProposalCanApply = async () => {
+    try {
+        const tokenUser = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const res = await request.get('/api/proposal/get-release-order-proposals-can-apply', {
+            headers: {
+                token: `Bearer ${tokenUser.accessToken}`,
+                employeeid: tokenUser.employeeID,
+                warehouseid: warehouse.warehouseID,
+            },
+        });
+        return res.data.data;
+    } catch (err) {
+        console.log(err);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+
         return err;
     }
 };

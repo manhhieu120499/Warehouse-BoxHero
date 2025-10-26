@@ -16,7 +16,6 @@ const cx = classNames.bind(styles);
 // Props: isOpen, onClose, onConfirm, initialData (array of batches)
 const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, requireQuantity }) => {
     const batchBoxProductList = useSelector((state) => state.BatchProductSlice.batchBoxProductList);
-    console.log(batchBoxProductList);
     const [query, setQuery] = useState('');
     const [page, setPage] = useState(1);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);

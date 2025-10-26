@@ -59,7 +59,7 @@ const ModalOrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem }) => {
         if (!orderReleaseItem) return;
         const groupDetail = []; // nhóm chi tiết sản phẩm trùng
         const formatOrderReleaseData = orderReleaseItem.orderReleaseDetails.map((item) => {
-            const uom = item.batch.unit.unitName.split('-')[1].trim();
+            const uom = item.batch.unit.conversionQuantity;
             const totalQuantityExport = item.orderReleaseBatchBoxDetails.reduce(
                 (acc, cur) => acc + Number(cur.quantityExported) * Number(uom),
                 0,

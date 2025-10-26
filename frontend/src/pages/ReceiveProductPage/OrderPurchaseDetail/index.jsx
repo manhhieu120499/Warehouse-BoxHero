@@ -77,77 +77,80 @@ const OrderPurchaseDetail = ({ orderPurchaseDetail, isOpen, onClose }) => {
                         {/** Table sản phẩm */}
                         <section className={cx('product-receive-list')}>
                             <h2>Danh sách nhập hàng</h2>
-                            <table className={cx('table')}>
-                                <thead>
-                                    <tr>
-                                        <th className={cx('stt')}>STT</th>
-                                        <th>Mã sản phẩm</th>
-                                        <th>Tên sản phẩm</th>
-                                        <th>Đơn vị tính</th>
-                                        <th>Số lượng yêu cầu</th>
-                                        <th>Số lượng thực tế</th>
-                                        <th>Số lượng thiếu</th>
-                                        <th>Mã lô</th>
-                                        <th>Ngày sản xuất</th>
-                                        <th>Hạn sử dụng</th>
-                                        <th>Mã nhà cung cấp</th>
-                                        <th>Tên nhà cung cấp</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {orderPurchaseDetail?.orderPurchaseDetail?.map((it, idx) => {
-                                        return (
-                                            <tr key={idx}>
-                                                <td className={cx('stt')}>{idx + 1}</td>
-
-                                                <td>
-                                                    <p>{it.batch.productID ?? ''}</p>
-                                                </td>
-                                                <td>
-                                                    <p>{it.batch.product.productName ?? ''}</p>
-                                                </td>
-                                                <td>
-                                                    <p>{it.batch.unit.unitName ?? ''}</p>
-                                                </td>
-                                                <td>
-                                                    <p>{it.requestedQuantity}</p>
-                                                </td>
-                                                <td>
-                                                    <p>{it.actualQuantity}</p>
-                                                </td>
-                                                <td>
-                                                    <p>{it.defectiveQuantity}</p>
-                                                </td>
-                                                <td>
-                                                    <p>{it.batch.batchID ?? ''}</p>
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        type="date"
-                                                        value={new Date(it.batch.manufactureDate)
-                                                            .toISOString()
-                                                            .slice(0, 10)}
-                                                        readOnly
-                                                    />
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        type="date"
-                                                        value={new Date(it.batch.expiryDate).toISOString().slice(0, 10)}
-                                                        readOnly
-                                                    />
-                                                </td>
-                                                <td>
-                                                    <p>{it.batch.supplier.supplierID ?? ''}</p>
-                                                </td>
-                                                <td>
-                                                    <p>{it.batch.supplier.supplierName ?? ''}</p>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                            <div className={cx('tableWrap')}>
+                                <table className={cx('table', 'stickyTable')}>
+                                    <thead>
+                                        <tr>
+                                            <th className={cx('stickyCol', 'stickyCol1', 'stt')}>STT</th>
+                                            <th className={cx('stickyCol', 'stickyCol2')}>Mã sản phẩm</th>
+                                            <th className={cx('stickyCol', 'stickyCol3')}>Tên sản phẩm</th>
+                                            <th>Đơn vị tính</th>
+                                            <th>Số lượng yêu cầu</th>
+                                            <th>Số lượng thực tế</th>
+                                            <th>Số lượng thiếu</th>
+                                            <th>Mã lô</th>
+                                            <th>Ngày sản xuất</th>
+                                            <th>Hạn sử dụng</th>
+                                            <th>Mã nhà cung cấp</th>
+                                            <th>Tên nhà cung cấp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {orderPurchaseDetail?.orderPurchaseDetail?.map((it, idx) => {
+                                            return (
+                                                <tr key={idx}>
+                                                    <td className={cx('stickyCol', 'stickyCol1', 'stt')}>{idx + 1}</td>
+                                                    <td className={cx('stickyCol', 'stickyCol2')}>
+                                                        <p>{it.batch.productID ?? ''}</p>
+                                                    </td>
+                                                    <td className={cx('stickyCol', 'stickyCol3')}>
+                                                        <p>{it.batch.product.productName ?? ''}</p>
+                                                    </td>
+                                                    <td>
+                                                        <p>{it.batch.unit.unitName ?? ''}</p>
+                                                    </td>
+                                                    <td>
+                                                        <p>{it.requestedQuantity}</p>
+                                                    </td>
+                                                    <td>
+                                                        <p>{it.actualQuantity}</p>
+                                                    </td>
+                                                    <td>
+                                                        <p>{it.defectiveQuantity}</p>
+                                                    </td>
+                                                    <td>
+                                                        <p>{it.batch.batchID ?? ''}</p>
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="date"
+                                                            value={new Date(it.batch.manufactureDate)
+                                                                .toISOString()
+                                                                .slice(0, 10)}
+                                                            readOnly
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="date"
+                                                            value={new Date(it.batch.expiryDate)
+                                                                .toISOString()
+                                                                .slice(0, 10)}
+                                                            readOnly
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <p>{it.batch.supplier.supplierID ?? ''}</p>
+                                                    </td>
+                                                    <td>
+                                                        <p>{it.batch.supplier.supplierName ?? ''}</p>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </section>
                     </div>
                 </main>

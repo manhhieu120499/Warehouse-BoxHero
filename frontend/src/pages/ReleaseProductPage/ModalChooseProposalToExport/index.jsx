@@ -3,7 +3,7 @@ import classNames from 'classnames/bind';
 import styles from './ModalChooseProposalToExport.module.scss';
 import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import { Modal, Button } from '../../../components';
-import { getAllOrderReleaseProposal, searchOrderReleaseProposal } from '../../../services/proposal.service';
+import { getAllOrderReleaseProposalCanApply, searchOrderReleaseProposal } from '../../../services/proposal.service';
 import { convertDateVN } from '../../../common';
 import useDebounce from '../../../hooks/useDebounce';
 import CreateExportProductDialog from '../CreateExportProductDialog';
@@ -37,9 +37,9 @@ const ModalChooseProposalToExport = ({ isOpen, onClose, fetchData }) => {
 
     const debounceProposalIDFilter = useDebounce(proposalIDFilter, 500);
 
-    const handleFetchOrderReleaseProposal = async (page = 1, status = 'COMPLETED') => {
+    const handleFetchOrderReleaseProposal = async () => {
         try {
-            const res = await getAllOrderReleaseProposal(page, { status });
+            const res = await getAllOrderReleaseProposalCanApply();
             setListData(res.length > 0 ? res : []);
         } catch (err) {
             console.log(err);
@@ -63,9 +63,17 @@ const ModalChooseProposalToExport = ({ isOpen, onClose, fetchData }) => {
         }
     }, [debounceProposalIDFilter]);
 
-    useEffect(() => {
+    const handleRefreshData = () => {
         handleFetchOrderReleaseProposal();
-    }, []);
+        fetchData();
+    };
+
+    useEffect(() => {
+        if (!isOpen) {
+            setProposalIDFilter('');
+            return;
+        } else handleFetchOrderReleaseProposal();
+    }, [isOpen]);
 
     return (
         <Modal isOpenInfo={isOpen} onClose={onClose}>
@@ -127,6 +135,7 @@ const ModalChooseProposalToExport = ({ isOpen, onClose, fetchData }) => {
                     isOpen={!!proposalSelected}
                     onClose={() => setProposalSelected(null)}
                     proposalRelease={proposalSelected}
+                    fetchData={handleRefreshData}
                 />
             )}
         </Modal>

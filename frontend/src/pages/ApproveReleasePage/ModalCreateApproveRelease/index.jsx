@@ -168,7 +168,7 @@ const ModalCreateApproveRelease = ({
     };
 
     // submit release order proposal
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!form.receiptCode) {
             toast.error('Vui lòng tạo mã phiếu đề xuất xuất kho', styleMessage);
             return;
@@ -195,11 +195,13 @@ const ModalCreateApproveRelease = ({
                 })),
                 status: 'PENDING',
             };
-            const res = createOrderReleaseProposal(formatData);
-            if (res.status === 'OK') {
+            const res = await createOrderReleaseProposal(formatData);
+            console.log('data submit', res);
+            if (res.data.status === 'OK') {
                 toast.success('Tạo phiếu đề xuất xuất kho thành công', styleMessage);
                 onClose();
                 handleReset();
+                refetchData();
             }
         } catch (err) {
             toast.error(err, styleMessage);
