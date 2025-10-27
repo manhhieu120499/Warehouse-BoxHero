@@ -9,6 +9,7 @@ const Floor = db.Floor;
 const Shelf = db.Shelf;
 const Zone = db.Zone;
 const dotenv = require('dotenv');
+const { Op } = require('sequelize');
 
 dotenv.config();
 
@@ -429,7 +430,7 @@ class BatchService {
                     });
                 }
                 const batches = await Batch.findAll({
-                    where: { productID, warehouseID },
+                    where: { productID, warehouseID, remainAmount: { [Op.gt]: 0 } },
                     include: [
                         { model: Unit, as: 'unit', attributes: ['unitID', 'unitName'] },
                         {

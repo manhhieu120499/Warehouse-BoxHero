@@ -23,6 +23,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.TEXT,
                 allowNull: true,
             },
+            orderReleaseProposalID: {
+                type: Sequelize.STRING,
+                allowNull: false,
+            },
         },
         {
             tableName: 'order_release',
@@ -39,6 +43,10 @@ module.exports = (sequelize, Sequelize) => {
         OrderRelease.hasMany(models.OrderReleaseDetail, {
             foreignKey: 'orderReleaseID',
             as: 'orderReleaseDetails',
+        });
+        OrderRelease.belongsTo(models.OrderReleaseProposal, {
+            foreignKey: 'orderReleaseProposalID',
+            as: 'orderReleaseProposal',
         });
     };
 

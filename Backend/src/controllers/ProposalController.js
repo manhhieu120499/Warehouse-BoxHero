@@ -77,6 +77,55 @@ class ProposalController {
             return res.status(err.statusHttp).json(err);
         }
     }
+
+    async createOrderReleaseProposal(req, res) {
+        try {
+            const { statusHttp, ...response } = await ProposalService.createOrderReleaseProposal(req.body);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
+    async getAllOrderReleaseProposal(req, res) {
+        try {
+            const { statusHttp, ...response } = await ProposalService.getAllOrderReleaseProposal(req.query);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
+    async getOrderReleaseProposalDetail(req, res) {
+        try {
+            const { statusHttp, ...response } = await ProposalService.getOrderProposalReleaseDetailByID(req.params.id);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
+    async approveOrderReleaseProposal(req, res) {
+        try {
+            const { statusHttp, ...response } = await ProposalService.approveOrderReleaseProposal(req.body);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
+    async searchOrderReleaseProposal(req, res) {
+        try {
+            const { statusHttp, ...response } = await ProposalService.searchOrderReleaseProposal(req.body);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
+    async getOrderReleaseProposalsCanApply(req, res) {
+        try {
+            const { statusHttp, ...response } = await ProposalService.getOrderReleaseProposalCanApply();
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
 }
 
 module.exports = new ProposalController();

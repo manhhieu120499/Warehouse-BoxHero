@@ -1,6 +1,6 @@
 const dotenv = require('dotenv');
 const db = require('../../models');
-const { Op, fn, col, where } = require('sequelize');
+const { Op, fn, col, where, literal } = require('sequelize');
 const Proposal = db.Proposal;
 const Employee = db.Employee;
 const Product = db.Product;
@@ -9,6 +9,10 @@ const Unit = db.Unit;
 const ProposalDetail = db.ProposalDetail;
 const OrderPurchase = db.OrderPurchase;
 const sequelize = db.sequelize;
+const Customer = db.Customer;
+const OrderReleaseProposalDetail = db.OrderReleaseProposalDetail;
+const OrderReleaseProposal = db.OrderReleaseProposal;
+const OrderRelease = db.OrderRelease;
 
 dotenv.config();
 
@@ -465,6 +469,320 @@ class ProposalService {
                 });
             } catch (err) {
                 console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+    // create order realease proposal
+    createOrderReleaseProposal(data) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                const { customerID } = data;
+                const checkCustomerExist = await Customer.findOne({ where: { customerID } });
+                if (!checkCustomerExist) {
+                    return reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Khách hàng không tồn tại',
+                    });
+                }
+                const newProposal = await db.OrderReleaseProposal.create(
+                    {
+                        orderReleaseProposalID: data.orderReleaseProposalID,
+                        employeeIDCreate: data.employeeIDCreate,
+                        approverID: null,
+                        customerID: data.customerID,
+                        warehouseID: data.warehouseID,
+                        note: null,
+                        status: 'PENDING',
+                    },
+                    { transaction },
+                );
+                // create proposal detail
+
+                await db.OrderReleaseProposalDetail.bulkCreate(
+                    data.orderReleaseProposalDetails.map((item) => ({
+                        ...item,
+                        orderReleaseProposalID: newProposal.orderReleaseProposalID,
+                    })),
+                    { transaction },
+                );
+                await transaction.commit();
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Tạo đề xuất xuất hàng thành công',
+                    proposal: newProposal,
+                });
+            } catch (err) {
+                await transaction.rollback();
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+    // get all order release proposal
+    getAllOrderReleaseProposal(data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const currentPage = data?.page || 1;
+                const whereClause = {};
+                if (data?.orderReleaseProposalID) whereClause.orderReleaseProposalID = data.orderReleaseProposalID;
+                if (data?.createdAt)
+                    whereClause[Op.and] = [
+                        ...(whereClause[Op.and] || []),
+                        where(fn('DATE', col('OrderReleaseProposal.createdAt')), data.createdAt),
+                    ];
+                if (data?.status) {
+                    whereClause.status = data.status;
+                }
+                if (data?.employeeIDCreate) whereClause.employeeIDCreate = data.employeeIDCreate;
+
+                const orderProposalsRelease =
+                    (await OrderReleaseProposal.findAll({
+                        where: {
+                            ...whereClause,
+                        },
+                        include: [
+                            {
+                                model: Employee,
+                                as: 'creator',
+                                attributes: ['employeeID', 'employeeName'],
+                            },
+                            {
+                                model: Employee,
+                                as: 'approver',
+                                attributes: ['employeeID', 'employeeName'],
+                            },
+                            {
+                                model: Warehouse,
+                                as: 'warehouse',
+                                attributes: ['warehouseID', 'warehouseName'],
+                            },
+                            {
+                                model: OrderReleaseProposalDetail,
+                                as: 'orderReleaseProposalDetails',
+                                attributes: ['productID', 'productName', 'note'],
+                            },
+                            {
+                                model: Customer,
+                                as: 'customer',
+                                attributes: ['customerID', 'customerName'],
+                            },
+                        ],
+                        limit: LIMIT_PAGE,
+                        offset: (currentPage - 1) * LIMIT_PAGE,
+                        order: [['createdAt', 'DESC']],
+                    })) || [];
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy danh sách đề xuất xuất hàng thành công',
+                    data: orderProposalsRelease,
+                });
+            } catch (err) {
+                console.log(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+    // get order release proposal detail by id
+    getOrderProposalReleaseDetailByID(orderReleaseProposalID) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const orderReleaseProposalDetail = await OrderReleaseProposal.findOne({
+                    where: { orderReleaseProposalID },
+                    include: [
+                        {
+                            model: OrderReleaseProposalDetail,
+                            as: 'orderReleaseProposalDetails',
+                            include: [{ model: Product, as: 'product', attributes: ['productID', 'productName'] }],
+                        },
+                        {
+                            model: Customer,
+                            as: 'customer',
+                            attributes: ['customerID', 'customerName'],
+                        },
+                        {
+                            model: Warehouse,
+                            as: 'warehouse',
+                            attributes: ['warehouseID', 'warehouseName'],
+                        },
+                        {
+                            model: Employee,
+                            as: 'creator',
+                            attributes: ['employeeID', 'employeeName'],
+                        },
+                        {
+                            model: Employee,
+                            as: 'approver',
+                            attributes: ['employeeID', 'employeeName'],
+                        },
+                    ],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy chi tiết đề xuất xuất hàng thành công',
+                    data: orderReleaseProposalDetail,
+                });
+            } catch (err) {
+                console.log(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+    approveOrderReleaseProposal(data) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                const checkOrderReleaseProposalExist = await OrderReleaseProposal.findOne({
+                    where: { orderReleaseProposalID: data.orderReleaseProposalID },
+                });
+
+                if (!checkOrderReleaseProposalExist) {
+                    return reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Đề xuất xuất hàng không tồn tại',
+                    });
+                }
+
+                const updateOrderReleaseProposal = await OrderReleaseProposal.update(
+                    {
+                        status: data.status,
+                        approverID: data.employeeIDApproval,
+                    },
+                    { where: { orderReleaseProposalID: data.orderReleaseProposalID }, transaction },
+                );
+                await transaction.commit();
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Cập nhật trạng thái đề xuất xuất hàng thành công',
+                    data: updateOrderReleaseProposal,
+                });
+            } catch (err) {
+                await transaction.rollback();
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+    searchOrderReleaseProposal(data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const option = {};
+                if (data.status) option.status = data.status;
+                if (data.orderReleaseProposalID)
+                    option.orderReleaseProposalID = { [Op.like]: `%${data.orderReleaseProposalID}%` };
+
+                const orderReleaseProposals = await OrderReleaseProposal.findAll({
+                    where: {
+                        ...option,
+                        orderReleaseProposalID: {
+                            [Op.notIn]: literal(`(
+                                SELECT orderReleaseProposalID FROM order_release AS o
+                                WHERE o.orderReleaseProposalID is NOT NULL
+                                )`),
+                        },
+                    },
+                    include: [
+                        {
+                            model: Employee,
+                            as: 'creator',
+                            attributes: ['employeeID', 'employeeName'],
+                        },
+                        {
+                            model: Customer,
+                            as: 'customer',
+                            attributes: ['customerID', 'customerName'],
+                        },
+                        {
+                            model: OrderReleaseProposalDetail,
+                            as: 'orderReleaseProposalDetails',
+                            attributes: ['productID', 'productName', 'note'],
+                        },
+                    ],
+                    order: [['createdAt', 'DESC']],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Tìm kiếm phiếu đề xuất xuất hàng thành công',
+                    data: orderReleaseProposals,
+                });
+            } catch (err) {
+                console.log(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+    getOrderReleaseProposalCanApply() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const orderReleaseProposals = await OrderReleaseProposal.findAll({
+                    where: {
+                        status: 'COMPLETED',
+                        orderReleaseProposalID: {
+                            [Op.notIn]: literal(`(
+                                SELECT orderReleaseProposalID FROM order_release AS o
+                                WHERE o.orderReleaseProposalID is NOT NULL
+                                )`),
+                        },
+                    },
+                    include: [
+                        {
+                            model: Employee,
+                            as: 'creator',
+                            attributes: ['employeeID', 'employeeName'],
+                        },
+                        {
+                            model: Customer,
+                            as: 'customer',
+                            attributes: ['customerID', 'customerName'],
+                        },
+                        {
+                            model: OrderReleaseProposalDetail,
+                            as: 'orderReleaseProposalDetails',
+                            attributes: ['productID', 'productName', 'note'],
+                        },
+                    ],
+                    order: [['createdAt', 'DESC']],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Tìm kiếm phiếu đề xuất xuất hàng thành công',
+                    data: orderReleaseProposals,
+                });
+            } catch (err) {
+                console.log(err);
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
