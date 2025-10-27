@@ -58,6 +58,12 @@ const checkCreateOrderRelease = [
         .bail()
         .isNumeric()
         .withMessage('Số lượng xuất kho phải là một số'),
+    body('orderReleaseProposalID')
+        .notEmpty()
+        .withMessage('Mã phiếu đề xuất xuất kho là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã phiếu đề xuất xuất kho không hợp lệ'),
 ];
 
 module.exports = {

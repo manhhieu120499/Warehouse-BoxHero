@@ -130,8 +130,77 @@ const checkUpdateProposalDetail = [
     body('proposalDetails.*.note').optional().isString().withMessage('Ghi chú chi tiết không hợp lệ'),
 ];
 
+// check create order release proposal
+const checkCreateOrderReleaseProposal = [
+    body('orderReleaseProposalID')
+        .notEmpty()
+        .withMessage('Mã phiếu đễ xuất xuất kho là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã phiếu đễ xuất xuất kho không hợp lệ'),
+    body('employeeIDCreate')
+        .notEmpty()
+        .withMessage('Mã nhân viên tạo phiếu là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã nhân viên tạo phiếu không hợp lệ'),
+    body('customerID')
+        .notEmpty()
+        .withMessage('Mã khách hàng là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã khách hàng không hợp lệ'),
+    body('warehouseID')
+        .notEmpty()
+        .withMessage('Mã kho là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã kho không hợp lệ'),
+    body('status')
+        .notEmpty()
+        .withMessage('Trạng thái là bắt buộc')
+        .bail()
+        .isIn(['PENDING', 'COMPLETED', 'REFUSE'])
+        .withMessage('Trạng thái không hợp lệ (PENDING, COMPLETED, REFUSE)'),
+    body('orderReleaseProposalDetails.*.productID')
+        .notEmpty()
+        .withMessage('Mã sản phẩm là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã sản phẩm không hợp lệ'),
+    body('orderReleaseProposalDetails.*.productName')
+        .notEmpty()
+        .withMessage('Tên sản phẩm là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Tên sản phẩm không hợp lệ'),
+];
+
+const checkStatusOrderReleaseProposal = [
+    body('orderReleaseProposalID')
+        .notEmpty()
+        .withMessage('Mã phiếu đề xuất xuất kho là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã phiếu đề xuất xuất kho không hợp lệ'),
+    body('employeeIDApproval')
+        .notEmpty()
+        .withMessage('Mã nhân viên phê duyệt là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã nhân viên phê duyệt phải là chuỗi'),
+    body('status')
+        .notEmpty()
+        .withMessage('Trạng thái là bắt buộc')
+        .bail()
+        .isIn(['PENDING', 'COMPLETED', 'REFUSE'])
+        .withMessage('Trạng thái không hợp lệ (PENDING, COMPLETED, REFUSE)'),
+];
+
 module.exports = {
     checkCreateProposal,
     checkUpdateStatusProposal,
     checkUpdateProposalDetail,
+    checkCreateOrderReleaseProposal,
+    checkStatusOrderReleaseProposal,
 };
