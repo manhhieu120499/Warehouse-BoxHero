@@ -5,6 +5,8 @@ const {
     checkCreateProposal,
     checkUpdateStatusProposal,
     checkUpdateProposalDetail,
+    checkCreateOrderReleaseProposal,
+    checkStatusOrderReleaseProposal,
 } = require('../validates/proposal.validation');
 const validate = require('../validates/validate');
 const router = express.Router();
@@ -30,4 +32,29 @@ router.get('/get-proposal-detail/:id', authUserIsManager, ProposalController.get
 router.get('/get-proposal-missing', authUserIsManager, ProposalController.getProposalMissing);
 
 router.post('/filter-proposal', authUserIsManagerOrStockReceiver, ProposalController.filterProposal);
+
+router.post(
+    '/create-release-proposal',
+    authUserIsManager,
+    checkCreateOrderReleaseProposal,
+    validate,
+    ProposalController.createOrderReleaseProposal,
+);
+
+router.get('/get-release-proposal', authUserIsManager, ProposalController.getAllOrderReleaseProposal);
+router.get('/get-release-proposal-detail/:id', authUserIsManager, ProposalController.getOrderReleaseProposalDetail);
+router.get(
+    '/get-release-order-proposals-can-apply',
+    authUserIsManager,
+    ProposalController.getOrderReleaseProposalsCanApply,
+);
+router.post(
+    '/approve-release-proposal',
+    authUserIsManager,
+    checkStatusOrderReleaseProposal,
+    validate,
+    ProposalController.approveOrderReleaseProposal,
+);
+router.post('/search-release-proposal', authUser, ProposalController.searchOrderReleaseProposal);
+
 module.exports = router;
