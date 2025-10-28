@@ -161,6 +161,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
         try {
             const res = await saveReceipt(payload);
             toast.success(res.data.message, styleMessage);
+            handleFetchProposalMissingOrderPurchase();
             onClose();
         } catch (err) {
             console.log(err);
@@ -324,37 +325,16 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                                     <td className={cx('stt')}>{idx + 1}</td>
 
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã sản phẩm"
-                                                            value={it.productID ?? ''}
-                                                            readOnly
-                                                        />
+                                                        <span>{it.productID ?? ''}</span>
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập tên sản phẩm"
-                                                            value={it.productName ?? ''}
-                                                            readOnly
-                                                        />
+                                                        <span>{it.productName ?? ''}</span>
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập đơn vị tính"
-                                                            value={it.unit.unitName ?? ''}
-                                                            readOnly
-                                                        />
+                                                        <span>{it.unit.unitName ?? ''}</span>
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="number"
-                                                            placeholder="Nhập số lượng"
-                                                            min={1}
-                                                            value={it.requestAmount ?? ''}
-                                                            readOnly
-                                                        />
+                                                        <span>{it.requestAmount ?? ''}</span>
                                                     </td>
                                                     <td>
                                                         <input

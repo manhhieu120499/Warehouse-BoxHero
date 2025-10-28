@@ -254,7 +254,7 @@
 
 .main-panel {
     display: grid;
-    grid-template-columns: repeat(10, 1fr); /* 10 cột */
+    grid-template-columns: repeat(5, 1fr); /* 5 cột */
     grid-template-rows: repeat(2, 1fr);
     gap: 10px;
     height: 100%;
@@ -278,7 +278,7 @@
                 border-radius: 3px;
                 width: 100%;
                 border: 2px solid transparent;
-                padding: 8px 12px;
+                padding: 12px 12px;
                 &.empty {
                     background: #ccffcc; // xanh lá
                 }
@@ -300,7 +300,7 @@
             }
 
             span {
-                font-size: 6px;
+                font-size: 8px;
                 display: block;
                 text-align: center;
                 margin: 0;

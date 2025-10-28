@@ -6,10 +6,12 @@ import { getBoxDetails } from '../../../services/box.service';
 import parseToken from '../../../utils/parseToken';
 import { convertDateVN } from '@/common';
 import { getBatchesWithoutLocation } from '../../../services/batch.service';
-import { set } from 'react-hook-form';
+import { MapPinPen, MoveIcon } from 'lucide-react';
+import Tippy from '@tippyjs/react';
+
 const cx = classNames.bind(styles);
 
-const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUpdate }) => {
+const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChangeLocation, setBatchesUpdate }) => {
     const [batchID, setBatchID] = useState('');
     const [productID, setProductID] = useState('');
     const [boxDetail, setBoxDetail] = useState({});
@@ -123,8 +125,20 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
     };
 
     const handleUpdateLocation = () => {
-        setShowUpdateLocation(true);
-        setBatchesUpdate(selectedBatches);
+        if (boxID) {
+            const location =
+                boxDetail?.boxName + ' - ' + boxDetail?.floor?.floorName + ' - ' + boxDetail?.floor?.shelf?.shelfName;
+            setBatchesUpdate({
+                boxID: boxID,
+                batches: selectedBatches,
+                location,
+            });
+            setShowChangeLocation(true);
+        } else {
+            // chuyển vị trí kho tạm
+            setBatchesUpdate(selectedBatches);
+            setShowUpdateLocation(true);
+        }
         handleCLoseModel();
     };
 
@@ -202,16 +216,14 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
                     <Button primary className={cx('btn-search')} onClick={handleReset}>
                         Đặt lại
                     </Button>
-                    {!boxID && (
-                        <Button
-                            disabled={selectedBatches.length === 0}
-                            primary
-                            className={cx('btn-search')}
-                            onClick={handleUpdateLocation}
-                        >
-                            Cập nhật vị trí
-                        </Button>
-                    )}
+                    <Button
+                        disabled={selectedBatches.length === 0}
+                        primary
+                        className={cx('btn-search')}
+                        onClick={handleUpdateLocation}
+                    >
+                        {!boxID ? 'Cập nhật vị trí' : 'Chuyển vị trí'}
+                    </Button>
                 </div>
                 {boxID && <h4 className={cx('box-detail-content')}>Nội dung chi tiết ô</h4>}
                 {!boxID && <h4 className={cx('box-detail-content')}>Danh sách sản phẩm trong kho tạm</h4>}
@@ -219,11 +231,9 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
                     <table className={cx('table')}>
                         <thead>
                             <tr>
-                                {!boxID && (
-                                    <th>
-                                        <input type="checkbox" checked={selectAll} onChange={handleSelectAllChange} />
-                                    </th>
-                                )}
+                                <th>
+                                    <input type="checkbox" checked={selectAll} onChange={handleSelectAllChange} />
+                                </th>
                                 <th className={cx('stt')}>Mã lô</th>
                                 <th className={cx('productID')}>Mã sản phẩm</th>
                                 <th className={cx('productName')}>Tên sản phẩm</th>
@@ -239,17 +249,15 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
                                 ?.filter((batch) => batch.batch_boxes?.quantity > 0 || !boxID)
                                 .map((batch, index) => (
                                     <tr key={index}>
-                                        {!boxID && (
-                                            <td>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedBatches
-                                                        .map((item) => item.batchID)
-                                                        .includes(batch.batchID)}
-                                                    onChange={() => handleCheckboxChange(batch)}
-                                                />
-                                            </td>
-                                        )}
+                                        <td>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedBatches
+                                                    .map((item) => item.batchID)
+                                                    .includes(batch.batchID)}
+                                                onChange={() => handleCheckboxChange(batch)}
+                                            />
+                                        </td>
                                         <td className={cx('stt')}>{batch.batchID}</td>
                                         <td className={cx('productID')}>{batch.product.productID}</td>
                                         <td className={cx('productName')}>{batch.product.productName}</td>

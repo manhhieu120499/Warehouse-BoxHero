@@ -31,6 +31,7 @@ import {
     PenLine,
     TruckElectric,
     CheckLine,
+    History,
 } from 'lucide-react';
 import logo from '../../../assets/logo_v2.jpg';
 import { useLocation } from 'react-router-dom';
@@ -254,16 +255,20 @@ const Sidebar = () => {
                     iconName: CalendarCheck,
                     path: '/check-inventory',
                 },
-
-                // {
-                //     title: 'Quản lý khu vực',
-                //     iconName: Columns3,
-                //     path: '/zone',
-                // },
                 {
                     title: 'Quản lý kệ',
                     iconName: Package,
                     path: '/batch',
+                },
+                // {
+                //     title: 'Quản lý kệ 3d',
+                //     iconName: Package,
+                //     path: '/warehouse-3d',
+                // },
+                {
+                    title: 'Nhật ký kho',
+                    iconName: History,
+                    path: '/history',
                 },
             ],
         },

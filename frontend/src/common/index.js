@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 const convertDateVN = (dateString) => {
     const date = new Date(dateString);
     const options = {
@@ -13,4 +15,8 @@ const convertDateVN = (dateString) => {
     return new Intl.DateTimeFormat('sv-SE', options).format(date);
 };
 
-export { convertDateVN };
+const handleCopy = (data) => {
+    return _.cloneDeep(data);
+};
+
+export { convertDateVN, handleCopy };

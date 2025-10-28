@@ -267,7 +267,7 @@
 
 .main-panel {
     display: grid;
-    grid-template-columns: repeat(10, 1fr); /* 10 cột */
+    grid-template-columns: repeat(5, 1fr); /* 5 cột */
     grid-template-rows: repeat(2, 1fr);
     gap: 10px;
     height: 100%;
@@ -281,6 +281,24 @@
         height: 100%;
         background-color: var(--color-shelf);
 
+        .shelf {
+            background: linear-gradient(160deg, #d8b98f, #c09368);
+            border: 2px solid #8b5a2b;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+            transform: perspective(600px) rotateX(10deg);
+        }
+
+        .box {
+            background: linear-gradient(160deg, #ffdf91, #d9a441);
+            box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.3);
+            transform: translateZ(5px);
+        }
+
+        .box:hover {
+            transform: translateZ(10px) scale(1.1);
+            transition: all 0.2s;
+        }
+
         .floor {
             display: grid;
             grid-template-rows: repeat(5, 1fr);
@@ -291,18 +309,18 @@
                 border-radius: 3px;
                 width: 100%;
                 border: 2px solid transparent;
-                padding: 8px 12px;
+                padding: 12px 12px;
                 &.empty {
                     background: #ccffcc; // xanh lá
                 }
                 &.ready {
-                    background: blue;
+                    background: rgb(66, 66, 255);
                 }
                 &.warning {
-                    background: red;
+                    background: rgb(255, 84, 84);
                 }
                 &.processing {
-                    background: yellow;
+                    background: rgb(245, 245, 71);
                 }
                 &.active {
                     border-color: black;

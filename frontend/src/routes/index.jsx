@@ -22,6 +22,8 @@ import {
     ApprovePage,
 } from '../pages';
 import DefaultLayout from '../layouts/DefaultLayout';
+import HistoryPage from '../pages/HistoryPage';
+import Warehouse3D from '../pages/Warehouse3D';
 
 const publicRoute = [
     {
@@ -110,7 +112,7 @@ const publicRoute = [
     //     layout: DefaultLayout,
     // },
     {
-        page: BatchPage,
+        page: Warehouse3D,
         path: '/batch',
         layout: DefaultLayout,
     },
@@ -129,6 +131,16 @@ const publicRoute = [
         path: '/proposal-list',
         layout: DefaultLayout,
     },
+    {
+        page: HistoryPage,
+        path: '/history',
+        layout: DefaultLayout,
+    },
+    // {
+    //     page: Warehouse3D,
+    //     path: '/warehouse-3d',
+    //     layout: DefaultLayout,
+    // },
 ];
 const publicRouteWithAdmin = [
     ...publicRoute,

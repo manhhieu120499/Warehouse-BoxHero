@@ -1,13 +1,11 @@
-import { Button, Modal, MyTable } from '../../../components';
+import { Button, Modal } from '../../../components';
 import classNames from 'classnames/bind';
 import styles from './ShowLocationDetail.module.scss';
 import Tippy from '@tippyjs/react';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getBoxContainProduct } from '../../../services/batch.service';
 import parseToken from '../../../utils/parseToken';
-import BoxDetail from '../../BatchPage/BoxDetail';
 import { getBoxDetails } from '../../../services/box.service';
-import { set } from 'react-hook-form';
 import CreateCheckDetail from '../CreateCheckDetail';
 import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';

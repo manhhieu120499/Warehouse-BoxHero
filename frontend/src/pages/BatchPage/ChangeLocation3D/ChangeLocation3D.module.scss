@@ -35,13 +35,11 @@
 }
 
 .tableWrap {
-    max-height: 200px;
-    overflow-y: auto;
     overflow-x: auto;
 
-    &.tableWrapNoBox {
-        max-height: 400px;
-    }
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: auto;
 
     /* Tùy chỉnh scrollbar */
     &::-webkit-scrollbar {
@@ -69,39 +67,43 @@
     }
 
     th.stt {
-        width: 60px;
-    }
-    th.productID {
-        width: 110px;
-    }
-    th.productName {
-        width: 250px;
-    }
-    th.unit {
-        width: 90px;
-    }
-    th.num {
-        width: 80px;
-    }
-    th.note {
-        width: 160px;
-    }
-    th.action {
-        text-align: center;
         width: 100px;
     }
-    td.action {
-        display: flex;
-        justify-content: center;
+    th.productID {
+        width: 150px;
+    }
+    th.productName {
+        width: 350px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    th.unit {
+        width: 150px;
+    }
+    th.acreage {
+        width: 150px;
+    }
+    th.acreageConsumption {
+        width: 150px;
+    }
+    th.num {
+        width: 100px;
+    }
+    th.note {
+        width: 280px;
+    }
+    th.action {
+        width: 180px;
     }
 
     th {
         background: #f1f5f9;
         font-weight: 600;
         color: #475569;
-        position: sticky; /* giữ cố định */
-        top: 0; /* dính ở đầu khi cuộn */
-        z-index: 2;
+    }
+    td.number {
+        text-align: right;
     }
 
     .num {
@@ -266,4 +268,108 @@
 .form-actions {
     display: flex;
     justify-content: flex-end;
+}
+
+.wrapper {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    height: 80vh;
+}
+
+.main-panel {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 10px;
+    height: 100%;
+
+    .shelf {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        padding: 5px;
+        gap: 3px;
+        width: 100%;
+        height: 100%;
+        background-color: var(--color-shelf);
+
+        .shelf {
+            background: linear-gradient(160deg, #d8b98f, #c09368);
+            border: 2px solid #8b5a2b;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+            transform: perspective(600px) rotateX(10deg);
+        }
+
+        .box {
+            background: linear-gradient(160deg, #ffdf91, #d9a441);
+            box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.3);
+            transform: translateZ(5px);
+        }
+
+        .box:hover {
+            transform: translateZ(10px) scale(1.1);
+            transition: all 0.2s;
+        }
+
+        .floor {
+            display: grid;
+            grid-template-rows: repeat(5, 1fr);
+            gap: 3px;
+
+            .box {
+                background: #cce5cc;
+                border-radius: 3px;
+                width: 100%;
+                border: 2px solid transparent;
+                padding: 12px 12px;
+                &.empty {
+                    background: #ccffcc; // xanh lá
+                }
+                &.ready {
+                    background: blue;
+                }
+                &.warning {
+                    background: red;
+                }
+                &.processing {
+                    background: yellow;
+                }
+                &.active {
+                    border-color: black;
+                }
+            }
+            .box + .box {
+                margin-left: 0px;
+            }
+
+            span {
+                font-size: 6px;
+                display: block;
+                text-align: center;
+                margin: 0;
+                padding: 0;
+                margin-top: 3px;
+            }
+        }
+    }
+}
+
+.update-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.action {
+    display: flex;
+    margin-top: 15px;
+    justify-content: flex-end;
+}
+
+.location-update {
+    flex: 1;
+}
+
+.location {
+    font-style: italic;
+    color: #2563eb;
+    font-size: 1.3rem;
 }
