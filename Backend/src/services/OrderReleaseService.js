@@ -17,6 +17,7 @@ const Unit = db.Unit;
 const Warehouse = db.Warehouse;
 const Employee = db.Employee;
 const BaseUnitProduct = db.BaseUnitProduct;
+const OrderReleaseProposal = db.OrderReleaseProposal;
 const { Op, fn, col, where } = require('sequelize');
 
 const LIMIT_PAGE = 5;
@@ -27,11 +28,28 @@ class OrderReleaseService {
         return new Promise(async (resolve, reject) => {
             const transaction = await db.sequelize.transaction();
             try {
-                const { orderReleaseID, customerID, employeeID, warehouseID, note, orderReleaseDetails } = data;
+                const {
+                    orderReleaseID,
+                    customerID,
+                    employeeID,
+                    warehouseID,
+                    note,
+                    orderReleaseDetails,
+                    orderReleaseProposalID,
+                } = data;
 
                 // check customer
                 const customer = await Customer.findOne({ where: { customerID } });
                 const orderRelease = await OrderRelease.findOne({ where: { orderReleaseID } });
+                const orderReleaseProposal = await OrderReleaseProposal.findOne({ where: { orderReleaseProposalID } });
+
+                if (!orderReleaseProposal) {
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Phiếu đề xuất xuất kho không tồn tại',
+                    });
+                }
 
                 if (orderRelease) {
                     return reject({
@@ -64,6 +82,7 @@ class OrderReleaseService {
                         employeeID,
                         warehouseID,
                         note,
+                        orderReleaseProposalID,
                     },
                     { transaction },
                 );
@@ -122,6 +141,14 @@ class OrderReleaseService {
                                 quantityExported: boxDetail.quantityExported,
                             },
                             { transaction },
+                        );
+
+                        // update lại số lượng còn lại cùa lô hàng (batch)
+                        const updateRemainBatch = await Batch.update(
+                            {
+                                remainAmount: batch.remainAmount - boxDetail.quantityExported,
+                            },
+                            { where: { batchID: element.batchID }, transaction },
                         );
 
                         // update lại số lượng
