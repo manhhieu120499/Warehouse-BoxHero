@@ -21,6 +21,22 @@ class OrderPurchaseMissingController {
         }
     }
 
+    // get /get-by-id/:id
+    async getOrderPurchaseMissingById(req, res) {
+        try {
+            const { statusHttp, ...response } = await OrderPurchaseMissingService.getOrderPurchaseMissingById(
+                req.params.id,
+            );
+            return res.status(statusHttp).json(response);
+        } catch (e) {
+            console.log(e);
+            return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
+                status: 'ERR',
+                message: [e.message],
+            });
+        }
+    }
+
     async filterOrderPurchaseMissing(req, res) {
         try {
             const { statusHttp, ...response } = await OrderPurchaseMissingService.filterOrderPurchaseMissing(req.query);

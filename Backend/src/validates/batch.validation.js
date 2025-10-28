@@ -13,6 +13,11 @@ const checkGetBoxesContainingProduct = [
     query('warehouseID').notEmpty().withMessage('Mã kho là bắt buộc').bail(),
 ];
 
+const checkGetBoxesContainingBatch = [
+    query('batchID').notEmpty().withMessage('Mã lô là bắt buộc').bail(),
+    query('warehouseID').notEmpty().withMessage('Mã kho là bắt buộc').bail(),
+];
+
 const checkGetBoxDetails = [query('boxID').notEmpty().withMessage('Mã box là bắt buộc').bail()];
 
 module.exports = {
@@ -21,4 +26,5 @@ module.exports = {
     checkGetAvailableBoxes,
     checkGetBoxesContainingProduct,
     checkGetBoxDetails,
+    checkGetBoxesContainingBatch,
 };

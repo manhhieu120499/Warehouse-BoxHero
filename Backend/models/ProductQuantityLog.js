@@ -50,6 +50,21 @@ module.exports = (sequelize, Sequelize) => {
             foreignKey: 'productID',
             as: 'product',
         });
+        ProductQuantityLog.belongsTo(models.OrderPurchase, {
+            foreignKey: 'referenceID',
+            targetKey: 'orderPurchaseID',
+            as: 'orderPurchase',
+        });
+        ProductQuantityLog.belongsTo(models.OrderRelease, {
+            foreignKey: 'referenceID',
+            targetKey: 'orderReleaseID',
+            as: 'orderRelease',
+        });
+        ProductQuantityLog.belongsTo(models.InventoryCheck, {
+            foreignKey: 'referenceID',
+            targetKey: 'inventoryCheckID',
+            as: 'inventoryCheck',
+        });
     };
 
     return ProductQuantityLog;
