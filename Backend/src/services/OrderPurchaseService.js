@@ -358,6 +358,9 @@ class OrderPurchaseService {
                             batchID: batchID,
                             requestedQuantity: orderPurchaseDetail.requestedQuantity,
                             actualQuantity: orderPurchaseDetail.actualQuantity,
+                            defectiveQuantity: Math.abs(
+                                orderPurchaseDetail.requestedQuantity - orderPurchaseDetail.actualQuantity,
+                            ),
                         },
                         { transaction },
                     );

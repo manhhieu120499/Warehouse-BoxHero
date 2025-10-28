@@ -6,6 +6,7 @@ const validate = require('../validates/validate');
 const { authUserIsManager, authUser } = require('../middleware/AuthMiddleware');
 
 router.get('/get-all', authUserIsManager, OrderPurchaseMissingController.getAllOrderPurchaseMissing);
+router.get('/get-by-id/:id', authUserIsManager, OrderPurchaseMissingController.getOrderPurchaseMissingById);
 router.get(
     '/filter',
     authUserIsManager,

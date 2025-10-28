@@ -8,6 +8,7 @@ const Floor = db.Floor;
 const Shelf = db.Shelf;
 const Zone = db.Zone;
 const Unit = db.Unit;
+const BatchBox = db.BatchBox;
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -22,17 +23,15 @@ class BatchBoxService {
     async suggestBoxes(data) {
         return new Promise(async (resolve, reject) => {
             try {
-                const { warehouseID, batchIDs } = data;
-
-                // 1. Kiểm tra kho
-                const warehouseExist = await Warehouse.findOne({ where: { warehouseID } });
-                if (!warehouseExist) {
-                    return reject({
-                        status: 'ERR',
-                        statusHttp: HTTP_NOT_FOUND,
-                        message: 'Kho không tồn tại',
-                    });
-                }
+                const {
+                    warehouseID,
+                    batchIDs,
+                    locationScore = 0,
+                    expiredScore = 0,
+                    unitScore = 0,
+                    productSimilarityScore = 0,
+                    enoughAcreageScore = 0,
+                } = data;
 
                 // 2. Lấy danh sách batch trong kho
                 let batches = [];
@@ -98,6 +97,7 @@ class BatchBoxService {
                         status: { [Op.in]: ['AVAILABLE', 'RESERVED', 'OCCUPIED'] },
                         remainingAcreage: { [Op.gt]: 0 },
                     },
+                    order: [[db.sequelize.literal('CAST(SUBSTRING(boxName, 3) AS UNSIGNED)'), 'ASC']],
                     include: [
                         {
                             model: Floor,
@@ -119,7 +119,12 @@ class BatchBoxService {
                         {
                             model: Batch,
                             as: 'batches',
-                            attributes: ['productID', 'unitID'],
+                            attributes: ['batchID', 'productID', 'unitID'],
+                            through: {
+                                model: BatchBox,
+                                attributes: ['quantity'],
+                                where: { quantity: { [Op.gt]: 0 } },
+                            },
                         },
                     ],
                 });
@@ -136,25 +141,74 @@ class BatchBoxService {
                 const expiryScore = (batch) => {
                     const now = new Date();
                     const daysToExpiry = Math.max(0, Math.ceil((batch.expiryDate - now) / (1000 * 60 * 60 * 24)));
-                    return Math.max(0, 5000 / (daysToExpiry + 1));
+                    const base = Math.min(20, 20 * (1 / (1 + daysToExpiry / 30)));
+                    return base * expiredScore;
+                };
+
+                const enoughAcreageScoreFunction = (batch, box, enoughAcreageWeight) => {
+                    const unitVolume = batch.unit.length * batch.unit.width * batch.unit.height;
+                    const requiredVolume = unitVolume * batch.remainAmount;
+                    if (box.remainingAcreage < requiredVolume) return 0;
+
+                    const ratio = requiredVolume / box.remainingAcreage;
+                    const base = 20 * Math.min(1, ratio);
+                    return base * enoughAcreageWeight;
+                };
+
+                const productScoreFunction = (batch, box, productWeight) => {
+                    const sameProduct = box.batches.some((b) => b.productID === batch.productID);
+                    return (sameProduct ? 20 : 0) * productWeight;
+                };
+
+                const unitScoreFunction = (batch, box, unitWeight) => {
+                    const sameUnit = box.batches.some((b) => b.unitID === batch.unitID);
+                    return (sameUnit ? 20 : 0) * unitWeight;
+                };
+
+                const locationScoreFunction = (shelf) => {
+                    const shelfNum = parseInt(shelf?.shelfName?.replace(/\D/g, '')) || 99;
+
+                    const floorNum = parseInt(shelf?.floor?.floorName?.replace(/\D/g, '')) || 1;
+
+                    // --- Cấu hình ---
+                    const totalShelves = 10;
+                    const baseShelfScore = 20;
+                    const shelfPenalty = 2;
+                    const floorBonus = 0.5;
+
+                    // --- Tính điểm theo kệ ---
+                    let score = 0;
+                    if (shelfNum >= 1 && shelfNum <= totalShelves) {
+                        const shelfBonus = Math.max(0, baseShelfScore - (shelfNum - 1) * shelfPenalty);
+                        score = shelfBonus * locationScore;
+                    }
+                    if (floorNum == 1) {
+                        score += floorBonus * locationScore;
+                    }
+
+                    return score;
                 };
 
                 // 5. Hàm tính điểm box
                 const boxScore = (batch, box) => {
                     let score = 0;
-                    const unit = batch.unit;
-                    const unitVolume = unit.length * unit.width * unit.height;
-                    const requiredVolume = unitVolume * batch.remainAmount;
 
-                    if (box.remainingAcreage >= requiredVolume) {
-                        score += 60;
-                        score += 50 * (1 - (box.remainingAcreage - requiredVolume) / requiredVolume);
+                    if (enoughAcreageScore > 0) {
+                        score += enoughAcreageScoreFunction(batch, box, enoughAcreageScore);
                     }
-                    if (box.batches.some((b) => b.productID === batch.productID)) score += 30;
-                    if (box.batches.some((b) => b.unitID === batch.unitID)) score += 10;
-                    if (box.floor && box.floor.floorName) {
-                        const floorNum = parseInt(box.floor.floorName.replace(/\D/g, '')) || 99;
-                        score += 10 - floorNum;
+                    if (productSimilarityScore > 0) {
+                        const productScore = productScoreFunction(batch, box, productSimilarityScore);
+                        if (productScore > 0) {
+                            score += productScore;
+                        } else if (locationScore === 0 && unitScore === 0 && enoughAcreageScore === 0) {
+                            score += enoughAcreageScoreFunction(batch, box, 1);
+                        }
+                    }
+                    if (unitScore > 0) {
+                        score += unitScoreFunction(batch, box, unitScore);
+                    }
+                    if (locationScore > 0) {
+                        score += locationScoreFunction(box, box.floor.shelf, locationScore);
                     }
 
                     return score;
@@ -170,8 +224,14 @@ class BatchBoxService {
                     let scoredPairs = [];
                     for (let batch of remainingBatches) {
                         for (let box of availableBoxes) {
-                            const score = expiryScore(batch) + boxScore(batch, box);
-                            scoredPairs.push({ batch, box, score });
+                            const unit = batch.unit;
+                            const unitVolume = unit.length * unit.width * unit.height;
+                            if (box.remainingAcreage < unitVolume) {
+                                scoredPairs.push({ batch, box, score: 0 });
+                            } else {
+                                const score = expiryScore(batch) + boxScore(batch, box);
+                                scoredPairs.push({ batch, box, score });
+                            }
                         }
                     }
 
@@ -198,14 +258,19 @@ class BatchBoxService {
                         box.remainingAcreage -= placed * unitVolume;
                     }
 
-                    // Ghi kết quả
-                    suggestions.push({
-                        batchID: batch.batchID,
-                        box: { boxID: box.boxID, boxName: box.boxName },
-                        floor: { floorID: box.floor.floorID, floorName: box.floor.floorName },
-                        shelf: { shelfID: box.floor.shelf.shelfID, shelfName: box.floor.shelf.shelfName },
-                        zone: { zoneID: box.floor.shelf.zone.zoneID, zoneName: box.floor.shelf.zone.zoneName },
-                        placedAmount: placed,
+                    const { batches: batchInfo, ...boxInfo } = box.get({ plain: true });
+                    // Ghi kết quả, group theo batchID
+                    let suggestion = suggestions.find((s) => s.batchID === batch.batchID);
+                    if (!suggestion) {
+                        suggestion = {
+                            batchID: batch.batchID,
+                            locations: [],
+                        };
+                        suggestions.push(suggestion);
+                    }
+                    suggestion.locations.push({
+                        ...boxInfo,
+                        quantity: placed,
                     });
                 }
 
@@ -222,7 +287,7 @@ class BatchBoxService {
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Gợi ý vị trí box thành công',
-                    boxes: suggestions,
+                    data: suggestions,
                 });
             } catch (err) {
                 console.error(err);
@@ -351,6 +416,205 @@ class BatchBoxService {
             }
         });
     }
+    async changeLocation(data) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                const { oldLocations, newLocations, boxID } = data;
+                for (const loc of oldLocations) {
+                    const { batchID, quantity } = loc;
+                    const batch = await Batch.findOne({
+                        where: { batchID },
+                        include: [{ model: Unit, as: 'unit' }],
+                    });
+                    if (!batch) {
+                        reject({
+                            status: 'ERR',
+                            statusHttp: HTTP_NOT_FOUND,
+                            message: `Batch ${batchID} không tồn tại hoặc không hợp lệ`,
+                        });
+                    }
+
+                    // kiểm tra box có tồn tại trong warehouse qua floor -> shelf -> zone
+                    const boxExist = await Box.findOne({
+                        where: { boxID },
+                        include: [
+                            {
+                                model: Floor,
+                                as: 'floor',
+                                include: [
+                                    {
+                                        model: Shelf,
+                                        as: 'shelf',
+                                        include: [
+                                            {
+                                                model: Zone,
+                                                as: 'zone',
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    });
+
+                    if (!boxExist) {
+                        return reject({
+                            status: 'ERR',
+                            statusHttp: HTTP_NOT_FOUND,
+                            message: `Box ${boxID} không tồn tại trong kho ${warehouseID}`,
+                        });
+                    }
+                    // tìm và lấy số lượng hiện tại trong batchbox
+                    const batchBoxExist = await db.BatchBox.findOne({
+                        where: { batchID: batch.batchID, boxID: boxExist.boxID },
+                    });
+                    if (!batchBoxExist) {
+                        return reject({
+                            status: 'ERR',
+                            statusHttp: HTTP_NOT_FOUND,
+                            message: `BatchBox với batchID ${batchID} và boxID ${boxID} không tồn tại`,
+                        });
+                    }
+
+                    const unitVolume = batch.unit.length * batch.unit.width * batch.unit.height;
+                    const currentQuantity = batchBoxExist.quantity;
+                    const requiredVolume = (currentQuantity - quantity) * unitVolume;
+
+                    // Cập nhật BatchBox
+                    await db.BatchBox.update(
+                        {
+                            quantity,
+                        },
+                        { where: { batchID: batch.batchID, boxID: boxExist.boxID }, transaction },
+                    );
+                    // Cập nhật remain của box
+                    boxExist.remainingAcreage += requiredVolume;
+                    if (boxExist.remainingAcreage === 0) {
+                        boxExist.status = 'FULL';
+                    } else if (boxExist.status === 'AVAILABLE') {
+                        boxExist.status = 'OCCUPIED';
+                    }
+                    await db.Box.increment({ remainingAcreage: requiredVolume }, { where: { boxID }, transaction });
+                }
+
+                // 2. Duyệt từng location để kiểm tra và cập nhật
+                for (const loc of newLocations) {
+                    const { batchID, boxes } = loc;
+                    const batch = await Batch.findOne({
+                        where: { batchID },
+                        include: [{ model: Unit, as: 'unit' }],
+                    });
+                    if (!batch) {
+                        reject({
+                            status: 'ERR',
+                            statusHttp: HTTP_NOT_FOUND,
+                            message: `Batch ${batchID} không tồn tại hoặc không hợp lệ`,
+                        });
+                    }
+                    for (const box of boxes) {
+                        const { boxID, quantity } = box;
+
+                        // kiểm tra số lượng vượt quá batch
+                        if (quantity > batch.remainAmount) {
+                            return reject({
+                                status: 'ERR',
+                                statusHttp: HTTP_BAD_REQUEST,
+                                message: `Số lượng đặt (${quantity}) vượt quá số lượng còn lại của batch ${batchID} (${batch.remainAmount})`,
+                            });
+                        }
+
+                        // kiểm tra box có tồn tại trong warehouse qua floor -> shelf -> zone
+                        const boxExist = await Box.findOne({
+                            where: { boxID },
+                            include: [
+                                {
+                                    model: Floor,
+                                    as: 'floor',
+                                    include: [
+                                        {
+                                            model: Shelf,
+                                            as: 'shelf',
+                                            include: [
+                                                {
+                                                    model: Zone,
+                                                    as: 'zone',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        });
+
+                        if (!boxExist) {
+                            return reject({
+                                status: 'ERR',
+                                statusHttp: HTTP_NOT_FOUND,
+                                message: `Box ${boxID} không tồn tại trong kho ${warehouseID}`,
+                            });
+                        }
+
+                        const unitVolume = batch.unit.length * batch.unit.width * batch.unit.height;
+                        const requiredVolume = unitVolume * quantity;
+                        if (boxExist.remainingAcreage < requiredVolume) {
+                            reject({
+                                status: 'ERR',
+                                statusHttp: HTTP_BAD_REQUEST,
+                                message: `Box ${box.boxID} không đủ diện tích (còn ${boxExist.remainingAcreage}, cần ${requiredVolume})`,
+                            });
+                        } else {
+                            // tìm batchbox cũ nếu có thì cộng thêm vào
+                            const oldBatchBox = await db.BatchBox.findOne({
+                                where: { batchID: batch.batchID, boxID: boxExist.boxID },
+                            });
+                            if (oldBatchBox) {
+                                oldBatchBox.quantity += quantity;
+                                await oldBatchBox.save({ transaction });
+                            } else {
+                                // Cập nhật BatchBox
+                                await db.BatchBox.create(
+                                    {
+                                        batchID: batch.batchID,
+                                        boxID: boxExist.boxID,
+                                        quantity,
+                                    },
+                                    { transaction },
+                                );
+                            }
+                            // Cập nhật remain của box
+                            boxExist.remainingAcreage -= requiredVolume;
+                            if (boxExist.remainingAcreage === 0) {
+                                boxExist.status = 'FULL';
+                            } else if (boxExist.status === 'AVAILABLE') {
+                                boxExist.status = 'OCCUPIED';
+                            }
+                            await db.Box.increment(
+                                { remainingAcreage: -requiredVolume },
+                                { where: { boxID }, transaction },
+                            );
+                        }
+                    }
+                }
+                await transaction.commit();
+
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Cập nhật vị trí batch thành công',
+                });
+            } catch (err) {
+                console.log(err);
+
+                await transaction.rollback();
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: [err.message] || err,
+                });
+            }
+        });
+    }
     async getAllBoxByBatchID(batchID) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -378,7 +642,7 @@ class BatchBoxService {
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách box của batch thành công',
-                    boxes: batch.boxes
+                    boxes: batch.boxes,
                 });
             } catch (err) {
                 reject({

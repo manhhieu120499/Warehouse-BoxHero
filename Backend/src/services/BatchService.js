@@ -142,6 +142,36 @@ class BatchService {
         });
     }
 
+    countBatchesWithoutLocation() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const count = await Batch.count({
+                    where: {
+                        batchID: {
+                            [db.Sequelize.Op.notIn]: db.sequelize.literal(
+                                '(SELECT DISTINCT batchID FROM batch_boxes WHERE batchID IS NOT NULL)',
+                            ),
+                        },
+                    },
+                });
+
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Đếm số lượng các batch chưa có location thành công',
+                    data: { count },
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+
     getAvailableBoxes(warehouseID) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -278,6 +308,7 @@ class BatchService {
                             through: {
                                 model: BatchBox,
                                 attributes: ['quantity'],
+                                where: { quantity: { [db.Sequelize.Op.gt]: 0 } },
                             },
                             include: [
                                 {
@@ -304,6 +335,108 @@ class BatchService {
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách các box có chứa sản phẩm thành công',
                     data: boxesWithProduct,
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+
+    getBoxesContainingBatch(batchID, warehouseID) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Kiểm tra warehouse có tồn tại không
+                const warehouseExist = await Warehouse.findOne({
+                    where: { warehouseID },
+                });
+
+                if (!warehouseExist) {
+                    return reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_NOT_FOUND,
+                        message: 'Kho không tồn tại',
+                    });
+                }
+
+                // Kiểm tra batch có tồn tại không
+                const batchExist = await Batch.findOne({
+                    where: { batchID },
+                });
+
+                if (!batchExist) {
+                    return reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_NOT_FOUND,
+                        message: 'Lô hàng không tồn tại',
+                    });
+                }
+
+                // Lấy danh sách box có chứa lô hàng cụ thể
+                const boxesWithBatch = await Box.findAll({
+                    include: [
+                        {
+                            model: Floor,
+                            as: 'floor',
+                            attributes: ['floorID', 'floorName'],
+                            include: [
+                                {
+                                    model: Shelf,
+                                    as: 'shelf',
+                                    attributes: ['shelfID', 'shelfName'],
+                                    include: [
+                                        {
+                                            model: Zone,
+                                            as: 'zone',
+                                            attributes: ['zoneID', 'zoneName', 'warehouseID'],
+                                            where: { warehouseID },
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            model: Batch,
+                            as: 'batches',
+                            attributes: ['batchID', 'manufactureDate', 'expiryDate', 'remainAmount'],
+                            where: {
+                                batchID,
+                                warehouseID,
+                            },
+                            through: {
+                                model: BatchBox,
+                                attributes: ['quantity'],
+                                where: { quantity: { [db.Sequelize.Op.gt]: 0 } },
+                            },
+                            include: [
+                                {
+                                    model: Product,
+                                    as: 'product',
+                                    attributes: ['productID', 'productName'],
+                                },
+                                {
+                                    model: Unit,
+                                    as: 'unit',
+                                    attributes: ['unitID', 'unitName'],
+                                },
+                            ],
+                        },
+                    ],
+                    order: [
+                        // Sắp xếp box theo số trong tên box (ví dụ: "Ô 10" -> lấy số 10)
+                        [db.sequelize.literal('CAST(SUBSTRING(boxName, 3) AS UNSIGNED)'), 'ASC'],
+                    ],
+                });
+
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy danh sách các box có chứa lô hàng thành công',
+                    data: boxesWithBatch,
                 });
             } catch (err) {
                 console.error(err);

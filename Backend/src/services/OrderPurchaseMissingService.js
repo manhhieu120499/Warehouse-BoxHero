@@ -59,6 +59,46 @@ class OrderPurchaseMissingService {
             }
         });
     }
+    getOrderPurchaseMissingById(id) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const orderPurchaseMissingFind = await OrderPurchaseMissing.findByPk(id, {
+                    include: [
+                        {
+                            model: OrderPurchaseMissingDetail,
+                            as: 'orderPurchaseMissingDetails',
+                            include: [
+                                {
+                                    model: OrderPurchaseDetail,
+                                    as: 'orderPurchaseDetail',
+                                    include: [
+                                        {
+                                            model: Batch,
+                                            as: 'batch',
+                                            include: [
+                                                {
+                                                    model: Product,
+                                                    as: 'product',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    data: orderPurchaseMissingFind,
+                });
+            } catch (e) {
+                console.log(e);
+                reject(e);
+            }
+        });
+    }
 
     filterOrderPurchaseMissing(query) {
         return new Promise(async (resolve, reject) => {

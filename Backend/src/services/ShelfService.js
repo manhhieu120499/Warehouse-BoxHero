@@ -29,6 +29,7 @@ class ShelfService {
                         {
                             model: Floor,
                             as: 'floor',
+                            separate: true,
                             include: [
                                 {
                                     model: Box,
@@ -49,6 +50,7 @@ class ShelfService {
                                     ],
                                 },
                             ],
+                            order: [[sequelize.literal('CAST(SUBSTRING(floor.floorID, 3) AS UNSIGNED)'), 'ASC']],
                         },
                     ],
                     order: [['createdAt']],
