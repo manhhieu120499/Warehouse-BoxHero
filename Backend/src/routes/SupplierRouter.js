@@ -6,7 +6,11 @@ const {
     checkSupplierValidate,
     checkSupplierIDValidate,
 } = require('../validates/supplier.validation');
-const { authUserIsManager, authUserIsManagerWithoutWarehouse } = require('../middleware/AuthMiddleware');
+const {
+    authUserIsManager,
+    authUserIsManagerWithoutWarehouse,
+    authUserIsManagerOrStockReceiver,
+} = require('../middleware/AuthMiddleware');
 const router = express.Router();
 
 // check mail đã tồn tại
@@ -16,12 +20,12 @@ router.get('/check-email-exists', checkEmailExists, validate, SupplierController
 router.get(
     '/provided-products/:supplierID',
     checkSupplierIDValidate,
-    authUserIsManagerWithoutWarehouse,
+    authUserIsManagerOrStockReceiver,
     SupplierController.getProductsBySupplierID,
 );
 
 // Tạo nhà cung cấp
-router.post('/', authUserIsManager, checkSupplierValidate, validate, SupplierController.createSupplier);
+router.post('/', authUserIsManagerOrStockReceiver, checkSupplierValidate, validate, SupplierController.createSupplier);
 
 // Sửa nhà cung cấp
 router.put('/:supplierID', authUserIsManager, checkSupplierValidate, validate, SupplierController.updateSupplier);

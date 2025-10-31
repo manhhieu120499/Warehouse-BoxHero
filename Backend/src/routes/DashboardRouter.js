@@ -7,7 +7,7 @@ const validate = require('../validates/validate');
 
 router.get(
     '/statistical-inventory',
-    authUserIsManager,
+    authUser,
     getStatisticalInventoryValidation,
     validate,
     DashboardController.getStatisticalInventory,
@@ -15,20 +15,16 @@ router.get(
 
 router.get(
     '/statistical-import-export',
-    authUserIsManager,
+    authUser,
     getStatisticalInventoryValidation,
     validate,
     DashboardController.getStatisticalImportExport,
 );
 
-router.get(
-    '/statistical-percent-used-warehouse',
-    authUserIsManager,
-    DashboardController.getStatisticalPercentUsedWarehouse,
-);
+router.get('/statistical-percent-used-warehouse', authUser, DashboardController.getStatisticalPercentUsedWarehouse);
 
-router.get('/statistical-min-stock-product', authUserIsManager, DashboardController.getStatisticalMinStockProduct);
+router.get('/statistical-min-stock-product', authUser, DashboardController.getStatisticalMinStockProduct);
 
-router.get('/statistical-product-old', authUserIsManager, DashboardController.getStatisticalProductOld);
+router.get('/statistical-product-old', authUser, DashboardController.getStatisticalProductOld);
 
 module.exports = router;
