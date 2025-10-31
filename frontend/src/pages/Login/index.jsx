@@ -15,6 +15,8 @@ import { jwtDecode } from 'jwt-decode';
 import EmployeeDTO from '../../dtos/EmployeeDTO';
 import request from '../../utils/httpRequest';
 import { addInfo } from '../../lib/redux/warehouse/wareHouseSlice';
+import { logout } from '../../lib/redux/auth/authSlice';
+import { resetActiveItemDrop } from '../../lib/redux/dropSidebar/dropSidebarSlice';
 
 const cx = classNames.bind(styles);
 const softwareName = import.meta.env.VITE_SOFTWARE_NAME;
@@ -33,6 +35,17 @@ const Login = () => {
     });
     const navigate = useNavigate();
     const dispatch = useDispatch();
+
+    // 🧹 Dọn sạch dữ liệu khi vào trang login
+    useEffect(() => {
+        if (localStorage.getItem('tokenUser')) {
+            dispatch(logout());
+            dispatch(resetActiveItemDrop());
+            localStorage.removeItem('tokenUser');
+            localStorage.removeItem('indexItemDropActive');
+            localStorage.removeItem('warehouse');
+        }
+    }, [dispatch]);
 
     const handleShowPassword = () => {
         setShowPassword((prev) => !prev);

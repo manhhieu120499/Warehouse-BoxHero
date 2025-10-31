@@ -2,17 +2,13 @@ import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ReleaseProductPage.module.scss';
 import { MyTable, Button, Modal, Select, ModelFilter, PaginationUI } from '../../components';
-import { ClipboardClock, Eye, PlusCircle, FileMinus, Search, RotateCcw, SquareKanban, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
-import Tippy from '@tippyjs/react';
-//import { fetchProduct } from '../../services/product.service';
-import ProductDTO from '../../dtos/ProductDTO';
-import ProposalStatus from '../../components/ProposalStatus';
-import CreateExportProductDialog from './CreateExportProductDialog';
 import request from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
 import ModalOrderReleaseDetail from './ModalOrderReleaseDetail';
 import { filterOrderRelease } from '../../services/order.service';
+import ModalChooseProposalToExport from './ModalChooseProposalToExport';
 
 const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyle);
@@ -163,23 +159,6 @@ const ReleaseProductPage = () => {
         fetchOrderRelease(currentPage);
     };
 
-    // useEffect(() => {
-    //     const fetchData = async (page = 1) => {
-    //         try {
-    //             const products = await fetchProduct(page);
-    //             const formatProducts =
-    //                 products?.map((item) => {
-    //                     const product = new ProductDTO(item);
-    //                     return { key: product.sku, ...product };
-    //                 }) || [];
-    //             setProductList(formatProducts);
-    //         } catch (err) {
-    //             console.log('Failed to fetch product: ', err);
-    //         }
-    //     };
-    //     fetchData();
-    // }, []);
-
     const fetchOrderRelease = async (page = 1) => {
         try {
             const warehouse = parseToken('warehouse');
@@ -194,7 +173,6 @@ const ReleaseProductPage = () => {
                     },
                 },
             );
-            console.log('res', res);
             setOrderReleaseList(res.data.data || []);
         } catch (err) {
             console.log(err);
@@ -224,6 +202,12 @@ const ReleaseProductPage = () => {
                 </Button>
             </ModelFilter>
 
+            <ModalChooseProposalToExport
+                isOpen={showModalCreateReleaseProposal}
+                onClose={() => setShowModalCreateReleaseProposal(false)}
+                fetchData={fetchOrderRelease}
+            />
+
             {/** danh sách phiếu đề xuất hoặc phiếu thiếu */}
             <div className={cx('view-list-proposal')}>
                 <div className={cx('table-header')}>
@@ -241,15 +225,6 @@ const ReleaseProductPage = () => {
             </div>
 
             {/* Modal tạo phiếu xuất */}
-            {showModalCreateReleaseProposal && (
-                <CreateExportProductDialog
-                    isOpen={showModalCreateReleaseProposal}
-                    onClose={() => {
-                        setShowModalCreateReleaseProposal(false);
-                    }}
-                    fetchData={fetchOrderRelease}
-                />
-            )}
 
             {showOrderReleaseDetail && (
                 <ModalOrderReleaseDetail

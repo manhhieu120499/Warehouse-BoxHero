@@ -3,11 +3,18 @@ import { Link } from 'react-router-dom';
 import classNames from 'classnames/bind';
 import styles from './SidebarItem.module.scss';
 import { ArrowBigRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useSelector } from 'react-redux';
 
 const cx = classNames.bind(styles);
 
-const SidebarItem = ({ id, title, iconName, path, location, subMenu = [], changeDropItem, itemDrop }) => {
+const SidebarItem = ({ id, title, iconName, path, location, subMenu = [], changeDropItem, itemDrop, roles }) => {
     const Icon = iconName ? iconName : Fragment;
+    const { user } = useSelector((state) => state.AuthSlice);
+
+    const checkRoleUser = (roles) => {
+        const userRoles = user?.empRole?.map((role) => role.roleName) || [];
+        return roles.some((role) => userRoles.includes(role) || roles.includes('PUBLIC'));
+    };
 
     const divRef = useRef();
     const handleScrollSubmenu = () => {
@@ -25,15 +32,9 @@ const SidebarItem = ({ id, title, iconName, path, location, subMenu = [], change
                 divRef.current.style.height = divRef.current.scrollHeight + 'px';
                 divRef.current.style.animation = `slice 1s ease-in-out`;
                 divRef.current.classList.add(cx('active'));
-                // divRef.current.style.display= 'flex';
-                // divRef.current.style.flexDirection= 'column';
-                // divRef.current.style.alignItems= 'center';
             } else {
                 divRef.current.style.height = '35px';
                 divRef.current.classList.remove(cx('active'));
-                // divRef.current.style.display= 'block';
-                // divRef.current.style.flexDirection= 'none';
-                // divRef.current.style.alignItems= 'none';
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -46,11 +47,11 @@ const SidebarItem = ({ id, title, iconName, path, location, subMenu = [], change
                     <div className={cx('header-submenu')} onClick={handleScrollSubmenu}>
                         {iconName && <Icon size={18} />}
                         <span className={cx('title')}>{title}</span>
-                        <ChevronRight className={cx('chevron-icon')} size={20}/>
+                        <ChevronRight className={cx('chevron-icon')} size={20} />
                     </div>
                     {subMenu.map((subItem, index) => {
                         const SubIcon = subItem.iconName ? subItem.iconName : Fragment;
-                        return (
+                        return checkRoleUser(subItem.roles) ? (
                             <Link
                                 key={index}
                                 to={`${subItem.path}`}
@@ -63,23 +64,22 @@ const SidebarItem = ({ id, title, iconName, path, location, subMenu = [], change
                                 {subItem.iconName && <SubIcon size={18} />}
                                 <span className={cx('title')}>{subItem.title}</span>
                             </Link>
-                        );
+                        ) : null;
                     })}
                 </div>
-            ) : (
+            ) : checkRoleUser(roles) ? (
                 <div className={cx('header-submenu')}>
                     <Link
-                    to={`${path}`}
-                    className={cx('wrapper-link', {
-                        active: path == location,
-                    })}
-                >
-                    {iconName && <Icon size={18} />}
-                    <span className={cx('title')}>{title}</span>
-                </Link>
+                        to={`${path}`}
+                        className={cx('wrapper-link', {
+                            active: path == location,
+                        })}
+                    >
+                        {iconName && <Icon size={18} />}
+                        <span className={cx('title')}>{title}</span>
+                    </Link>
                 </div>
-                
-            )}
+            ) : null}
         </>
     );
 };

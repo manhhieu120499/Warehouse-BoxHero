@@ -1,37 +1,25 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Sidebar.module.scss';
 import SidebarItem from './SidebarItem';
 import {
-    Settings,
     User,
     LayoutDashboard,
-    ShoppingBasket,
     CircleArrowLeft,
     CircleArrowRight,
     ClipboardMinus,
-    Undo2,
     CalendarCheck,
-    Truck,
     Warehouse,
     Factory,
-    ShieldX,
     Info,
     Users,
-    ShoppingCart,
-    BookMinus,
     Milk,
     Package,
-    FileClock,
-    UserCog,
-    Columns3,
-    File,
-    Target,
-    List,
-    PenLine,
     TruckElectric,
     CheckLine,
     History,
+    ClipboardPlus,
+    Files,
 } from 'lucide-react';
 import logo from '../../../assets/logo_v2.jpg';
 import { useLocation } from 'react-router-dom';
@@ -44,188 +32,59 @@ const shopName = import.meta.env.VITE_SOFTWARE_NAME;
 const cx = classNames.bind(styles);
 
 const Sidebar = () => {
-    // const sidebarMenu = [
-    //     {
-    //         id: 1,
-    //         title: 'Dashboard',
-    //         iconName: LayoutDashboard,
-    //         path: '/',
-    //     },
-    //     {
-    //         id: 2,
-    //         title: 'Quản lý sản phẩm',
-    //         iconName: ShoppingCart,
-    //         subMenu: [
-    //             {
-    //                 title: 'Nhóm sản phẩm',
-    //                 iconName: ShoppingBasket,
-    //                 path: '/categories',
-    //             },
-    //             {
-    //                 title: 'Sản phẩm',
-    //                 iconName: Milk,
-    //                 path: '/products',
-    //             },
-    //             {
-    //                 title: 'Quản lý lô hàng',
-    //                 iconName: Package,
-    //                 path: '/batch',
-    //             },
-    //         ],
-    //     },
-    //     {
-    //         id: 3,
-    //         title: 'Quản lý nhập xuất',
-    //         iconName: BookMinus,
-    //         // path: '/ware-receive',
-    //         subMenu: [
-    //             {
-    //                 title: 'Tạo phiếu đề xuất',
-    //                 iconName: FileClock,
-    //                 path: '/proposal',
-    //             },
-    //             {
-    //                 title: 'Nhập kho',
-    //                 iconName: CircleArrowRight,
-    //                 path: '/ware-receive',
-    //             },
-    //             {
-    //                 title: 'Xuất kho',
-    //                 iconName: CircleArrowLeft,
-    //                 path: '/ware-release',
-    //             },
-    //             {
-    //                 title: 'Chuyển kho',
-    //                 iconName: Truck,
-    //                 path: '/ware-transfer',
-    //             },
-    //             {
-    //                 title: 'Phê duyệt',
-    //                 iconName: Truck,
-    //                 path: '/approve',
-    //             },
-    //         ],
-    //     },
-    //     {
-    //         id: 4,
-    //         title: 'Quản lý đối tác',
-    //         iconName: UserCog,
-    //         subMenu: [
-    //             {
-    //                 title: 'Khách hàng',
-    //                 iconName: Users,
-    //                 path: '/customer',
-    //             },
-    //             {
-    //                 title: 'Nhà cung cấp',
-    //                 iconName: Factory,
-    //                 path: '/supplier',
-    //             },
-    //             {
-    //                 title: 'Đổi trả',
-    //                 iconName: Undo2,
-    //                 path: '/return-order',
-    //             },
-    //         ],
-    //     },
-    //     {
-    //         id: 5,
-    //         title: 'Quản lý kho',
-    //         iconName: Warehouse,
-    //         subMenu: [
-    //             {
-    //                 title: 'Kiểm kê kho',
-    //                 iconName: CalendarCheck,
-    //                 path: '/check-inventory',
-    //             },
-
-    //             {
-    //                 title: 'Quản lý khu vực',
-    //                 iconName: Columns3,
-    //                 path: '/zone',
-    //             },
-    //         ],
-    //     },
-    // ];
-
     const sidebarMenu = [
         {
             id: 1,
             title: 'Dashboard',
             iconName: LayoutDashboard,
             path: '/',
+            roles: ['PUBLIC'],
         },
         {
             id: 2,
             title: 'Sản phẩm',
             iconName: Milk,
             path: '/products',
-            // subMenu: [
-            //     {
-            //         title: 'Nhóm sản phẩm',
-            //         iconName: ShoppingBasket,
-            //         path: '/categories',
-            //     },
-            //     {
-            //         title: 'Sản phẩm',
-            //         iconName: Milk,
-            //         path: '/products',
-            //     },
-            //     {
-            //         title: 'Khách hàng',
-            //         iconName: Users,
-            //         path: '/customer',
-            //     },
-            //     {
-            //         title: 'Nhà cung cấp',
-            //         iconName: Factory,
-            //         path: '/supplier',
-            //     },
-            //     {
-            //         title: 'Nhân sự',
-            //         iconName: User,
-            //         path: '/auth',
-            //     },
-            // ],
+            roles: ['PUBLIC'],
         },
         {
             id: 3,
             title: 'Khách hàng',
             iconName: Users,
             path: '/customer',
+            roles: ['SYSTEM_ADMIN', 'WARE_MANAGER', 'STOCK_DISPATCHER'],
         },
         {
             id: 4,
             title: 'Nhà cung cấp',
             iconName: Factory,
             path: '/supplier',
+            roles: ['SYSTEM_ADMIN', 'WARE_MANAGER', 'STOCK_RECEIVER'],
         },
         {
             id: 5,
             title: 'Nhân sự',
             iconName: User,
             path: '/auth',
+            roles: ['SYSTEM_ADMIN', 'WARE_MANAGER'],
         },
         {
             id: 6,
             title: 'Phiếu đề xuất',
-            iconName: ClipboardMinus,
+            iconName: Files,
             subMenu: [
                 {
-                    title: 'DS phiếu đề xuất',
-                    iconName: List,
-                    path: '/proposal-list',
+                    title: 'Phiếu đề xuất nhập',
+                    iconName: ClipboardPlus,
+                    path: '/proposal-import-list',
+                    roles: ['SYSTEM_ADMIN', 'WARE_MANAGER', 'STOCK_RECEIVER'],
                 },
-                // {
-                //     title: 'Tạo phiếu đề xuất',
-                //     iconName: PenLine,
-                //     path: '/proposal',
-                // },
-                // {
-                //     title: 'Phê duyệt',
-                //     iconName: CheckLine,
-                //     path: '/approve',
-                // },
+                {
+                    title: 'Phiếu đề xuất xuất',
+                    iconName: ClipboardMinus,
+                    path: '/proposal-export-list',
+                    roles: ['SYSTEM_ADMIN', 'WARE_MANAGER', 'STOCK_DISPATCHER'],
+                },
             ],
         },
         {
@@ -237,11 +96,13 @@ const Sidebar = () => {
                     title: 'Tạo phiếu nhập kho',
                     iconName: CircleArrowRight,
                     path: '/ware-receive',
+                    roles: ['SYSTEM_ADMIN', 'WARE_MANAGER', 'STOCK_RECEIVER'],
                 },
                 {
                     title: 'Tạo phiếu xuất kho',
                     iconName: CircleArrowLeft,
                     path: '/ware-release',
+                    roles: ['SYSTEM_ADMIN', 'WARE_MANAGER', 'STOCK_DISPATCHER'],
                 },
             ],
         },
@@ -254,11 +115,13 @@ const Sidebar = () => {
                     title: 'Kiểm kê kho',
                     iconName: CalendarCheck,
                     path: '/check-inventory',
+                    roles: ['SYSTEM_ADMIN', 'WARE_MANAGER', 'ACCOUNTANT'],
                 },
                 {
                     title: 'Quản lý kệ',
                     iconName: Package,
                     path: '/batch',
+                    roles: ['PUBLIC'],
                 },
                 // {
                 //     title: 'Quản lý kệ 3d',
@@ -269,6 +132,7 @@ const Sidebar = () => {
                     title: 'Nhật ký kho',
                     iconName: History,
                     path: '/history',
+                    roles: ['SYSTEM_ADMIN', 'WARE_MANAGER'],
                 },
             ],
         },
@@ -322,6 +186,7 @@ const Sidebar = () => {
                                 path={item.path}
                                 location={location.pathname}
                                 subMenu={item?.subMenu}
+                                roles={item.roles}
                             />
                         ))}
                     </div>

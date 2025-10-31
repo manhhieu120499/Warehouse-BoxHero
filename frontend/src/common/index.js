@@ -19,4 +19,8 @@ const handleCopy = (data) => {
     return _.cloneDeep(data);
 };
 
-export { convertDateVN, handleCopy };
+const authIsAdmin = (user) => {
+    return user?.empRole?.some((role) => role.roleName === 'SYSTEM_ADMIN' || role.roleName === 'WARE_MANAGER');
+};
+
+export { convertDateVN, handleCopy, authIsAdmin };

@@ -8,6 +8,8 @@ import { convertDateVN } from '@/common';
 import { getBatchesWithoutLocation } from '../../../services/batch.service';
 import { MapPinPen, MoveIcon } from 'lucide-react';
 import Tippy from '@tippyjs/react';
+import { authIsAdmin } from '../../../common';
+import { useSelector } from 'react-redux';
 
 const cx = classNames.bind(styles);
 
@@ -19,6 +21,7 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
     const [batchesWithoutLocation, setBatchesWithoutLocation] = useState([]);
     const [selectedBatches, setSelectedBatches] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
+    const currentUser = useSelector((state) => state.AuthSlice.user);
 
     const handleSelectAllChange = () => {
         if (selectAll) {
@@ -216,14 +219,16 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                     <Button primary className={cx('btn-search')} onClick={handleReset}>
                         Đặt lại
                     </Button>
-                    <Button
-                        disabled={selectedBatches.length === 0}
-                        primary
-                        className={cx('btn-search')}
-                        onClick={handleUpdateLocation}
-                    >
-                        {!boxID ? 'Cập nhật vị trí' : 'Chuyển vị trí'}
-                    </Button>
+                    {authIsAdmin(currentUser) && (
+                        <Button
+                            disabled={selectedBatches.length === 0}
+                            primary
+                            className={cx('btn-search')}
+                            onClick={handleUpdateLocation}
+                        >
+                            {!boxID ? 'Cập nhật vị trí' : 'Chuyển vị trí'}
+                        </Button>
+                    )}
                 </div>
                 {boxID && <h4 className={cx('box-detail-content')}>Nội dung chi tiết ô</h4>}
                 {!boxID && <h4 className={cx('box-detail-content')}>Danh sách sản phẩm trong kho tạm</h4>}
@@ -231,9 +236,11 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                     <table className={cx('table')}>
                         <thead>
                             <tr>
-                                <th>
-                                    <input type="checkbox" checked={selectAll} onChange={handleSelectAllChange} />
-                                </th>
+                                {authIsAdmin(currentUser) && (
+                                    <th>
+                                        <input type="checkbox" checked={selectAll} onChange={handleSelectAllChange} />
+                                    </th>
+                                )}
                                 <th className={cx('stt')}>Mã lô</th>
                                 <th className={cx('productID')}>Mã sản phẩm</th>
                                 <th className={cx('productName')}>Tên sản phẩm</th>
@@ -249,15 +256,17 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                                 ?.filter((batch) => batch.batch_boxes?.quantity > 0 || !boxID)
                                 .map((batch, index) => (
                                     <tr key={index}>
-                                        <td>
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedBatches
-                                                    .map((item) => item.batchID)
-                                                    .includes(batch.batchID)}
-                                                onChange={() => handleCheckboxChange(batch)}
-                                            />
-                                        </td>
+                                        {authIsAdmin(currentUser) && (
+                                            <td>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedBatches
+                                                        .map((item) => item.batchID)
+                                                        .includes(batch.batchID)}
+                                                    onChange={() => handleCheckboxChange(batch)}
+                                                />
+                                            </td>
+                                        )}
                                         <td className={cx('stt')}>{batch.batchID}</td>
                                         <td className={cx('productID')}>{batch.product.productID}</td>
                                         <td className={cx('productName')}>{batch.product.productName}</td>

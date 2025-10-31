@@ -88,6 +88,10 @@ const SupplierPage = () => {
             setProductData(formatProductsData);
             setShowProductTable(true);
         } catch (err) {
+            toast.error(
+                Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+                styleMessage,
+            );
             console.log(err);
             setShowProductTable(false);
         }
@@ -141,8 +145,13 @@ const SupplierPage = () => {
                 setIsOpenCreate(false);
             }
         } catch (error) {
-            console.error('Error occurred while creating supplier:', error.response.data.messages);
-            toast.error(error.response.data.messages[0], styleMessage);
+            toast.error(
+                Array.isArray(error.response.data.message)
+                    ? error.response.data.message[0]
+                    : error.response.data.message,
+                styleMessage,
+            );
+            console.log(error);
         }
     };
 
@@ -504,29 +513,35 @@ const SupplierPage = () => {
     // columns product table
     const columnsProduct = [
         {
-            title: 'Mã nhóm sản phẩm',
+            title: 'Mã nhóm SP',
             dataIndex: 'categoryID',
             key: 'categoryID',
+            width: '10%',
         },
         {
-            title: 'Mã sản phẩm',
+            title: 'Mã SP',
             dataIndex: 'productID',
             key: 'productID',
+            width: '7%',
         },
         {
             title: 'Tên sản phẩm',
             dataIndex: 'productName',
             key: 'productName',
+            width: '30%',
         },
         {
             title: 'Mô tả',
             dataIndex: 'productDes',
             key: 'productDes',
+            width: '30%',
+            ellipsis: true,
         },
         {
             title: 'Trạng thái',
             dataIndex: 'statusProduct',
             key: 'statusProduct',
+            width: '15%',
         },
         {
             title: 'Chi tiết',
@@ -561,6 +576,12 @@ const SupplierPage = () => {
                                         navigate('/products', { state: productDetail });
                                         dispatch(removeItemDrop(2));
                                     } catch (err) {
+                                        toast.error(
+                                            Array.isArray(err.response.data.message)
+                                                ? err.response.data.message[0]
+                                                : err.response.data.message,
+                                            styleMessage,
+                                        );
                                         console.log(err);
                                     }
                                 }}
@@ -571,16 +592,6 @@ const SupplierPage = () => {
                     </div>
                 );
             },
-        },
-    ];
-
-    const dataProduct = [
-        {
-            key: 1,
-            productID: 'SP01',
-            productName: 'Sữa Vina Milk',
-            productDes: 'Sản phẩm tuyệt trùng phù hợp cho mọi lứa tuổi',
-            statusProduct: 'Đang kinh doanh',
         },
     ];
 
@@ -660,7 +671,7 @@ const SupplierPage = () => {
             {/** danh sách sản phẩm của nhà cung cấp */}
             <Modal isOpenInfo={showProductTable} onClose={() => setShowProductTable(false)}>
                 <div className={cx('wrapper-product-supplier')}>
-                    <h1>Danh sách sản phẩm thuộc về nhà cung cấp</h1>
+                    <h1 className={cx('title')}>Danh sách sản phẩm thuộc về nhà cung cấp</h1>
                     <MyTable
                         className={cx('product-supplier-table')}
                         columns={columnsProduct}

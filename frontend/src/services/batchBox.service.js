@@ -3,7 +3,7 @@ import { styleMessage } from '../constants';
 import request from '../utils/httpRequest';
 import parseToken from '../utils/parseToken';
 
-export const updateLocationBatch = async (warehouseID, locations) => {
+export const updateLocationBatch = async (warehouseID, locations, employeeID) => {
     try {
         const token = parseToken('tokenUser');
         console.log(token);
@@ -13,6 +13,7 @@ export const updateLocationBatch = async (warehouseID, locations) => {
             {
                 warehouseID,
                 locations,
+                employeeID: token.employeeID,
             },
             {
                 headers: {
@@ -38,13 +39,17 @@ export const changeLocationBatch = async (payload) => {
         const token = parseToken('tokenUser');
         const warehouse = parseToken('warehouse');
 
-        const res = await request.post(`/api/batch-box/change-location-batch`, payload, {
-            headers: {
-                token: `Bearer ${token.accessToken}`,
-                employeeID: token.employeeID,
-                warehouseID: warehouse.warehouseID,
+        const res = await request.post(
+            `/api/batch-box/change-location-batch`,
+            { ...payload, employeeID: token.employeeID },
+            {
+                headers: {
+                    token: `Bearer ${token.accessToken}`,
+                    employeeID: token.employeeID,
+                    warehouseID: warehouse.warehouseID,
+                },
             },
-        });
+        );
         return res;
     } catch (err) {
         toast.error(

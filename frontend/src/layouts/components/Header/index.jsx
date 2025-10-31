@@ -32,7 +32,9 @@ const Header = ({ children }) => {
         '/batch': 'Quản lý lô hàng',
         '/zone': 'Quản lý khu vực',
         '/categories': 'Nhóm sản phẩm',
-        '/proposal-list': 'Danh sách đề xuất',
+        '/proposal-import-list': 'Danh sách đề xuất nhập',
+        '/proposal-export-list': 'Danh sách đề xuất xuất',
+        '/history': 'Nhật ký kho',
     };
 
     const navigate = useNavigate();
@@ -48,12 +50,13 @@ const Header = ({ children }) => {
             Icon: LogOut,
             path: '/login',
             onClick: () => {
-                dispatch(logout());
-                dispatch(resetActiveItemDrop());
-                localStorage.setItem('tokenUser', null);
-                localStorage.setItem('indexItemDropActive', JSON.stringify([]));
-                localStorage.setItem('warehouse', null);
-                navigate('/login');
+                navigate('/login', { replace: true });
+
+                // dispatch(logout());
+                // dispatch(resetActiveItemDrop());
+                // localStorage.removeItem('tokenUser');
+                // localStorage.removeItem('indexItemDropActive');
+                // localStorage.removeItem('warehouse');
             },
         },
     ];
