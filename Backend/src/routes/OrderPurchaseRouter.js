@@ -3,14 +3,14 @@ const router = express.Router();
 const OrderPurchaseController = require('../controllers/OrderPurchaseController');
 const { checkCreateOrderPurchase, checkUpdateStatusOrderPurchase } = require('../validates/orderPurchase.validation');
 const validate = require('../validates/validate');
-const { authUserIsManager, authUser } = require('../middleware/AuthMiddleware');
+const { authUserIsManager, authUser, authUserIsManagerOrStockReceiver } = require('../middleware/AuthMiddleware');
 
-router.get('/get-all-order-purchase', authUserIsManager, OrderPurchaseController.getAllOrderPurchase);
-router.get('/filter-order-purchase', authUserIsManager, OrderPurchaseController.filterOrderPurchase);
+router.get('/get-all-order-purchase', authUserIsManagerOrStockReceiver, OrderPurchaseController.getAllOrderPurchase);
+router.get('/filter-order-purchase', authUserIsManagerOrStockReceiver, OrderPurchaseController.filterOrderPurchase);
 
 router.post(
     '/create-order-purchase',
-    authUserIsManager,
+    authUserIsManagerOrStockReceiver,
     checkCreateOrderPurchase,
     validate,
     OrderPurchaseController.createOrderPurchase,
@@ -18,7 +18,7 @@ router.post(
 
 router.post(
     '/update-status-order-purchase',
-    authUserIsManager,
+    authUserIsManagerOrStockReceiver,
     checkUpdateStatusOrderPurchase,
     validate,
     OrderPurchaseController.updateStatusOrderPurchase,

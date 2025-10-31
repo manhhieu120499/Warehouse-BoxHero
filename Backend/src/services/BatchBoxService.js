@@ -303,7 +303,7 @@ class BatchBoxService {
         return new Promise(async (resolve, reject) => {
             const transaction = await db.sequelize.transaction();
             try {
-                const { warehouseID, locations } = data;
+                const { warehouseID, locations, employeeID } = data;
                 // 1. Kiểm tra kho
                 const warehouseExist = await Warehouse.findOne({ where: { warehouseID } });
                 if (!warehouseExist) {
@@ -327,6 +327,18 @@ class BatchBoxService {
                             message: `Batch ${batchID} không tồn tại hoặc không hợp lệ`,
                         });
                     }
+                    // Tạo BatchMoveLog
+                    const log = await db.BatchMoveLog.create(
+                        {
+                            batchID: batch.batchID,
+                            actionType: 'FROM_TEMP',
+                            note: 'Cập nhật vị trí batch từ kho tạm vào box',
+                            fromLocation: null,
+                            employeeCreate: data.employeeID,
+                            quantity: batch.remainAmount,
+                        },
+                        { transaction },
+                    );
                     for (const box of boxes) {
                         const { boxID, quantity } = box;
 
@@ -389,6 +401,15 @@ class BatchBoxService {
                                 },
                                 { transaction },
                             );
+                            // Tạo BatchMoveDetail
+                            await db.BatchMoveDetail.create(
+                                {
+                                    logID: log.logID,
+                                    toLocation: boxExist.boxID,
+                                    quantity,
+                                },
+                                { transaction },
+                            );
                             // Cập nhật remain của box
                             boxExist.remainingAcreage -= requiredVolume;
                             if (boxExist.remainingAcreage === 0) {
@@ -420,8 +441,10 @@ class BatchBoxService {
         return new Promise(async (resolve, reject) => {
             const transaction = await db.sequelize.transaction();
             try {
-                const { oldLocations, newLocations, boxID } = data;
+                const { oldLocations, newLocations, boxID, employeeID } = data;
+                const listBatchMoveLog = [];
                 for (const loc of oldLocations) {
+                    let totalQuantityChange = 0;
                     const { batchID, quantity } = loc;
                     const batch = await Batch.findOne({
                         where: { batchID },
@@ -480,6 +503,7 @@ class BatchBoxService {
                     const unitVolume = batch.unit.length * batch.unit.width * batch.unit.height;
                     const currentQuantity = batchBoxExist.quantity;
                     const requiredVolume = (currentQuantity - quantity) * unitVolume;
+                    totalQuantityChange += currentQuantity - quantity;
 
                     // Cập nhật BatchBox
                     await db.BatchBox.update(
@@ -488,6 +512,20 @@ class BatchBoxService {
                         },
                         { where: { batchID: batch.batchID, boxID: boxExist.boxID }, transaction },
                     );
+
+                    // Tạo BatchMoveLog
+                    const log = await db.BatchMoveLog.create(
+                        {
+                            batchID: batch.batchID,
+                            actionType: 'FROM_BOX',
+                            note: 'Cập nhật vị trí batch từ ' + boxID + ' sang box khác',
+                            fromLocation: boxID,
+                            employeeCreate: employeeID,
+                            quantity: totalQuantityChange,
+                        },
+                        { transaction },
+                    );
+                    listBatchMoveLog.push({ batchID: batch.batchID, logID: log.logID });
                     // Cập nhật remain của box
                     boxExist.remainingAcreage += requiredVolume;
                     if (boxExist.remainingAcreage === 0) {
@@ -582,6 +620,17 @@ class BatchBoxService {
                                     { transaction },
                                 );
                             }
+
+                            // Tạo BatchMoveDetail
+                            await db.BatchMoveDetail.create(
+                                {
+                                    logID: listBatchMoveLog.find((item) => item.batchID === batchID).logID,
+                                    toLocation: boxExist.boxID,
+                                    quantity,
+                                },
+                                { transaction },
+                            );
+
                             // Cập nhật remain của box
                             boxExist.remainingAcreage -= requiredVolume;
                             if (boxExist.remainingAcreage === 0) {

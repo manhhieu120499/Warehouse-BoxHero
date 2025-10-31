@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const InventoryCheckController = require('../controllers/InventoryCheckController');
-const { authUserIsManager } = require('../middleware/AuthMiddleware');
+const { authUserIsManager, authUserIsManagerOrAccountant } = require('../middleware/AuthMiddleware');
 const validate = require('../validates/validate');
 const {
     getAllInventoryChecks,
@@ -17,7 +17,7 @@ router.get(
     '/get-all-inventory-checks',
     getAllInventoryChecks,
     validate,
-    authUserIsManager,
+    authUserIsManagerOrAccountant,
     InventoryCheckController.getListInventoryCheck,
 );
 
@@ -25,7 +25,7 @@ router.post(
     '/create-inventory-checks',
     createInventoryCheck,
     validate,
-    authUserIsManager,
+    authUserIsManagerOrAccountant,
     InventoryCheckController.createInventoryCheck,
 );
 
@@ -41,7 +41,7 @@ router.get(
     '/filter-inventory-checks',
     filterInventoryCheck,
     validate,
-    authUserIsManager,
+    authUserIsManagerOrAccountant,
     InventoryCheckController.filterInventoryCheck,
 );
 

@@ -21,6 +21,7 @@ const updateLocationBatch = [
         .isString()
         .withMessage('Mã kho không hợp lệ')
         .bail(),
+    body('employeeID').notEmpty().withMessage('Mã nhân viên là bắt buộc').bail(),
 
     body('locations').isArray({ min: 1 }).withMessage('Danh sách locations không hợp lệ hoặc rỗng').bail(),
 
@@ -55,6 +56,7 @@ const changeLocation = [
     //     .withMessage('Mã kho không hợp lệ')
     //     .bail(),
     body('boxID').isString().withMessage('Mã ô cũ là bắt buộc').bail(),
+    body('employeeID').isString().withMessage('Mã nhân viên là bắt buộc').bail(),
 
     body('oldLocations').isArray({ min: 1 }).withMessage('Danh sách locations cũ không hợp lệ hoặc rỗng').bail(),
 
