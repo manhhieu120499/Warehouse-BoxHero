@@ -339,41 +339,16 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                                 <tr key={idx}>
                                                     <td className={cx('stickyCol', 'stickyCol1', 'stt')}>{idx + 1}</td>
                                                     <td className={cx('stickyCol', 'stickyCol2', 'sku')}>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã sản phẩm"
-                                                            value={it.productID ?? ''}
-                                                            readOnly
-                                                            className={cxGlb('readOnly')}
-                                                        />
+                                                        <span>{it.productID ?? ''}</span>
                                                     </td>
                                                     <td className={cx('stickyCol', 'stickyCol3', 'name')}>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập tên sản phẩm"
-                                                            value={it.productName ?? ''}
-                                                            readOnly
-                                                            className={cxGlb('readOnly')}
-                                                        />
+                                                        <span>{it.productName ?? ''}</span>
                                                     </td>
                                                     <td className={cx('unit')}>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập đơn vị tính"
-                                                            value={it.unit.unitName ?? ''}
-                                                            readOnly
-                                                            className={cxGlb('readOnly')}
-                                                        />
+                                                        <span>{it.unit.unitName ?? ''}</span>
                                                     </td>
                                                     <td className={cx('number')}>
-                                                        <input
-                                                            type="number"
-                                                            placeholder="Nhập số lượng"
-                                                            min={1}
-                                                            value={it.requestAmount ?? ''}
-                                                            readOnly
-                                                            className={cxGlb('readOnly')}
-                                                        />
+                                                        <span>{it.requestAmount ?? ''}</span>
                                                     </td>
                                                     <td className={cx('number')}>
                                                         <input
@@ -463,13 +438,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                                         />
                                                     </td>
                                                     <td className={cx('name_sup')}>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Tên nhà cung cấp"
-                                                            value={it.supplierName ?? ''}
-                                                            readOnly
-                                                            className={cxGlb('readOnly')}
-                                                        />
+                                                        <span>{it.supplierName ?? ''}</span>
                                                     </td>
                                                 </tr>
                                             ))}

@@ -271,22 +271,24 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                     <tr key={idx}>
                         <td>{idx + 1}</td>
                         <td>
-                            <input
+                            {/* <input
                                 value={typeDetail ? it.product?.productID || '' : it.sku || ''}
                                 onChange={(e) => updateCell(idx, 'sku', e.target.value)}
                                 placeholder="Mã sản phẩm"
                                 readOnly={typeDetail}
                                 className={cx('readOnly')}
-                            />
+                            /> */}
+                            <span>{typeDetail ? it.product?.productID || '' : it.sku || ''}</span>
                         </td>
                         <td>
-                            <input
+                            {/* <input
                                 value={typeDetail ? it.product?.productName || '' : it.name || ''}
                                 onChange={(e) => updateCell(idx, 'name', e.target.value)}
                                 readOnly
                                 placeholder="Tên sản phẩm"
                                 className={cx('readOnly')}
-                            />
+                            /> */}
+                            <span>{typeDetail ? it.product?.productName || '' : it.name || ''}</span>
                         </td>
                         <td>
                             <select

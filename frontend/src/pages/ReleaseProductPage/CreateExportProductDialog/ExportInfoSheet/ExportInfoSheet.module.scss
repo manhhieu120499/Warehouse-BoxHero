@@ -35,9 +35,9 @@
     margin-bottom: 12px; // tăng khoảng cách giữa các row
 }
 
-.row-3 {
-    grid-template-columns: repeat(3, 1fr);
-}
+// .row-3 {
+//     grid-template-columns: repeat(4, 1fr);
+// }
 
 .row-4 {
     grid-template-columns: repeat(4, 1fr);
@@ -54,7 +54,7 @@
 }
 
 .form-group label {
-    font-size: 1.18rem; // tăng size
+    font-size: 1.3rem;
     font-weight: 600;
     color: #222;
     margin-bottom: 2px;
@@ -62,7 +62,7 @@
 
 .form-group input,
 .form-group textarea {
-    padding: 10px 14px; // tăng padding input lên 1 tí
+    padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid #e5e7eb;
     font-size: 1.15rem;
@@ -98,7 +98,7 @@
         padding: 4px 2px;
     }
 
-    .row-3,
+    // .row-3,
     .row-4 {
         grid-template-columns: 1fr;
         gap: 8px;

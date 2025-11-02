@@ -200,7 +200,7 @@ const BatchDialog = ({ product, isOpen, onClose }) => {
             render: (_, record) => (
                 <div className={cx('cell-text', 'location-cell')}>
                     <Button
-                        small
+                        medium
                         success
                         rounded
                         disabled={!checkExistBatch(record.batchID) || record.quantity <= 0}

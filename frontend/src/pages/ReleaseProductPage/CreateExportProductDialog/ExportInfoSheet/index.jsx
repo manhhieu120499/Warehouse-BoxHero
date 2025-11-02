@@ -9,18 +9,19 @@ const cxGlb = classNames.bind(globalStyles);
 const cx = classNames.bind(styles);
 
 const ExportInfoSheet = ({ formData, setFormData, className }) => {
+    console.log('form', formData);
     return (
         <section className={cx('info-sheet', className)}>
             <p className={cx('content-header')}>Thông tin chung</p>
             {/* Row 1: 3 phần tử */}
-            <div className={cx('row', 'row-3')}>
+            <div className={cx('row', 'row-4')}>
                 <div className={cx('form-group')}>
                     <label>Mã phiếu</label>
                     <div className={cx('input-generate-code')}>
                         <input type="text" placeholder="Tạo mã phiếu" value={formData.receiptCode || ''} />
                         <Button
                             primary
-                            medium
+                            small
                             rounded
                             onClick={() => {
                                 setFormData((prev) => ({
@@ -28,8 +29,9 @@ const ExportInfoSheet = ({ formData, setFormData, className }) => {
                                     receiptCode: `${generateCode('PX-')}`,
                                 }));
                             }}
+                            style={{ padding: '8px 10px' }}
                         >
-                            Tạo mã phiếu
+                            <span style={{ fontSize: '13px' }}>Tạo mã phiếu</span>
                         </Button>
                     </div>
                 </div>
@@ -50,6 +52,15 @@ const ExportInfoSheet = ({ formData, setFormData, className }) => {
                         placeholder="Tên kho"
                         readOnly
                         value={formData.warehouse || ''}
+                        className={cxGlb('readOnly')}
+                    />
+                </div>
+                <div className={cx('form-group')}>
+                    <label>Tên người phê duyệt</label>
+                    <input
+                        type="text"
+                        placeholder="Tên người lập phiếu"
+                        value={formData?.approver || 'null'}
                         className={cxGlb('readOnly')}
                     />
                 </div>

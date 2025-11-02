@@ -56,7 +56,7 @@ const ExportProduct = ({ productListResult, className, setProductListResult }) =
                                         <td>
                                             <Button
                                                 success
-                                                small
+                                                medium
                                                 rounded
                                                 onClick={() => {
                                                     setProductSelectedToChooseBatch(item);
@@ -69,7 +69,7 @@ const ExportProduct = ({ productListResult, className, setProductListResult }) =
                                         <td>
                                             <Button
                                                 primary
-                                                small
+                                                medium
                                                 rounded
                                                 onClick={() => {
                                                     setProductSelectedToChooseBatch(item);

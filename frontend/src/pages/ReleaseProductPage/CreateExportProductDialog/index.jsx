@@ -30,6 +30,7 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
         note: '',
         orderReleaseProposalID: proposalRelease ? proposalRelease.orderReleaseProposalID : '',
         orderReleaseDetails: [],
+        approver: proposalRelease?.approver?.employeeName,
     });
     const contentSliceRef = useRef(null);
     const [productListSelected, setProductListSelected] = useState([]); // danh sách sản phẩm được chọn để export
@@ -141,7 +142,6 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
 
     // init form data
     useEffect(() => {
-        console.log('proposalRelease', proposalRelease);
         if (!proposalRelease) return;
         setFormData({
             receiptCode: '',
@@ -153,6 +153,7 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
             note: proposalRelease?.note || '',
             orderReleaseProposalID: proposalRelease.orderReleaseProposalID || '',
             orderReleaseDetails: [],
+            approver: proposalRelease?.approver?.employeeName || '',
         });
         setProductListSelected(
             (proposalRelease?.orderReleaseProposalDetails || []).map((item) => ({

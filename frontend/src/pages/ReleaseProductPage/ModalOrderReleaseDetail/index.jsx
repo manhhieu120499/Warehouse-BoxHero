@@ -20,22 +20,26 @@ const ModalOrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem }) => {
             title: 'Mã sản phẩm',
             dataIndex: 'productID',
             key: 'productID',
+            width: '15%',
         },
         {
             title: 'Tên sản phẩm',
             dataIndex: 'productName',
             key: 'productName',
+            width: '40%',
         },
         {
             title: 'Đơn vị tính',
             dataIndex: 'unitName',
             key: 'unitName',
+            width: '15%',
         },
         {
             title: 'Số lượng xuất',
             dataIndex: 'quantityExported',
             key: 'quantityExported',
             render: (text) => <p className={cx('cell-number')}>{text}</p>,
+            width: '15%',
         },
         {
             title: 'Thao tác',

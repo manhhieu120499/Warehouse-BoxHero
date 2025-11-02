@@ -241,12 +241,18 @@
 
 .table th,
 .table td {
-    background: #fff;
+    background-color: #fff;
     border-bottom: 1px solid #e5e7eb;
     padding: 10px 12px;
     text-align: left;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     white-space: nowrap;
+}
+
+.table th {
+    background: #f1f5f9;
+    font-weight: 600;
+    color: #475569;
 }
 
 /* Sticky 3 cột đầu cả header và body */
