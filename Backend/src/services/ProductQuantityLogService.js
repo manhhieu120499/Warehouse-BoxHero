@@ -15,13 +15,19 @@ const HTTP_UNAUTHORIZED = process.env.HTTP_UNAUTHORIZED;
 
 class ProductQuantityLogService {
     // get all unit
-    getLogByProductID({ productID }) {
+    getLogByProductID({ productID, page = 1 }) {
         return new Promise(async (resolve, reject) => {
             try {
+                const limit = 5;
                 const productQuantityLog = await ProductQuantityLog.findAll({
                     where: { productID },
                     order: [['createdAt', 'DESC']],
+                    limit,
+                    offset: (page - 1) * limit,
                 });
+
+                const total = await db.ProductQuantityLog.count({ where: { productID } });
+                const totalPages = Math.ceil(total / limit);
 
                 for (const log of productQuantityLog) {
                     let employeeName = 'N/A';
@@ -72,6 +78,10 @@ class ProductQuantityLogService {
                     message: 'Lấy log số lượng sản phẩm thành công',
                     statusHttp: HTTP_OK,
                     data: productQuantityLog,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
                 });
             } catch (e) {
                 console.error(e);

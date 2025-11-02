@@ -50,11 +50,17 @@ class OrderPurchaseService {
                     limit: LIMIT_PAGE,
                     offset: (page - 1) * LIMIT_PAGE,
                 });
+                const total = await db.OrderPurchase.count();
+                const totalPages = Math.ceil(total / LIMIT_PAGE);
                 resolve({
                     statusHttp: HTTP_OK,
                     status: 'OK',
                     message: 'Lấy danh sách đơn nhập hàng thành công',
                     data: response,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
                 });
             } catch (e) {
                 console.log(e);
@@ -117,11 +123,18 @@ class OrderPurchaseService {
                     limit: LIMIT_PAGE,
                     offset: (page - 1) * LIMIT_PAGE,
                 });
+                const total = await db.OrderPurchase.count({ where: { ...filterOptions, ...date } });
+                const totalPages = Math.ceil(total / LIMIT_PAGE);
+
                 resolve({
                     statusHttp: HTTP_OK,
                     status: 'OK',
                     message: 'Lấy danh sách đơn nhập hàng thành công',
                     data: response,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
                 });
             } catch (e) {
                 console.log(e);
