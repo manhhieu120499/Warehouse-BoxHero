@@ -20,6 +20,7 @@ const ImportProduct = () => {
     const [orderPurchaseDetail, setOrderPurchaseDetail] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [showCreateOrderPurchase, setShowCreateOrderPurchase] = useState(false);
+    const [totalPage, setTotalPage] = useState(0);
 
     const [filter, setFilter] = useState({
         code: '',
@@ -29,15 +30,6 @@ const ImportProduct = () => {
         originalOrderPurchaseID: '',
         proposalID: '',
     });
-
-    const handleNextPage = () => {
-        setCurrentPage((prev) => prev + 1);
-    };
-
-    const handlePrevPage = () => {
-        if (currentPage == 1) return;
-        setCurrentPage((prev) => (prev == 1 ? 1 : prev - 1));
-    };
 
     const columnsDefineSuggestProposal = [
         {
@@ -106,12 +98,22 @@ const ImportProduct = () => {
 
         if (res.data?.status === 'OK') {
             setOrderPurchaseList(res.data.data || []);
+            setTotalPage(res.data?.pagination?.totalPages || 0);
         }
+    };
+
+    const onChangePage = (page) => {
+        setCurrentPage(page);
     };
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        // Fetch initial data if needed
+        handleSubmitFilter({ page: currentPage });
+    }, [currentPage]);
 
     const columnsFilter = [
         {
@@ -190,7 +192,7 @@ const ImportProduct = () => {
         },
     ];
 
-    const handleSubmitFilter = async () => {
+    const handleSubmitFilter = async ({ page }) => {
         if (Object.keys(filter).every((key) => filter[key] == '')) return;
         const filterParams = { ...filter };
         if (filter.type === 'ALL') {
@@ -200,11 +202,10 @@ const ImportProduct = () => {
         } else if (filter.type === 'SUPPLEMENT') {
             delete filterParams.proposalID;
         }
-        const res = await filterOrderPurchase({ ...filterParams, page: currentPage });
+        const res = await filterOrderPurchase({ ...filterParams, page });
         if (res.data?.status === 'OK') {
-            console.log(res.data);
-
             setOrderPurchaseList(res.data.data || []);
+            setTotalPage(res.data?.pagination?.totalPages || 0);
         }
     };
 
@@ -219,6 +220,7 @@ const ImportProduct = () => {
         });
         fetchData();
         setTypeFilter('ALL');
+        setCurrentPage(1);
     };
 
     return (
@@ -233,7 +235,10 @@ const ImportProduct = () => {
                         : [...columnsFilter, ...columnsFilterProposal]
                 }
                 selectInput={selectInput}
-                handleSubmitFilter={handleSubmitFilter}
+                handleSubmitFilter={() => {
+                    handleSubmitFilter({ page: 1 });
+                    setCurrentPage(1);
+                }}
                 handleResetFilters={handleResetFilter}
             >
                 <Button
@@ -249,17 +254,18 @@ const ImportProduct = () => {
 
             <div className={cx('view-list-proposal')}>
                 <div className={cx('table-header')}>
-                    '<p className={cx('table-title')}>Danh sách phiếu nhập</p>
+                    <p className={cx('table-title')}>Danh sách phiếu nhập</p>
                 </div>
 
-                <MyTable data={orderPurchaseList} columns={columnsDefineSuggestProposal} />
-                <div className={cx('pagination-table')}>
-                    <PaginationUI
-                        currentPage={currentPage}
-                        handleNextPage={handleNextPage}
-                        handlePrevPage={handlePrevPage}
-                    />
-                </div>
+                <MyTable
+                    data={orderPurchaseList}
+                    columns={columnsDefineSuggestProposal}
+                    pagination
+                    total={totalPage * 5}
+                    pageSize={5}
+                    onChangePage={onChangePage}
+                    currentPage={currentPage}
+                />
             </div>
             {orderPurchaseDetail && (
                 <OrderPurchaseDetail

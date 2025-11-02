@@ -8,25 +8,34 @@ import { ModalUpdate } from '@/components';
 import { getLogByProductID } from '../../services/productquantitylog.service';
 import { typeTransaction } from '../../constants';
 import { convertDateVN } from '../../common';
+import { Pagination } from 'antd';
 
 const cx = classNames.bind(styles);
 
 const ProductHistory = ({ data, onClose }) => {
     const [logs, setLogs] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
     useEffect(() => {
         const fecthData = async () => {
-            const res = await getLogByProductID(data);
+            const res = await getLogByProductID({ productID: data, page: currentPage });
 
             if (res.data?.status === 'OK') {
+                console.log(res.data);
+
                 setLogs(res.data.data);
+                setTotalPages(res.data.pagination.totalPages);
             }
         };
         fecthData();
-    }, []);
+    }, [currentPage]);
 
     return (
         <Modal showButtonClose={false} isOpenInfo={true} onClose={onClose}>
             <div className={cx('wrapper')}>
+                <div className={cx('header')}>
+                    <h2>Lịch sử thay đổi số lượng sản phẩm</h2>
+                </div>
                 <table className={cx('table')}>
                     <thead>
                         <tr>
@@ -57,6 +66,18 @@ const ProductHistory = ({ data, onClose }) => {
                         ))}
                     </tbody>
                 </table>
+                {/* Pagination riêng của Ant Design */}
+                <div className={cx('pagination-wrapper')}>
+                    <Pagination
+                        className={cx('pagination')}
+                        current={currentPage}
+                        pageSize={5}
+                        total={totalPages * 5}
+                        onChange={(page) => {
+                            setCurrentPage(page);
+                        }}
+                    />
+                </div>
             </div>
         </Modal>
     );

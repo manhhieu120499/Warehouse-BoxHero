@@ -20,6 +20,7 @@ import PaginationUI from '@/components/PaginationUI';
 import ModalProductCreate from '../../components/ModalProductCreate';
 import ProductHistory from '../../components/ProductHistory';
 import { authIsAdmin } from '../../common';
+import { set } from 'lodash';
 
 const cx = classNames.bind(styles);
 
@@ -62,8 +63,9 @@ const ProductPage = () => {
     const productID = query.get('productID');
     const dispatch = useDispatch();
     const [showModalCreateProduct, setShowModalCreateProduct] = useState(false);
+    const [totalPage, setTotalPage] = useState(0);
 
-    const handleOnChange = useCallback((page, pageSize) => {
+    const handleOnChange = useCallback((page) => {
         setCurrentPage(page);
     }, []);
 
@@ -233,17 +235,21 @@ const ProductPage = () => {
                 const product = new ProductDTO(item);
                 return { ...product, ...item.baseUnitProducts };
             });
-            console.log('fetch', formatProducts);
             setProductList(formatProducts);
+            setTotalPage(result.data.pagination.totalPages);
         } catch (err) {
             console.log('fetch err', err);
         }
     };
 
-    const handleSearch = async () => {
+    const handleSearch = async ({ productID, productName, categoryID, minStock, page }) => {
         try {
             const params = {
-                ...filterProduct,
+                productID,
+                productName,
+                categoryID,
+                minStock,
+                page,
             };
             const tokenUser = parseToken('tokenUser');
             const res = await request.get('/api/product/filter', {
@@ -260,8 +266,8 @@ const ProductPage = () => {
                 return { ...product };
             });
             setProductList(formatProduct || []);
+            setTotalPage(res.data.pagination.totalPages);
         } catch (err) {
-            console.log(err);
             fetchProducts();
         }
     };
@@ -273,6 +279,7 @@ const ProductPage = () => {
             minStock: '',
         });
         fetchProducts();
+        setCurrentPage(1);
     };
 
     useEffect(() => {
@@ -315,24 +322,15 @@ const ProductPage = () => {
         }
     };
 
-    const handleNextPage = () => {
-        setCurrentPage(currentPage + 1);
-    };
-
-    const handlePrevPage = () => {
-        if (currentPage - 1 == 0) return;
-        setCurrentPage(currentPage - 1);
-    };
-
     useEffect(() => {
-        fetchProducts(currentPage);
+        handleSearch({ ...filterProduct, page: currentPage });
     }, [currentPage]);
 
     return (
         <div className={cx('wrapper-product')}>
             <ModelFilter
                 columns={columnsModelFilter}
-                handleSubmitFilter={handleSearch}
+                handleSubmitFilter={() => handleSearch({ ...filterProduct, page: 1 })}
                 handleResetFilters={handleResetFilterProduct}
             >
                 {authIsAdmin(currentUser) && (
@@ -351,18 +349,12 @@ const ProductPage = () => {
                 className={cx('my-table')}
                 columns={tableColumns}
                 data={productList}
-                //pageSize={5}
-                //pagination
+                pageSize={5}
+                pagination
                 onChangePage={handleOnChange}
-                //currentPage={currentPage}
+                currentPage={currentPage}
+                total={totalPage * 5}
             />
-            <div className={cx('pagination-wrapper')}>
-                <PaginationUI
-                    currentPage={currentPage}
-                    handleNextPage={handleNextPage}
-                    handlePrevPage={handlePrevPage}
-                />
-            </div>
             {action.productId && action.actionName === 'view' && (
                 <ProductDetail
                     data={productData}

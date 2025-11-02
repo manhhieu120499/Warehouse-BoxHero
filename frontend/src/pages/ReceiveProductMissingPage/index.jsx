@@ -4,8 +4,10 @@ import styles from './ReceiveProductMissingPage.module.scss';
 import { Button, ModelFilter, MyTable, PaginationUI } from '../../components';
 import request, { post } from '../../utils/httpRequest';
 import parseToken from '../../utils/parseToken';
-import { formatStatusOrderPurchaseMissing } from '../../constants';
+import { formatStatusOrderPurchaseMissing, styleMessage } from '../../constants';
 import ModalReceiveProductMissingDetail from '../../components/ModalReceiveProductMissingDetail';
+import toast from 'react-hot-toast';
+import { set } from 'lodash';
 
 const cx = classNames.bind(styles);
 
@@ -15,6 +17,7 @@ const ReceiveProductMissingPage = () => {
     const [receiverPurchaseList, setReceiverPurchaseList] = useState([]);
     const [showDetail, setShowDetail] = useState(false);
     const [indexDetail, setIndexDetail] = useState({});
+    const [totalPage, setTotalPage] = useState(0);
     const [filterReceiverPurchase, setFilterReceiverPurchase] = useState({
         proposalID: '',
         createdAt: '',
@@ -121,44 +124,17 @@ const ReceiveProductMissingPage = () => {
         },
     ];
 
-    const fetchProposals = async () => {
-        try {
-            console.log(page);
-            const token = parseToken('tokenUser');
-            const warehouse = parseToken('warehouse');
-            const res = await request.get('/api/order-purchase-missing/filter', {
-                params: {
-                    warehouseID: warehouse.warehouseID,
-                    status: 'PENDING',
-                },
-                headers: {
-                    token: `Beare ${token.accessToken}`,
-                    employeeid: token.employeeID,
-                    warehouseID: warehouse.warehouseID,
-                },
-            });
-            console.log('missing', res.data.data);
-            setReceiverPurchaseList(res.data.data);
-            setPage(page);
-        } catch (err) {
-            console.log(err);
-        }
-    };
-
-    const handleFilter = async () => {
+    const handleFilter = async ({ pageFilter = page, filter = filterReceiverPurchase }) => {
         try {
             const token = parseToken('tokenUser');
             const warehouse = parseToken('warehouse');
             const filterParam = {};
-            if (filterReceiverPurchase.proposalID)
-                filterParam.orderPurchaseMissingID = filterReceiverPurchase.proposalID;
-            if (filterReceiverPurchase.createdAt) filterParam.createdAt = filterReceiverPurchase.createdAt;
-            if (filterReceiverPurchase.status)
-                filterParam.status =
-                    filterReceiverPurchase.status === 'Đang xử lý' ? 'PENDING' : filterReceiverPurchase.status;
-            if (filterReceiverPurchase.employeeName) filterParam.employeeName = filterReceiverPurchase.employeeName;
+            if (filter.proposalID) filterParam.orderPurchaseMissingID = filter.proposalID;
+            if (filter.createdAt) filterParam.createdAt = filter.createdAt;
+            if (filter.status) filterParam.status = filter.status === 'Đang xử lý' ? 'PENDING' : filter.status;
+            if (filter.employeeName) filterParam.employeeName = filter.employeeName;
 
-            const params = { ...filterParam, warehouseID: warehouse.warehouseID };
+            const params = { ...filterParam, warehouseID: warehouse.warehouseID, page: pageFilter };
             const res = await request.get(`/api/order-purchase-missing/filter`, {
                 params,
                 headers: {
@@ -166,11 +142,14 @@ const ReceiveProductMissingPage = () => {
                     employeeid: token.employeeID,
                 },
             });
-            console.log(res.data);
             setReceiverPurchaseList(res.data.data || []);
+            setTotalPage(res.data.pagination?.totalPages || 0);
         } catch (err) {
             console.log(err);
-            fetchProposals(1);
+            toast.error(
+                Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+                styleMessage,
+            );
         }
     };
 
@@ -182,21 +161,17 @@ const ReceiveProductMissingPage = () => {
             employeeName: '',
         });
         setPage(1);
-        fetchProposals();
-    };
-
-    const handleNextPage = () => {
-        fetchProposals(page + 1);
-    };
-
-    const handlePrevPage = async () => {
-        if (page - 1 <= 0) return;
-        fetchProposals(page - 1);
+        handleFilter({ pageFilter: 1, filter: { status: 'PENDING' } });
     };
 
     useEffect(() => {
-        fetchProposals(page);
+        handleFilter({ pageFilter: page });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page]);
+
+    const onChangePage = (page) => {
+        setPage(page);
+    };
 
     return (
         <div className={cx('wrapper-approve')}>
@@ -205,19 +180,25 @@ const ReceiveProductMissingPage = () => {
                 columns={columnsFilter}
                 handleResetFilters={handleResetFilter}
                 selectInput={selectFilter}
-                handleSubmitFilter={handleFilter}
+                handleSubmitFilter={() => {
+                    setPage(1);
+                    handleFilter({ pageFilter: 1 });
+                }}
             />
             <div className={cx('table-container-header')}>
                 <h1 className={cx('title-approve')}>Danh sách phiếu nhập thiếu</h1>
             </div>
             <div className={cx('table-container')}>
                 <MyTable
+                    currentPage={page}
                     className={cx('my-table')}
                     columns={columnsTable}
                     data={receiverPurchaseList}
                     pageSize={pageSize}
+                    pagination
+                    total={totalPage * 5}
+                    onChangePage={onChangePage}
                 />
-                <PaginationUI currentPage={page} handleNextPage={handleNextPage} handlePrevPage={handlePrevPage} />
             </div>
 
             <ModalReceiveProductMissingDetail

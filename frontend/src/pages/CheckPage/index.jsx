@@ -21,37 +21,31 @@ const ImportProduct = () => {
     const [listInventoryCheck, setListInventoryCheck] = useState([]);
     const [inventoryCheckDetail, setInventoryCheckDetail] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-
-    const handleNextPage = () => {
-        setCurrentPage(currentPage + 1);
-    };
-
-    const handlePrevPage = () => {
-        if (currentPage - 1 == 0) return;
-        setCurrentPage(currentPage - 1);
-    };
+    const [totalPage, setTotalPage] = useState(0);
 
     useEffect(() => {
-        fetchData(currentPage);
+        handleSubmitFilter(
+            filterInventoryCheck.status,
+            filterInventoryCheck.checkStatus,
+            filterInventoryCheck.createdAt,
+            filterInventoryCheck.employeeName,
+            filterInventoryCheck.inventoryCheckID,
+            currentPage,
+        );
     }, [currentPage]);
 
     const fetchData = async (currentPage) => {
-        console.log('fetch data');
-
         const warehouseID = parseToken('warehouse').warehouseID;
         const res = await getAllInventoryCheck(warehouseID, currentPage);
         if (res.status == 200) {
             setListInventoryCheck(res.data.data);
+            setTotalPage(res.data.pagination.totalPages);
         }
     };
 
     useEffect(() => {
         fetchData();
     }, []);
-
-    useEffect(() => {
-        console.log(listInventoryCheck);
-    }, [listInventoryCheck]);
 
     const [filterInventoryCheck, setFilterInventoryCheck] = useState({
         inventoryCheckID: '',
@@ -204,39 +198,42 @@ const ImportProduct = () => {
         },
     ];
 
-    const handleSubmitFilter = async () => {
+    const handleSubmitFilter = async (
+        statusFilter = '',
+        checkStatusFilter = '',
+        createdAt,
+        employeeName,
+        inventoryCheckID,
+        page,
+    ) => {
         const warehouse = parseToken('warehouse');
         const warehouseID = warehouse.warehouseID;
         let status = '';
         let checkStatus = '';
-        if (filterInventoryCheck.status === 'ALL') {
+        if (statusFilter === 'ALL') {
             status = '';
         } else {
-            status = filterInventoryCheck.status;
+            status = statusFilter;
         }
-        if (filterInventoryCheck.checkStatus === 'ALL') {
+        if (checkStatusFilter === 'ALL') {
             checkStatus = '';
         } else {
-            checkStatus = filterInventoryCheck.checkStatus;
+            checkStatus = checkStatusFilter;
         }
-        console.log({
-            ...filterInventoryCheck,
-            warehouseID,
-            currentPage,
-            status,
-            checkStatus,
-        });
 
         const res = await getFilterInventoryCheck({
-            ...filterInventoryCheck,
             warehouseID,
-            currentPage,
+            currentPage: page,
             status,
             checkStatus,
+            inventoryCheckID,
+            createdAt,
+            employeeName,
         });
 
         if (res?.data?.status == 'OK') {
             setListInventoryCheck(res.data.data);
+            setTotalPage(res.data.pagination.totalPages);
         }
     };
 
@@ -252,12 +249,26 @@ const ImportProduct = () => {
         setCurrentPage(1);
     };
 
+    const onChangePage = (page) => {
+        setCurrentPage(page);
+    };
+
     return (
         <div className={cx('wrapper-import-product')}>
             <ModelFilter
                 columns={columnsFilter}
                 selectInput={selectInput}
-                handleSubmitFilter={handleSubmitFilter}
+                handleSubmitFilter={() => {
+                    handleSubmitFilter(
+                        filterInventoryCheck.status,
+                        filterInventoryCheck.checkStatus,
+                        filterInventoryCheck.createdAt,
+                        filterInventoryCheck.employeeName,
+                        filterInventoryCheck.inventoryCheckID,
+                        1,
+                    );
+                    setCurrentPage(1);
+                }}
                 handleResetFilters={handleResetFilter}
             >
                 <Button
@@ -276,14 +287,15 @@ const ImportProduct = () => {
                     <p className={cx('table-title')}>Danh sách phiếu kiểm kê</p>
                 </div>
 
-                <MyTable data={listInventoryCheck} columns={columnsDefineSuggestProposal} />
-                <div className={cx('pagination-table')}>
-                    <PaginationUI
-                        currentPage={currentPage}
-                        handleNextPage={handleNextPage}
-                        handlePrevPage={handlePrevPage}
-                    />
-                </div>
+                <MyTable
+                    data={listInventoryCheck}
+                    columns={columnsDefineSuggestProposal}
+                    pagination
+                    total={totalPage * 5}
+                    pageSize={5}
+                    onChangePage={onChangePage}
+                    currentPage={currentPage}
+                />
             </div>
 
             {showDetailInventoryCheck && (
