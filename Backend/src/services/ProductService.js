@@ -169,11 +169,17 @@ class ProductService {
                     offset: (page - 1) * LIMIT_PAGE,
                     limit: LIMIT_PAGE,
                 });
+                const total = await Product.count();
+                const totalPages = Math.ceil(total / LIMIT_PAGE);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách sản phẩm thành công',
                     products,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
                 });
             } catch (err) {
                 reject({
@@ -185,9 +191,10 @@ class ProductService {
             }
         });
     }
-    searchProduct(productID, productName, categoryID, minStock, supplierID) {
+    searchProduct({ productID, productName, categoryID, minStock, supplierID, page = 1 }) {
         return new Promise(async (resolve, reject) => {
             try {
+                const LIMIT_PAGE = 5;
                 //console.log(minStock)
                 let where = {};
                 if (productID) where.productID = { [Op.like]: `%${productID}%` };
@@ -195,6 +202,7 @@ class ProductService {
                 if (minStock) where.minStock = minStock;
                 if (categoryID) where.categoryID = categoryID;
                 if (supplierID) where.supplierID = supplierID;
+
                 const resultSearch = await Product.findAll({
                     where,
                     include: [
@@ -204,12 +212,20 @@ class ProductService {
                             as: 'category',
                         },
                     ],
+                    offset: (page - 1) * LIMIT_PAGE,
+                    limit: LIMIT_PAGE,
                 });
+                const total = await Product.count({ where });
+                const totalPages = Math.ceil(total / LIMIT_PAGE);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Tìm kiếm thành công',
                     products: resultSearch,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
                 });
             } catch (err) {
                 console.error(err);
@@ -257,6 +273,8 @@ class ProductService {
     filterProduct(data) {
         return new Promise(async (resolve, reject) => {
             const condition = {};
+            const page = data?.page || 1;
+            const limit = 5;
             if (data?.status) condition.status = data.status;
             if (data?.minAmount) condition.amount = { [Op.gt]: data.minAmount };
             try {
@@ -269,12 +287,20 @@ class ProductService {
                             attributes: ['baseUnitName'],
                         },
                     ],
+                    limit,
+                    offset: (page - 1) * limit,
                 });
+                const total = await Product.count({ where: condition });
+                const totalPages = Math.ceil(total / limit);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách sản phẩm thành công',
                     data: products,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
                 });
             } catch (err) {
                 console.error(err);

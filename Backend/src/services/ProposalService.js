@@ -337,11 +337,12 @@ class ProposalService {
     filterProposal(data) {
         return new Promise(async (resolve, reject) => {
             try {
+                const limit = 5;
                 const {
                     proposalID,
                     warehouseID,
                     status,
-                    page,
+                    page = 1,
                     employeeIDCreate,
                     employeeIDApproval,
                     updatedAt,
@@ -363,7 +364,9 @@ class ProposalService {
                         { model: Employee, as: 'approver' },
                         { model: Warehouse, as: 'warehouse' },
                     ],
-                    order: [['createdAt', 'DESC']], // Mới nhất lên đầu
+                    order: [['createdAt', 'DESC']],
+                    limit,
+                    offset: (page - 1) * limit,
                 };
 
                 // Thêm điều kiện lọc
@@ -408,19 +411,21 @@ class ProposalService {
                     };
                 }
 
-                // Phân trang
-                if (page) {
-                    const offset = (page - 1) * LIMIT_PAGE;
-                    options.limit = LIMIT_PAGE;
-                    options.offset = offset;
-                }
-
                 const proposals = await Proposal.findAll(options);
+
+                const total = await db.Proposal.count({ where: options.where });
+
+                const totalPages = Math.ceil(total / limit);
+
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách đề xuất theo bộ lọc thành công',
                     proposals,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
                 });
             } catch (err) {
                 console.error(err);

@@ -78,11 +78,18 @@ class InventoryCheckService {
                     limit: LIMIT_PAGE,
                 });
 
+                const total = await InventoryCheck.count({ where: { warehouseID } });
+
+                const totalPages = Math.ceil(total / LIMIT_PAGE);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách kiểm kê thành công',
                     data: response,
+                    pagination: {
+                        totalPages,
+                        currentPage: page,
+                    },
                 });
             } catch (err) {
                 console.log(err);
@@ -180,11 +187,23 @@ class InventoryCheckService {
                     offset: (page - 1) * LIMIT_PAGE,
                     limit: LIMIT_PAGE,
                 });
+                const total = await InventoryCheck.count({
+                    where: {
+                        warehouseID,
+                        ...date,
+                        ...filterOptions,
+                    },
+                });
+                const totalPages = Math.ceil(total / LIMIT_PAGE);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách kiểm kê thành công',
                     data: response,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
                 });
             } catch (err) {
                 console.log(err);
