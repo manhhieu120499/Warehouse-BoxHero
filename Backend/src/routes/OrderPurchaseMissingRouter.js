@@ -3,12 +3,17 @@ const router = express.Router();
 const OrderPurchaseMissingController = require('../controllers/OrderPurchaseMissingController');
 const { checkFilter } = require('../validates/orderPurchaseMissing.validation');
 const validate = require('../validates/validate');
-const { authUserIsManager, authUser } = require('../middleware/AuthMiddleware');
+const { authUserIsManagerOrStockReceiver } = require('../middleware/AuthMiddleware');
 
-router.get('/get-all', authUserIsManager, OrderPurchaseMissingController.getAllOrderPurchaseMissing);
+router.get('/get-all', authUserIsManagerOrStockReceiver, OrderPurchaseMissingController.getAllOrderPurchaseMissing);
+router.get(
+    '/get-by-id/:id',
+    authUserIsManagerOrStockReceiver,
+    OrderPurchaseMissingController.getOrderPurchaseMissingById,
+);
 router.get(
     '/filter',
-    authUserIsManager,
+    authUserIsManagerOrStockReceiver,
     checkFilter,
     validate,
     OrderPurchaseMissingController.filterOrderPurchaseMissing,

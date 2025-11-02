@@ -213,9 +213,139 @@ const authUserIsManagerOrStockReceiver = async (req, res, next) => {
     }
 };
 
+const authUserIsManagerOrStockDispatcher = async (req, res, next) => {
+    try {
+        const employeeID = req.headers['employeeid'];
+        const warehouseID = req.headers['warehouseid'];
+        const token = req.headers.token;
+
+        if (!token) {
+            return res.status(HTTP_BAD_REQUEST).json({
+                status: 'ERR',
+                message: 'Token là bắt buộc',
+            });
+        }
+
+        const accessToken = token.split(' ')[1];
+
+        jwt.verify(accessToken, process.env.ACCESS_TOKEN, (err, user) => {
+            if (err) {
+                return res.status(HTTP_UNAUTHORIZED).json({
+                    status: 'ERR',
+                    message: 'Token không hợp lệ',
+                });
+            }
+
+            if (employeeID != user.payload.employeeID) {
+                return res.status(HTTP_UNAUTHORIZED).json({
+                    status: 'ERR',
+                    message: 'Employee ID không trùng với token',
+                });
+            }
+
+            // --- Ưu tiên check STOCK_DISPATCHER trước ---
+            const hasStockDispatcherRole = user.payload.roles.some((role) => role.roleName === 'STOCK_DISPATCHER');
+            if (hasStockDispatcherRole) {
+                return next(); // Nếu là STOCK_DISPATCHER thì pass luôn
+            }
+
+            // --- Nếu không phải STOCK_DISPATCHER thì check System Admin / Ware Manager ---
+            const hasWareManagerRole = user.payload.roles.some((role) => role.roleName === 'WARE_MANAGER');
+            const hasSysAdminRole = user.payload.roles.some((role) => role.roleName === 'SYSTEM_ADMIN');
+
+            if (!hasSysAdminRole && !hasWareManagerRole) {
+                return res.status(HTTP_FORBIDDEN).json({
+                    status: 'ERR',
+                    message: 'Bạn không có quyền truy cập tài nguyên này',
+                });
+            }
+
+            if (hasWareManagerRole && user.payload.warehouseID !== warehouseID && !hasSysAdminRole) {
+                return res.status(HTTP_FORBIDDEN).json({
+                    status: 'ERR',
+                    message: 'Bạn không có quyền truy cập kho này',
+                });
+            }
+
+            return next();
+        });
+    } catch (e) {
+        return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
+            status: 'ERR',
+            message: [e.message],
+        });
+    }
+};
+
+const authUserIsManagerOrAccountant = async (req, res, next) => {
+    try {
+        const employeeID = req.headers['employeeid'];
+        const warehouseID = req.headers['warehouseid'];
+        const token = req.headers.token;
+
+        if (!token) {
+            return res.status(HTTP_BAD_REQUEST).json({
+                status: 'ERR',
+                message: 'Token là bắt buộc',
+            });
+        }
+
+        const accessToken = token.split(' ')[1];
+
+        jwt.verify(accessToken, process.env.ACCESS_TOKEN, (err, user) => {
+            if (err) {
+                return res.status(HTTP_UNAUTHORIZED).json({
+                    status: 'ERR',
+                    message: 'Token không hợp lệ',
+                });
+            }
+
+            if (employeeID != user.payload.employeeID) {
+                return res.status(HTTP_UNAUTHORIZED).json({
+                    status: 'ERR',
+                    message: 'Employee ID không trùng với token',
+                });
+            }
+
+            // --- Ưu tiên check ACCOUNTANT trước ---
+            const hasAccountantRole = user.payload.roles.some((role) => role.roleName === 'ACCOUNTANT');
+            if (hasAccountantRole) {
+                return next(); // Nếu là ACCOUNTANT thì pass luôn
+            }
+
+            // --- Nếu không phải ACCOUNTANT thì check System Admin / Ware Manager ---
+            const hasWareManagerRole = user.payload.roles.some((role) => role.roleName === 'WARE_MANAGER');
+            const hasSysAdminRole = user.payload.roles.some((role) => role.roleName === 'SYSTEM_ADMIN');
+
+            if (!hasSysAdminRole && !hasWareManagerRole) {
+                return res.status(HTTP_FORBIDDEN).json({
+                    status: 'ERR',
+                    message: 'Bạn không có quyền truy cập tài nguyên này',
+                });
+            }
+
+            if (hasWareManagerRole && user.payload.warehouseID !== warehouseID && !hasSysAdminRole) {
+                return res.status(HTTP_FORBIDDEN).json({
+                    status: 'ERR',
+                    message: 'Bạn không có quyền truy cập kho này',
+                });
+            }
+
+            return next();
+        });
+    } catch (e) {
+        return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
+            status: 'ERR',
+            message: [e.message],
+        });
+    }
+};
+
 module.exports = {
     authUser,
     authUserIsManager,
     authUserIsManagerWithoutWarehouse,
     authUserIsManagerOrStockReceiver,
+    authUserIsManagerOrStockDispatcher,
+    authUserIsManagerOrAccountant,
 };

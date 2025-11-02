@@ -6,6 +6,7 @@ const {
     checkGetAvailableBoxes,
     checkGetBoxesContainingProduct,
     checkGetBoxDetails,
+    checkGetBoxesContainingBatch,
 } = require('../validates/batch.validation');
 const validate = require('../validates/validate');
 const BatchController = require('../controllers/BatchController');
@@ -22,6 +23,7 @@ router.get(
     validate,
     BatchController.getBatchesWithoutLocation,
 );
+router.get('/count-batches-without-location', authUser, BatchController.countBatchesWithoutLocation);
 router.get('/available-boxes', authUser, checkGetAvailableBoxes, validate, BatchController.getAvailableBoxes);
 router.get(
     '/boxes-containing-product',
@@ -29,6 +31,13 @@ router.get(
     checkGetBoxesContainingProduct,
     validate,
     BatchController.getBoxesContainingProduct,
+);
+router.get(
+    '/boxes-containing-batch',
+    authUser,
+    checkGetBoxesContainingBatch,
+    validate,
+    BatchController.getBoxesContainingBatch,
 );
 router.get('/box-details', authUser, checkGetBoxDetails, validate, BatchController.getBoxDetails);
 router.get('/all-batch-by-product', authUser, BatchController.getAllBatchByProductID);

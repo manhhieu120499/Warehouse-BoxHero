@@ -21,6 +21,15 @@ class BatchController {
         }
     }
 
+    async countBatchesWithoutLocation(req, res) {
+        try {
+            const { statusHttp, ...response } = await BatchService.countBatchesWithoutLocation();
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
+
     async getAvailableBoxes(req, res) {
         try {
             const { warehouseID } = req.query;
@@ -35,6 +44,16 @@ class BatchController {
         try {
             const { productID, warehouseID } = req.query;
             const { statusHttp, ...response } = await BatchService.getBoxesContainingProduct(productID, warehouseID);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
+
+    async getBoxesContainingBatch(req, res) {
+        try {
+            const { batchID, warehouseID } = req.query;
+            const { statusHttp, ...response } = await BatchService.getBoxesContainingBatch(batchID, warehouseID);
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp).json(err);
@@ -59,7 +78,6 @@ class BatchController {
             return res.status(err.statusHttp).json(err);
         }
     }
-    
 }
 
 module.exports = new BatchController();

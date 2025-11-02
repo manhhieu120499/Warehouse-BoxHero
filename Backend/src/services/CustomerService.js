@@ -62,7 +62,7 @@ class CustomerService {
                 const whereClause = {};
                 if (data?.customerID) whereClause.customerID = data.customerID;
                 if (data?.customerName) whereClause.customerName = { [Op.like]: `%${data.customerName}%` };
-                if (data?.customerPhone) whereClause.customerPhone = { [Op.like]: `%${data.customerPhone}%` };
+                if (data?.customerPhone) whereClause.phone = { [Op.like]: `%${data.customerPhone}%` };
                 if (data?.email) whereClause.email = data.email;
 
                 const customers = await Customer.findAll({ where: whereClause });
