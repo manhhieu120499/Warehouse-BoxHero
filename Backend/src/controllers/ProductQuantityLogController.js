@@ -10,9 +10,7 @@ class ProductQuantityLogController {
     // get /get-all
     async getLogByProductID(req, res) {
         try {
-            const { statusHttp, ...response } = await ProductQuantityLogService.getLogByProductID({
-                productID: req.params.productID,
-            });
+            const { statusHttp, ...response } = await ProductQuantityLogService.getLogByProductID(req.query);
             return res.status(statusHttp).json(response);
         } catch (e) {
             console.log(e);

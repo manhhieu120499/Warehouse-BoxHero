@@ -22,14 +22,7 @@ class ProductController {
     }
     async searchProduct(req, res) {
         try {
-            console.log(req.query);
-            const { productID, productName, categoryID, minStock } = req.query;
-            const { statusHttp, ...response } = await ProductService.searchProduct(
-                productID,
-                productName,
-                categoryID,
-                minStock,
-            );
+            const { statusHttp, ...response } = await ProductService.searchProduct(req.query);
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp).json(err);

@@ -103,7 +103,16 @@ class OrderPurchaseMissingService {
     filterOrderPurchaseMissing(query) {
         return new Promise(async (resolve, reject) => {
             try {
-                const { orderPurchaseMissingID, warehouseID, employeeID, employeeName, createdAt, ...rest } = query;
+                const limit = 5;
+                const {
+                    orderPurchaseMissingID,
+                    warehouseID,
+                    employeeID,
+                    employeeName,
+                    createdAt,
+                    page = 1,
+                    ...rest
+                } = query;
                 const filter = {};
                 if (orderPurchaseMissingID) filter.orderPurchaseMissingID = orderPurchaseMissingID;
                 const queryEmployee = {};
@@ -175,11 +184,73 @@ class OrderPurchaseMissingService {
                         },
                     ],
                     order: [['createdAt', 'DESC']],
+                    limit,
+                    offset: (page - 1) * limit,
                 });
+                const total = await OrderPurchaseMissing.count({
+                    where: {
+                        ...filter,
+                        ...rest,
+                        ...date,
+                    },
+                    include: [
+                        {
+                            model: OrderPurchase,
+                            attributes: ['orderPurchaseID', 'warehouseID'],
+                            as: 'orderPurchase',
+                            where: { warehouseID },
+                            include: [
+                                {
+                                    model: Employee,
+                                    as: 'employee',
+                                    where: queryEmployee,
+                                },
+                            ],
+                        },
+                        {
+                            model: OrderPurchaseMissingDetail,
+                            as: 'orderPurchaseMissingDetails',
+                            include: [
+                                {
+                                    model: OrderPurchaseDetail,
+                                    as: 'orderPurchaseDetail',
+                                    include: [
+                                        {
+                                            model: Batch,
+                                            as: 'batch',
+                                            include: [
+                                                {
+                                                    model: Product,
+                                                    as: 'product',
+                                                },
+                                                {
+                                                    model: Unit,
+                                                    as: 'unit',
+                                                },
+                                                {
+                                                    model: Supplier,
+                                                    as: 'supplier',
+                                                },
+                                            ],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                    order: [['createdAt', 'DESC']],
+                    limit,
+                    offset: (page - 1) * limit,
+                });
+                const totalPages = Math.ceil(total / limit);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     data: orderPurchaseMissingFind,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
                 });
             } catch (e) {
                 console.log(e);
