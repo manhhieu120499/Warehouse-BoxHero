@@ -69,25 +69,30 @@
     }
 
     th.stt {
-        width: 150px;
+        width: 60px;
     }
     th.productID {
-        width: 150px;
+        width: 110px;
     }
     th.productName {
         width: 250px;
     }
     th.unit {
-        width: 200px;
+        width: 90px;
     }
     th.num {
-        width: 150px;
+        width: 80px;
     }
     th.note {
-        width: 280px;
+        width: 160px;
     }
     th.action {
-        width: 180px;
+        text-align: center;
+        width: 100px;
+    }
+    td.action {
+        display: flex;
+        justify-content: center;
     }
 
     th {

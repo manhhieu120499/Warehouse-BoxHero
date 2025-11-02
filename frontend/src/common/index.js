@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 const convertDateVN = (dateString) => {
     const date = new Date(dateString);
     const options = {
@@ -13,4 +15,12 @@ const convertDateVN = (dateString) => {
     return new Intl.DateTimeFormat('sv-SE', options).format(date);
 };
 
-export { convertDateVN };
+const handleCopy = (data) => {
+    return _.cloneDeep(data);
+};
+
+const authIsAdmin = (user) => {
+    return user?.empRole?.some((role) => role.roleName === 'SYSTEM_ADMIN' || role.roleName === 'WARE_MANAGER');
+};
+
+export { convertDateVN, handleCopy, authIsAdmin };

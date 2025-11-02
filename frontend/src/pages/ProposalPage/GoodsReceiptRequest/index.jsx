@@ -10,6 +10,7 @@ import parseToken from '../../../utils/parseToken';
 import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';
 import { Search } from 'lucide-react';
+import { authIsAdmin } from '../../../common';
 
 const cx = classNames.bind(styles);
 
@@ -118,8 +119,11 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                 handleReset();
             }
         } catch (err) {
+            toast.error(
+                Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+                styleMessage,
+            );
             console.log(err);
-            toast.error(err.response.data.messages[0], styleMessage);
             return;
         }
     };
@@ -355,7 +359,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                         </Button>
                     </div>
                 )}
-                {typeDetail && proposalDetail?.status === 'PENDING' && (
+                {typeDetail && proposalDetail?.status === 'PENDING' && authIsAdmin(currentUser) && (
                     <div>
                         <Button success onClick={() => handleApproveProposal(proposalDetail.proposalID, 'COMPLETED')}>
                             <span>Chấp nhận</span>

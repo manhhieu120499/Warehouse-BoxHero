@@ -110,6 +110,35 @@ export const fetchOrderMissing = async (warehouseID) => {
         return err;
     }
 };
+
+export const fetchOrderMissingById = async (orderMissingID) => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const warehouseID = warehouse.warehouseID;
+
+        const res = await request.get(`/api/order-purchase-missing/get-by-id/${orderMissingID}`, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+            },
+            params: {
+                warehouseID: warehouseID,
+                employeeID: token.employeeID,
+                status: 'PENDING',
+            },
+        });
+        return res;
+    } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
+    }
+};
 export const filterOrderMissing = async (params) => {
     try {
         const token = parseToken('tokenUser');

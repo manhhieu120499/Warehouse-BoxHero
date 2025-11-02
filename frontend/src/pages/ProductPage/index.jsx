@@ -19,6 +19,7 @@ import { formatStatusProduct, styleMessage } from '../../constants';
 import PaginationUI from '@/components/PaginationUI';
 import ModalProductCreate from '../../components/ModalProductCreate';
 import ProductHistory from '../../components/ProductHistory';
+import { authIsAdmin } from '../../common';
 
 const cx = classNames.bind(styles);
 
@@ -194,14 +195,16 @@ const ProductPage = () => {
                                 <Eye size={20} />
                             </button>
                         </Tippy>
-                        <Tippy content={'Chỉnh sửa'} placement="bottom-end">
-                            <button
-                                className={cx('action-table-icon')}
-                                onClick={() => handleShowEditProduct(record.sku)}
-                            >
-                                <PencilIcon size={20} />
-                            </button>
-                        </Tippy>
+                        {authIsAdmin(currentUser) && (
+                            <Tippy content={'Chỉnh sửa'} placement="bottom-end">
+                                <button
+                                    className={cx('action-table-icon')}
+                                    onClick={() => handleShowEditProduct(record.sku)}
+                                >
+                                    <PencilIcon size={20} />
+                                </button>
+                            </Tippy>
+                        )}
                         <Tippy content={'Lịch sử'} placement="bottom-end">
                             <button className={cx('action-table-icon')} onClick={() => handleShowHistory(record.sku)}>
                                 <HistoryIcon size={20} />
@@ -304,8 +307,11 @@ const ProductPage = () => {
             toast.success(result.message, styleMessage);
             fetchProducts();
         } catch (err) {
-            console.error(err);
-            toast.error(err.response.data.message, styleMessage);
+            toast.error(
+                Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+                styleMessage,
+            );
+            console.log(err);
         }
     };
 
@@ -329,9 +335,16 @@ const ProductPage = () => {
                 handleSubmitFilter={handleSearch}
                 handleResetFilters={handleResetFilterProduct}
             >
-                <Button primary medium onClick={() => setShowModalCreateProduct(true)} leftIcon={<Plus size={20} />}>
-                    <span>Tạo sản phẩm</span>
-                </Button>
+                {authIsAdmin(currentUser) && (
+                    <Button
+                        primary
+                        medium
+                        onClick={() => setShowModalCreateProduct(true)}
+                        leftIcon={<Plus size={20} />}
+                    >
+                        <span>Tạo sản phẩm</span>
+                    </Button>
+                )}
             </ModelFilter>
             <h1>Danh sách sản phẩm</h1>
             <MyTable

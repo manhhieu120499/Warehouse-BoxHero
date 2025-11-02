@@ -108,8 +108,11 @@ export default function GoodsIssueRequest() {
                 handleReset();
             }
         } catch (err) {
+            toast.error(
+                Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+                styleMessage,
+            );
             console.log(err);
-            toast.error(err.response.data.messages[0], styleMessage);
             return;
         }
     };

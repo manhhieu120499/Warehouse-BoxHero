@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './BatchPage.module.scss';
 import Button from '../../components/Button';
@@ -7,6 +7,7 @@ import parseToken from '@/utils/parseToken';
 import Tippy from '@tippyjs/react';
 import BoxDetail from './BoxDetail';
 import UpdateLocation from './UpdateLocation';
+import ChangeLocation from './ChangeLocation';
 
 const cx = classNames.bind(styles);
 
@@ -15,7 +16,9 @@ const BatchPage = () => {
     const [selectedBox, setSelectedBox] = useState(null);
     const [showWareHouseTemp, setShowWareHouseTemp] = useState(false);
     const [showUpdateLocation, setShowUpdateLocation] = useState(false);
+    const [showChangeLocation, setShowChangeLocation] = useState(false);
     const [batchesUpdate, setBatchesUpdate] = useState([]);
+    const [batchesMove, setBatchesMove] = useState([]);
 
     const volumePercentage = (maxAcreage, remainingAcreage) => {
         const volume = (remainingAcreage / maxAcreage) * 100;
@@ -124,7 +127,13 @@ const BatchPage = () => {
                     KHU VỰC CHỜ NHẬP HÀNG
                 </Button>
             </div>
-            <BoxDetail isOpen={!!selectedBox} onClose={() => setSelectedBox(null)} boxID={selectedBox} />
+            <BoxDetail
+                isOpen={!!selectedBox}
+                onClose={() => setSelectedBox(null)}
+                boxID={selectedBox}
+                setBatchesUpdate={setBatchesMove}
+                setShowChangeLocation={setShowChangeLocation}
+            />
             <BoxDetail
                 isOpen={showWareHouseTemp}
                 onClose={() => setShowWareHouseTemp(false)}
@@ -135,6 +144,13 @@ const BatchPage = () => {
                 isOpen={showUpdateLocation}
                 onClose={() => setShowUpdateLocation(false)}
                 batches={batchesUpdate}
+                shelvesData={shelvesData}
+                fetchData={fetchData}
+            />
+            <ChangeLocation
+                isOpen={showChangeLocation}
+                onClose={() => setShowChangeLocation(false)}
+                batches={batchesMove}
                 shelvesData={shelvesData}
                 fetchData={fetchData}
             />

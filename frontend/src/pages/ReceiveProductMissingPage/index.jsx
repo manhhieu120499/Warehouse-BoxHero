@@ -108,13 +108,13 @@ const ReceiveProductMissingPage = () => {
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                     <Button
                         primary
-                        small
+                        medium
                         onClick={() => {
                             setIndexDetail(record);
                             setShowDetail(true);
                         }}
                     >
-                        <span>Xem</span>
+                        <span>Xem chi tiết</span>
                     </Button>
                 </div>
             ),

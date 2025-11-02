@@ -163,6 +163,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
         try {
             const res = await saveReceipt(payload);
             toast.success(res.data.message, styleMessage);
+            handleFetchProposalMissingOrderPurchase();
             onClose();
         } catch (err) {
             console.log(err);

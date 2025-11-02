@@ -10,6 +10,7 @@ import { styleMessage } from '../../../constants';
 import { searchCustomer } from '../../../services/customer.service';
 import { createOrderReleaseProposal, updateStatusOrderReleaseProposal } from '../../../services/proposal.service';
 import globalStyles from '@/components/GlobalStyle/GlobalStyle.module.scss';
+import { authIsAdmin } from '../../../common';
 
 const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyles);
@@ -110,7 +111,7 @@ const ModalCreateApproveRelease = ({
                 employeeIDApproval: currentUser.empId,
                 status: status,
             });
-            if (resultApprove.data.status === 'OK') {
+            if (resultApprove.data?.status === 'OK') {
                 toast.success('Cập nhật trạng thái phiếu đề xuất xuất kho thành công', styleMessage);
                 onClose();
                 refetchData();
@@ -250,7 +251,7 @@ const ModalCreateApproveRelease = ({
                             </Button>
                         </div>
                     )}
-                    {typeDetail && initialData?.status === 'PENDING' && (
+                    {typeDetail && initialData?.status === 'PENDING' && authIsAdmin(currentUser) && (
                         <div>
                             <Button
                                 success

@@ -6,10 +6,14 @@ import { getBoxDetails } from '../../../services/box.service';
 import parseToken from '../../../utils/parseToken';
 import { convertDateVN } from '@/common';
 import { getBatchesWithoutLocation } from '../../../services/batch.service';
-import { set } from 'react-hook-form';
+import { MapPinPen, MoveIcon } from 'lucide-react';
+import Tippy from '@tippyjs/react';
+import { authIsAdmin } from '../../../common';
+import { useSelector } from 'react-redux';
+
 const cx = classNames.bind(styles);
 
-const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUpdate }) => {
+const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChangeLocation, setBatchesUpdate }) => {
     const [batchID, setBatchID] = useState('');
     const [productID, setProductID] = useState('');
     const [boxDetail, setBoxDetail] = useState({});
@@ -17,6 +21,7 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
     const [batchesWithoutLocation, setBatchesWithoutLocation] = useState([]);
     const [selectedBatches, setSelectedBatches] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
+    const currentUser = useSelector((state) => state.AuthSlice.user);
 
     const handleSelectAllChange = () => {
         if (selectAll) {
@@ -123,8 +128,20 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
     };
 
     const handleUpdateLocation = () => {
-        setShowUpdateLocation(true);
-        setBatchesUpdate(selectedBatches);
+        if (boxID) {
+            const location =
+                boxDetail?.boxName + ' - ' + boxDetail?.floor?.floorName + ' - ' + boxDetail?.floor?.shelf?.shelfName;
+            setBatchesUpdate({
+                boxID: boxID,
+                batches: selectedBatches,
+                location,
+            });
+            setShowChangeLocation(true);
+        } else {
+            // chuyển vị trí kho tạm
+            setBatchesUpdate(selectedBatches);
+            setShowUpdateLocation(true);
+        }
         handleCLoseModel();
     };
 
@@ -202,14 +219,14 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
                     <Button primary className={cx('btn-search')} onClick={handleReset}>
                         Đặt lại
                     </Button>
-                    {!boxID && (
+                    {authIsAdmin(currentUser) && (
                         <Button
                             disabled={selectedBatches.length === 0}
                             primary
                             className={cx('btn-search')}
                             onClick={handleUpdateLocation}
                         >
-                            Cập nhật vị trí
+                            {!boxID ? 'Cập nhật vị trí' : 'Chuyển vị trí'}
                         </Button>
                     )}
                 </div>
@@ -219,7 +236,7 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
                     <table className={cx('table')}>
                         <thead>
                             <tr>
-                                {!boxID && (
+                                {authIsAdmin(currentUser) && (
                                     <th>
                                         <input type="checkbox" checked={selectAll} onChange={handleSelectAllChange} />
                                     </th>
@@ -239,7 +256,7 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setBatchesUp
                                 ?.filter((batch) => batch.batch_boxes?.quantity > 0 || !boxID)
                                 .map((batch, index) => (
                                     <tr key={index}>
-                                        {!boxID && (
+                                        {authIsAdmin(currentUser) && (
                                             <td>
                                                 <input
                                                     type="checkbox"

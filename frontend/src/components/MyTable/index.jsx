@@ -47,8 +47,8 @@ export default function MyTable({
                                 ...props.style,
                                 padding: '8px',
                                 border: `1px solid rgba(0,0,0,.05)`,
-                                borderRightColor:'transparent',
-                                borderLeftColor:'transparent',
+                                borderRightColor: 'transparent',
+                                borderLeftColor: 'transparent',
                             }}
                         >
                             {props.children}

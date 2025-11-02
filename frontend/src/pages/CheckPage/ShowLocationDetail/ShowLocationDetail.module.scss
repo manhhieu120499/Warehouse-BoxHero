@@ -34,10 +34,6 @@
     font-size: 1.4rem;
 }
 
-.tableWrap {
-    overflow-x: auto;
-}
-
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -253,10 +249,6 @@
 }
 
 .main-panel {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr); /* 10 cột */
-    grid-template-rows: repeat(2, 1fr);
-    gap: 10px;
     height: 100%;
 
     .shelf {
@@ -278,7 +270,7 @@
                 border-radius: 3px;
                 width: 100%;
                 border: 2px solid transparent;
-                padding: 8px 12px;
+                padding: 12px 12px;
                 &.empty {
                     background: #ccffcc; // xanh lá
                 }
@@ -300,7 +292,7 @@
             }
 
             span {
-                font-size: 6px;
+                font-size: 8px;
                 display: block;
                 text-align: center;
                 margin: 0;
@@ -311,17 +303,6 @@
     }
 }
 
-.update-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.action {
-    display: flex;
-    margin-top: 15px;
-    justify-content: flex-end;
-}
-
 .location-update {
     flex: 1;
 }
@@ -329,16 +310,24 @@
 .update-info {
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    h3 {
+        flex-shrink: 0;
+    }
 }
 
-.batches-update {
+.tableWrap {
     flex: 1;
+    overflow-y: auto;
 }
 
 .action {
+    flex-shrink: 0;
+    margin-top: 10px;
     display: flex;
-    margin-top: 15px;
     justify-content: flex-end;
+    gap: 10px;
 }
 
 .box-wrapper {

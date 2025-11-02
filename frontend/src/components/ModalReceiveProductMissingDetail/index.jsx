@@ -10,12 +10,14 @@ import { formatStatusOrderPurchaseMissing, styleMessage } from '../../constants'
 import parseToken from '../../utils/parseToken';
 import request from '../../utils/httpRequest';
 import PopupMessage from '../PopupMessage';
+import CreateImportReceiptMissingDialog from '../../pages/ReceiveProductPage/CreateImportReceiptMissingDialog';
 
 const cx = classNames.bind(styles);
 
 const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
-    console.log(data);
+    console.log('data', data);
     const [showPopConfirmSaveMissing, setShowPopConfirmSaveMissing] = useState(false);
+    const [showPurchaseSupplement, setShowPurchaseSupplement] = useState(false);
 
     const handleUpdateStatus = async (status) => {
         try {
@@ -188,9 +190,14 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
                 </div>
                 <div className={cx('action-modal')}>
                     {data?.status === 'PENDING' && (
-                        <Button error onClick={() => setShowPopConfirmSaveMissing(true)}>
-                            <span>Đã hủy</span>
-                        </Button>
+                        <>
+                            <Button success onClick={() => setShowPurchaseSupplement(true)}>
+                                <span>Nhập bổ sung</span>
+                            </Button>
+                            <Button error onClick={() => setShowPopConfirmSaveMissing(true)}>
+                                <span>Đã hủy</span>
+                            </Button>
+                        </>
                     )}
                     <Button primary onClick={onClose}>
                         <span>Đóng</span>
@@ -203,26 +210,36 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
                 onClose={() => setShowPopConfirmSaveMissing(false)}
                 showButtonClose={false}
             >
-                    <div className={cx('wrapper-message')}>
-                        <h1 className={cx('title')}>Thông báo</h1>
-                        <p className={cx('des')}>
-                            Bạn có chắc chắn muốn hủy phiếu nhập thiếu này không?
-                        </p>
-                        <div className={cx('action-confirm')}>
-                            <Button
-                                primary
-                                onClick={() => {
-                                    handleUpdateStatus('CANCELED');
-                                }}
-                            >
-                                <span>Có</span>
-                            </Button>
-                            <Button outline onClick={() => setShowPopConfirmSaveMissing(false)}>
-                                <span>Không</span>
-                            </Button>
-                        </div>
+                <div className={cx('wrapper-message')}>
+                    <h1 className={cx('title')}>Thông báo</h1>
+                    <p className={cx('des')}>Bạn có chắc chắn muốn hủy phiếu nhập thiếu này không?</p>
+                    <div className={cx('action-confirm')}>
+                        <Button
+                            primary
+                            onClick={() => {
+                                handleUpdateStatus('CANCELED');
+                            }}
+                        >
+                            <span>Có</span>
+                        </Button>
+                        <Button outline onClick={() => setShowPopConfirmSaveMissing(false)}>
+                            <span>Không</span>
+                        </Button>
                     </div>
+                </div>
             </Modal>
+
+            {showPurchaseSupplement && (
+                <CreateImportReceiptMissingDialog
+                    isOpen={showPurchaseSupplement}
+                    onClose={() => {
+                        onClose();
+                        setShowPurchaseSupplement(false);
+                    }}
+                    orderPurchaseMissing={data}
+                    handleFetchOrderMissing={reset}
+                />
+            )}
         </Modal>
     );
 };

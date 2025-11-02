@@ -1,26 +1,38 @@
-import { Button, Modal, MyTable } from '../../../components';
+import { Button, Modal } from '../../../components';
 import classNames from 'classnames/bind';
 import styles from './ShowLocationDetail.module.scss';
 import Tippy from '@tippyjs/react';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getBoxContainProduct } from '../../../services/batch.service';
 import parseToken from '../../../utils/parseToken';
-import BoxDetail from '../../BatchPage/BoxDetail';
 import { getBoxDetails } from '../../../services/box.service';
-import { set } from 'react-hook-form';
 import CreateCheckDetail from '../CreateCheckDetail';
 import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';
 import { getAllShelfOfWarehouse } from '../../../services/shelf.service';
+import Shelf3D from '../../../components/Shelf3D';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Plane } from '@react-three/drei';
 const cx = classNames.bind(styles);
 
 const ShowLocationDetail = ({ isOpen, onClose, item, fetchData }) => {
     const [selectedBox, setSelectedBox] = useState([]);
     const [localShelves, setLocalShelves] = useState([]);
+    const [localShelvesAvailable, setLocalShelvesAvailable] = useState([]);
     const [boxContaining, setBoxContaining] = useState([]);
     const [listBatchBoxCheck, setListBatchBoxCheck] = useState([]);
-    const [listShelfCheck, setListShelfCheck] = useState([]);
     const [showCreateInventoryCheck, setShowCreateInventoryCheck] = useState(false);
+    const [selectedAll, setSelectedAll] = useState(false);
+    const [selectedShelf, setSelectedShelf] = useState([]);
+    // Tinh chỉnh để xếp các kệ theo 10 cột × 10 hàng (BX1-BX100)
+    const getShelfPosition = (index) => {
+        const col = Math.floor(index / 10);
+        const row = index % 10; // hàng (0-9)
+        const x = col * 5; // điều chỉnh vị trí ngang
+        const z = -(row * 8 - 37);
+
+        return [x, 0, z];
+    };
 
     const fetchShelfData = async () => {
         const token = parseToken('tokenUser');
@@ -43,6 +55,13 @@ const ShowLocationDetail = ({ isOpen, onClose, item, fetchData }) => {
     useEffect(() => {
         fetchShelfData();
     }, []);
+
+    useEffect(() => {
+        const availableShelves = localShelves.filter((shelf) =>
+            shelf.floor?.some((floor) => floor.boxes?.some((box) => box.status !== 'AVAILABLE')),
+        );
+        setLocalShelvesAvailable(availableShelves);
+    }, [localShelves]);
 
     useEffect(() => {
         const fetchBoxContaining = async () => {
@@ -71,10 +90,6 @@ const ShowLocationDetail = ({ isOpen, onClose, item, fetchData }) => {
         onClose();
     };
 
-    useEffect(() => {
-        console.log(listBatchBoxCheck);
-    }, [listBatchBoxCheck]);
-
     const handleClickBox = async (boxID) => {
         const boxExists = selectedBox.find((box) => box.boxID === boxID);
         if (boxExists) {
@@ -94,9 +109,9 @@ const ShowLocationDetail = ({ isOpen, onClose, item, fetchData }) => {
         }
     };
 
-    const handleOnclickShelf = (shelf) => () => {
-        if (listShelfCheck.includes(shelf.shelfID)) {
-            setListShelfCheck(listShelfCheck.filter((id) => id !== shelf.shelfID));
+    const handleOnclickShelf = (shelf) => {
+        if (selectedShelf.includes(shelf.shelfID)) {
+            setSelectedShelf(selectedShelf.filter((id) => id !== shelf.shelfID));
             // filter status different AVAILABLE and add to selectedBox
             const boxesInShelf = shelf.floor.flatMap((floor) =>
                 floor.boxes.filter((box) => !checkBoxAvailable(box)).map((box) => box.boxID),
@@ -104,7 +119,7 @@ const ShowLocationDetail = ({ isOpen, onClose, item, fetchData }) => {
             setSelectedBox(selectedBox.filter((box) => !boxesInShelf.includes(box.boxID)));
             setListBatchBoxCheck(listBatchBoxCheck.filter((box) => !boxesInShelf.includes(box.boxID)));
         } else {
-            setListShelfCheck([...listShelfCheck, shelf.shelfID]);
+            setSelectedShelf([...selectedShelf, shelf.shelfID]);
             const boxesInShelf = shelf.floor.flatMap((floor) =>
                 floor.boxes.filter((box) => !checkBoxAvailable(box)).map((box) => box.boxID),
             );
@@ -126,15 +141,44 @@ const ShowLocationDetail = ({ isOpen, onClose, item, fetchData }) => {
         }
     };
 
+    const handleOnclickAllShelf = () => {
+        if (selectedAll) {
+            setSelectedAll(false);
+            setSelectedShelf([]);
+            setSelectedBox([]);
+            setListBatchBoxCheck([]);
+        } else {
+            setSelectedAll(true);
+            setSelectedShelf(localShelvesAvailable.map((shelf) => shelf.shelfID));
+            localShelvesAvailable.forEach((shelf) => {
+                shelf.floor.forEach((floor) => {
+                    floor.boxes.forEach(async (box) => {
+                        if (!checkBoxAvailable(box)) {
+                            if (!selectedBox.find((item) => item.boxID === box.boxID)) {
+                                const warehouse = parseToken('warehouse');
+                                const warehouseID = warehouse.warehouseID;
+                                const res = await getBoxDetails(warehouseID, box.boxID);
+                                if (res.data.status === 'OK' && res.data.data.batches.length > 0) {
+                                    const location = `${res.data.data.floor.shelf.shelfName} - ${res.data.data.floor.floorName} - ${res.data.data.boxName}`;
+                                    const batches = res.data.data.batches.filter(
+                                        (batch) => batch.batch_boxes.quantity > 0,
+                                    );
+                                    setSelectedBox((prev) => [...prev, { boxID: box.boxID }]);
+                                    setListBatchBoxCheck((prev) => [...prev, { boxID: box.boxID, location, batches }]);
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+        }
+    };
+
     const checkBoxExists = (boxID) => {
         const boxFind = selectedBox.find((item) => item.boxID === boxID);
         if (boxFind) return true;
 
         return false;
-    };
-
-    const checkShelfAvailable = (shelf) => {
-        return shelf.floor?.some((floor) => floor.boxes?.some((box) => box.status !== 'AVAILABLE'));
     };
 
     const handleCreateInventoryCheck = () => {
@@ -149,34 +193,32 @@ const ShowLocationDetail = ({ isOpen, onClose, item, fetchData }) => {
         <Modal isOpenInfo={isOpen} onClose={handleOnclose} showButtonClose={false}>
             <div className={cx('wrapper')}>
                 <div className={cx('update-info')}>
-                    <div className={cx('batches-update')}>
-                        <h3>Danh sách lô hàng cần kiểm kê</h3>
-                        <div className={cx('tableWrap')}>
-                            <table className={cx('table')}>
-                                <thead>
-                                    <tr>
-                                        <th className={cx('location')}>Vị trí</th>
-                                        <th className={cx('batchID')}>Mã lô</th>
-                                        <th className={cx('productName')}>Tên sản phẩm</th>
-                                        <th className={cx('unit')}>Đơn vị tính</th>
-                                        <th className={cx('num')}>Số lượng</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {listBatchBoxCheck?.map((batchBoxCheck) =>
-                                        batchBoxCheck?.batches.map((batch, idx) => (
-                                            <tr key={idx}>
-                                                <td className={cx('location')}>{batchBoxCheck.location}</td>
-                                                <td className={cx('batchID')}>{batch.batchID}</td>
-                                                <td className={cx('productName')}>{batch.product.productName}</td>
-                                                <td className={cx('unit')}>{batch.unit.unitName}</td>
-                                                <td className={cx('num')}>{batch.batch_boxes.quantity}</td>
-                                            </tr>
-                                        )),
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                    <h3>Danh sách lô hàng cần kiểm kê</h3>
+                    <div className={cx('tableWrap')}>
+                        <table className={cx('table')}>
+                            <thead>
+                                <tr>
+                                    <th className={cx('location')}>Vị trí</th>
+                                    <th className={cx('batchID')}>Mã lô</th>
+                                    <th className={cx('productName')}>Tên sản phẩm</th>
+                                    <th className={cx('unit')}>Đơn vị tính</th>
+                                    <th className={cx('num')}>Số lượng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {listBatchBoxCheck?.map((batchBoxCheck) =>
+                                    batchBoxCheck?.batches.map((batch, idx) => (
+                                        <tr key={idx}>
+                                            <td className={cx('location')}>{batchBoxCheck.location}</td>
+                                            <td className={cx('batchID')}>{batch.batchID}</td>
+                                            <td className={cx('productName')}>{batch.product.productName}</td>
+                                            <td className={cx('unit')}>{batch.unit.unitName}</td>
+                                            <td className={cx('num')}>{batch.batch_boxes.quantity}</td>
+                                        </tr>
+                                    )),
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                     <div className={cx('action')}>
                         <Button primary onClick={handleOnclose}>
@@ -189,7 +231,81 @@ const ShowLocationDetail = ({ isOpen, onClose, item, fetchData }) => {
                 </div>
                 {/* KHU CHÍNH */}
                 <div className={cx('main-panel')}>
-                    {localShelves.map((shelf) => {
+                    <div style={{ width: '100%', height: '100%', position: 'relative', background: '#f0f0f0' }}>
+                        <div
+                            style={{
+                                position: 'absolute',
+                                left: 12,
+                                top: 12,
+                                zIndex: 10,
+                                background: 'rgba(255,255,255,0.9)',
+                                padding: 8,
+                                borderRadius: 6,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    gap: 6,
+                                    alignItems: 'center',
+                                    fontSize: 13,
+                                    marginBottom: 5,
+                                }}
+                            >
+                                <input type="checkbox" checked={selectedAll} onChange={handleOnclickAllShelf} />
+                                <span>Tất cả</span>
+                            </div>
+                            {localShelvesAvailable?.map((shelf) => (
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        gap: 6,
+                                        alignItems: 'center',
+                                        fontSize: 13,
+                                        marginBottom: 5,
+                                    }}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedShelf.includes(shelf.shelfID)}
+                                        onChange={() => handleOnclickShelf(shelf)}
+                                    />
+                                    <span>{shelf.shelfName}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <Canvas camera={{ position: [0, 60, 120], fov: 50 }}>
+                            <OrbitControls enableRotate={false} enableZoom enablePan />
+                            <ambientLight intensity={0.6} />
+                            <directionalLight position={[10, 30, 10]} intensity={1} castShadow />
+
+                            <OrbitControls enablePan enableZoom enableRotate />
+
+                            {/* Sàn kho (nhìn giống viền trong hình) */}
+                            <Plane args={[60, 90]} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+                                <meshStandardMaterial color="#ffffff" />
+                            </Plane>
+
+                            {/* Render các shelf theo shelvesData */}
+                            {localShelves?.map((shelf, idx) => (
+                                <Shelf3D
+                                    shelfType="inventoryCheck"
+                                    checkBoxAvailable={checkBoxAvailable}
+                                    checkBoxContain={checkBoxContain}
+                                    checkBoxExists={checkBoxExists}
+                                    key={shelf.shelfID}
+                                    shelf={shelf}
+                                    position={getShelfPosition(idx)}
+                                    onBoxSelect={(box) => {
+                                        handleClickBox(box.boxID);
+                                    }}
+                                    shelfConfig={{ boxSpacing: 1.6, floorHeight: 4 }}
+                                />
+                            ))}
+                        </Canvas>
+                    </div>
+                    {/* {localShelves.map((shelf) => {
                         return (
                             <div
                                 className={cx(['shelf', !checkShelfAvailable(shelf) && 'un-active'])}
@@ -225,7 +341,7 @@ const ShowLocationDetail = ({ isOpen, onClose, item, fetchData }) => {
                                 })}
                             </div>
                         );
-                    })}
+                    })} */}
                 </div>
             </div>
             {showCreateInventoryCheck && (

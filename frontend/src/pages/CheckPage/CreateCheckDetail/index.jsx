@@ -13,6 +13,7 @@ import Tippy from '@tippyjs/react';
 import { Eye } from 'lucide-react';
 import ShowLocationDetail from '../ShowLocationDetail';
 import { updateInventoryCheck } from '../../../services/inventoryCheck.service';
+import { authIsAdmin } from '../../../common';
 
 const cx = classNames.bind(styles);
 
@@ -141,28 +142,30 @@ const CreateCheckDetail = ({
                     <div className={cx('header-check')}>
                         <h4>Thông tin phiếu kiểm kê</h4>
                         <div className={cx('headerActions')}>
-                            {type === 'detail' && inventoryCheckDetail?.status === 'PENDING' && (
-                                <>
-                                    <Button
-                                        error
-                                        className={cx('btn-generate')}
-                                        onClick={() =>
-                                            handleUpdateStatus('REFUSE', inventoryCheckDetail?.inventoryCheckID)
-                                        }
-                                    >
-                                        Từ chối
-                                    </Button>
-                                    <Button
-                                        success
-                                        className={cx('btn-generate')}
-                                        onClick={() =>
-                                            handleUpdateStatus('COMPLETED', inventoryCheckDetail?.inventoryCheckID)
-                                        }
-                                    >
-                                        Phê duyệt
-                                    </Button>
-                                </>
-                            )}
+                            {type === 'detail' &&
+                                inventoryCheckDetail?.status === 'PENDING' &&
+                                authIsAdmin(currentUser) && (
+                                    <>
+                                        <Button
+                                            error
+                                            className={cx('btn-generate')}
+                                            onClick={() =>
+                                                handleUpdateStatus('REFUSE', inventoryCheckDetail?.inventoryCheckID)
+                                            }
+                                        >
+                                            Từ chối
+                                        </Button>
+                                        <Button
+                                            success
+                                            className={cx('btn-generate')}
+                                            onClick={() =>
+                                                handleUpdateStatus('COMPLETED', inventoryCheckDetail?.inventoryCheckID)
+                                            }
+                                        >
+                                            Phê duyệt
+                                        </Button>
+                                    </>
+                                )}
                             <Button primary borderRadiusMedium onClick={onClose}>
                                 <span>Đóng</span>
                             </Button>
