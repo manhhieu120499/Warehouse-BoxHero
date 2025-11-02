@@ -15,7 +15,6 @@ import CreateImportReceiptMissingDialog from '../../pages/ReceiveProductPage/Cre
 const cx = classNames.bind(styles);
 
 const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
-    console.log('data', data);
     const [showPopConfirmSaveMissing, setShowPopConfirmSaveMissing] = useState(false);
     const [showPurchaseSupplement, setShowPurchaseSupplement] = useState(false);
 
@@ -39,7 +38,7 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
             );
             console.log(res.data);
             toast.success('Cập nhật trạng thái thành công', styleMessage);
-            reset();
+            reset({ pageFilter: 1 });
             onClose(false);
         } catch (err) {
             toast.error('Cập nhật trạng thái thất bại', styleMessage);
@@ -237,7 +236,9 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
                         setShowPurchaseSupplement(false);
                     }}
                     orderPurchaseMissing={data}
-                    handleFetchOrderMissing={reset}
+                    handleFetchOrderMissing={() => {
+                        reset({ pageFilter: 1 });
+                    }}
                 />
             )}
         </Modal>

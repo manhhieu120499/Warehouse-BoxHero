@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ModelCreateOrderPurchase.module.scss';
 import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
@@ -76,48 +76,35 @@ const ModelCreateOrderPurchase = ({ isOpen, onClose, fetchData }) => {
     };
 
     useEffect(() => {
-        if (!debounceProposalIDFilter.trim()) {
-            handleFetchProposalMissingOrderPurchase();
-            return;
+        if (typeFilter === 'NORMAL') {
+            if (!debounceProposalIDFilter.trim()) {
+                handleFetchProposalMissingOrderPurchase();
+                return;
+            } else {
+                const searchDate = async () => {
+                    const res = await fetchFilterProposal({ proposalID: debounceProposalIDFilter.trim() });
+                    if (res.status === 'OK') {
+                        setListData(res.proposals || []);
+                    }
+                };
+                searchDate();
+            }
         } else {
-            const searchDate = async () => {
-                const res = await fetchFilterProposal({ proposalID: debounceProposalIDFilter.trim() });
-
-                if (res.status === 'OK') {
-                    console.log(res.proposals);
-
-                    const dataFilter = listData.filter((it) =>
-                        it.proposalID.toLowerCase().includes(res.proposals[0]?.proposalID.toLowerCase()),
-                    );
-                    setListData(dataFilter || []);
-                }
-            };
-
-            searchDate();
+            if (!debounceMissingIDFilter.trim()) {
+                handleFetchOrderMissing();
+                return;
+            } else {
+                const searchDate = async () => {
+                    const res = await filterOrderMissing({ orderPurchaseMissingID: debounceMissingIDFilter.trim() });
+                    if (res.data?.status === 'OK') {
+                        setListData(res.data.data || []);
+                    }
+                };
+                searchDate();
+            }
         }
-    }, [debounceProposalIDFilter]);
-
-    useEffect(() => {
-        if (!debounceMissingIDFilter.trim()) {
-            handleFetchOrderMissing();
-            return;
-        } else {
-            const searchDate = async () => {
-                const res = await filterOrderMissing({ orderPurchaseMissingID: debounceMissingIDFilter.trim() });
-
-                if (res.data?.status === 'OK') {
-                    const dataFilter = listData.filter((it) =>
-                        it.orderPurchaseMissingID
-                            .toLowerCase()
-                            .includes(res.data.data[0].orderPurchaseMissingID.toLowerCase()),
-                    );
-                    setListData(dataFilter || []);
-                }
-            };
-
-            searchDate();
-        }
-    }, [debounceMissingIDFilter]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debounceProposalIDFilter, debounceMissingIDFilter]);
 
     const handleFetchOrderMissing = async () => {
         const warehouse = parseToken('warehouse');
@@ -156,6 +143,11 @@ const ModelCreateOrderPurchase = ({ isOpen, onClose, fetchData }) => {
             setShowModalCreateMissing(true);
         }
     }, [selectedRow]);
+
+    useEffect(() => {
+        console.log('listData', listData);
+        console.log('typeFilter', typeFilter);
+    }, [listData, typeFilter]);
 
     return (
         <Modal isOpenInfo={isOpen} onClose={onClose}>

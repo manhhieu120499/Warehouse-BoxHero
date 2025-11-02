@@ -16,7 +16,7 @@ const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle);
 
 const ApprovePage = () => {
-    const pageSize = 4;
+    const pageSize = 5;
     const [page, setPage] = useState(1);
     const [proposalPurchaseList, setProposalPurchaseList] = useState([]);
     const [showModalDetail, setShowModalDetail] = useState(false);
@@ -28,6 +28,7 @@ const ApprovePage = () => {
         status: 'PENDING',
         employeeName: '',
     });
+    const [totalPage, setTotalPage] = useState(0);
 
     const columnsFilter = [
         {
@@ -137,27 +138,25 @@ const ApprovePage = () => {
         },
     ];
 
-    const fetchProposals = async (page = 1) => {
-        try {
-            const token = parseToken('tokenUser');
-            const res = await post(
-                '/api/proposal/filter-proposal',
-                {
-                    status: 'PENDING',
-                    page,
-                },
-                token.accessToken,
-                token.employeeID,
-            );
-            setProposalPurchaseList(res.proposals || []);
-        } catch (err) {
-            console.log(err);
-        }
-    };
+    // const fetchProposals = async (page = 1) => {
+    //     try {
+    //         const token = parseToken('tokenUser');
+    //         const res = await post(
+    //             '/api/proposal/filter-proposal',
+    //             {
+    //                 status: 'PENDING',
+    //                 page,
+    //             },
+    //             token.accessToken,
+    //             token.employeeID,
+    //         );
+    //         setProposalPurchaseList(res.proposals || []);
+    //     } catch (err) {
+    //         console.log(err);
+    //     }
+    // };
 
     const handleResetFilter = () => {
-        const { proposalID, createdAt, employeeName } = filterProposal;
-        if (!proposalID && !createdAt && !employeeName) return;
         setFilterProposal({
             proposalID: '',
             createdAt: '',
@@ -165,48 +164,61 @@ const ApprovePage = () => {
             employeeName: '',
         });
         setPage(1);
-        fetchProposals();
+        handleSearch({
+            proposalID: '',
+            createdAt: '',
+            employeeName: '',
+            pageFilter: 1,
+            status: 'PENDING',
+        });
     };
 
-    const handleSearch = async () => {
+    const handleSearch = async ({
+        proposalID = filterProposal.proposalID,
+        createdAt = filterProposal.createdAt,
+        status = filterProposal.status,
+        employeeName = filterProposal.employeeName,
+        pageFilter = page,
+    }) => {
         if (!Object.keys(filterProposal).some((key) => filterProposal[key])) return;
         try {
             const token = parseToken('tokenUser');
             const res = await post(
                 '/api/proposal/filter-proposal',
                 {
-                    proposalID: filterProposal?.proposalID,
-                    createdAt: filterProposal?.createdAt,
-                    status: filterProposal?.status,
-                    employeeName: filterProposal?.employeeName,
+                    proposalID,
+                    createdAt,
+                    status,
+                    employeeName,
+                    page: pageFilter,
                 },
                 token.accessToken,
                 token.employeeID,
             );
-            console.log(res);
+
             setProposalPurchaseList(res.proposals || []);
+            setTotalPage(res.pagination.totalPages || 0);
         } catch (err) {
             console.log(err);
         }
     };
 
-    const handleNextPage = () => {
-        setPage(page + 1);
-    };
-
-    const handlePrevPage = async () => {
-        if (page - 1 <= 0) return;
-        setPage(page - 1);
+    const onChangePage = (page) => {
+        setPage(page);
     };
 
     useEffect(() => {
-        //fetchProposals(page)
-        handleSearch();
+        handleSearch({ pageFilter: 1, status: filterProposal.status });
     }, [filterProposal.status]);
 
     useEffect(() => {
-        console.log('page', page);
-        fetchProposals(page);
+        handleSearch({
+            proposalID: filterProposal.proposalID,
+            createdAt: filterProposal.createdAt,
+            employeeName: filterProposal.employeeName,
+            pageFilter: page,
+            status: filterProposal.status,
+        });
     }, [page]);
 
     return (
@@ -238,9 +250,12 @@ const ApprovePage = () => {
                     className={cx('my-table')}
                     columns={columnsTable}
                     data={proposalPurchaseList}
-                    //pageSize={pageSize}
+                    pagination
+                    total={totalPage * 5}
+                    pageSize={5}
+                    onChangePage={onChangePage}
+                    currentPage={page}
                 />
-                <PaginationUI currentPage={page} handleNextPage={handleNextPage} handlePrevPage={handlePrevPage} />
             </div>
             {showModalDetail && (
                 <ModelProposalDetail
@@ -248,7 +263,7 @@ const ApprovePage = () => {
                     typeDetail={typeDetail}
                     isOpen={showModalDetail}
                     onClose={() => setShowModalDetail(false)}
-                    handleSearch={handleSearch}
+                    handleSearch={handleResetFilter}
                 />
             )}
         </div>

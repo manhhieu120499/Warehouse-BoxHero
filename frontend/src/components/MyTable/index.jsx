@@ -30,6 +30,9 @@ export default function MyTable({
                     current: currentPage, // trang hiện tại (controlled)
                     total: total ?? data.length, // tổng số dòng (nếu dùng server side)
                     position: ['bottomRight'], // vị trí thanh trang
+                    showLessItems: true, // ✅ hiển thị dạng "1 2 ... 8 ... 20"
+                    showQuickJumper: false, // ẩn ô nhập nhanh
+                    showSizeChanger: false,
                     onChange: (page, pageSize) => {
                         onChangePage(page, pageSize);
                     },
