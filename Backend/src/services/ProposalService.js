@@ -22,7 +22,8 @@ const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
 const HTTP_UNAUTHORIZED = process.env.HTTP_UNAUTHORIZED;
 const HTTP_INTERNAL_SERVER_ERROR = process.env.HTTP_INTERNAL_SERVER_ERROR;
 const HTTP_FORBIDDEN = process.env.HTTP_FORBIDDEN;
-const LIMIT_PAGE = parseInt(process.env.LIMIT_PAGE, 10);
+//const LIMIT_PAGE = parseInt(process.env.LIMIT_PAGE, 10);
+const LIMIT_PAGE = 5;
 
 class ProposalService {
     // create proposal
@@ -695,23 +696,21 @@ class ProposalService {
             try {
                 const option = {};
                 if (data.status) option.status = data.status;
-                if (data.orderReleaseProposalID)
-                    option.orderReleaseProposalID = { [Op.like]: `%${data.orderReleaseProposalID}%` };
+                if (data.orderReleaseProposalID) option.orderReleaseProposalID = data.orderReleaseProposalID;
 
                 const orderReleaseProposals = await OrderReleaseProposal.findAll({
                     where: {
                         ...option,
-                        orderReleaseProposalID: {
-                            [Op.notIn]: literal(`(
-                                SELECT orderReleaseProposalID FROM order_release AS o
-                                WHERE o.orderReleaseProposalID is NOT NULL
-                                )`),
-                        },
                     },
                     include: [
                         {
                             model: Employee,
                             as: 'creator',
+                            attributes: ['employeeID', 'employeeName'],
+                        },
+                        {
+                            model: Employee,
+                            as: 'approver',
                             attributes: ['employeeID', 'employeeName'],
                         },
                         {
@@ -760,6 +759,11 @@ class ProposalService {
                         {
                             model: Employee,
                             as: 'creator',
+                            attributes: ['employeeID', 'employeeName'],
+                        },
+                        {
+                            model: Employee,
+                            as: 'approver',
                             attributes: ['employeeID', 'employeeName'],
                         },
                         {

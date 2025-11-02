@@ -1,5 +1,5 @@
 const db = require('../../models');
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const Warehouse = db.Warehouse;
 const Batch = db.Batch;
 const Product = db.Product;
@@ -9,6 +9,7 @@ const Shelf = db.Shelf;
 const Zone = db.Zone;
 const Unit = db.Unit;
 const dotenv = require('dotenv');
+const BatchBox = db.BatchBox;
 
 dotenv.config();
 
@@ -363,6 +364,7 @@ class BatchBoxService {
                             attributes: { exclude: ['createdAt', 'updatedAt'] },
                             through: {
                                 attributes: ['quantity'],
+                                where: { quantity: { [Op.gt]: 0 } },
                             },
                         },
                     ],
@@ -378,9 +380,10 @@ class BatchBoxService {
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách box của batch thành công',
-                    boxes: batch.boxes
+                    boxes: batch.boxes,
                 });
             } catch (err) {
+                console.log('lỗi', err);
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
