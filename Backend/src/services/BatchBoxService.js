@@ -247,6 +247,7 @@ class BatchBoxService {
                     const maxCapacity = Math.floor(box.remainingAcreage / unitVolume);
                     const isBatchLarger = batch.remainAmount > maxCapacity;
                     let placed;
+                    const remainingBoxesBefore = box.remainingAcreage;
 
                     if (isBatchLarger) {
                         placed = maxCapacity;
@@ -270,6 +271,7 @@ class BatchBoxService {
                     }
                     suggestion.locations.push({
                         ...boxInfo,
+                        remainingAcreage: remainingBoxesBefore,
                         quantity: placed,
                     });
                 }
