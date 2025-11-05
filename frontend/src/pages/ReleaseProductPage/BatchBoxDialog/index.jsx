@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './BatchBoxDialog.module.scss';
 import MyTable from '../../../components/MyTable';
-import { Button, Input, Modal } from '../../../components';
-import { Search } from 'lucide-react';
 import InputBase from '../../../components/InputBase';
 import { getBoxesByBatchID } from '../../../services/box.service';
 import toast from 'react-hot-toast';
@@ -125,7 +123,7 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
             .filter((r) => selectedRowKeys.includes(r.boxID))
             .reduce((total, cur) => total + (cur.qty || 0), 0);
         const boxSelectedListToExport = rows
-            .filter((r) => selectedRowKeys.includes(r.boxID))
+            .filter((r) => selectedRowKeys.includes(r.boxID) && r.qty > 0)
             .map((box) => ({ ...box, quantityExported: box.qty }));
         if (!selectedRowKeys.length) {
             toast.error(`Vui lòng chọn ít nhất 1 ô để xuất`, styleMessage);
