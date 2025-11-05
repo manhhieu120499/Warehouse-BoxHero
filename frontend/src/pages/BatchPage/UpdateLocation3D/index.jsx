@@ -148,7 +148,7 @@ const UpdateLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData, fe
     };
 
     const handleSuggestLocationSubmit = (dataSubmit) => {
-        console.log('shelvesData ', shelvesData);
+        console.log('dataSubmit ', dataSubmit);
 
         const localShelvesConvert = handleCopy(shelvesData);
         const localBatchesConvert = batches.map((b) => ({ ...b }));
@@ -171,6 +171,7 @@ const UpdateLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData, fe
             });
             batchFind.remainAmount -= totalAssigned;
         });
+
         setLocations(dataSubmit);
 
         setLocalShelves(localShelvesConvert);
