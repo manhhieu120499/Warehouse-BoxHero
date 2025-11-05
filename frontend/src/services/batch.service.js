@@ -132,3 +132,33 @@ export const getBoxContainBatch = async (warehouseID, batchID) => {
         return err;
     }
 };
+
+export const suggestBatchProductForExport = async (productID, priority = null) => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const res = await request.post(
+            '/api/batch/suggest-batch-export',
+            {
+                productID,
+                warehouseID: warehouse.warehouseID,
+                type: priority,
+            },
+            {
+                headers: {
+                    token: `Beare ${token.accessToken}`,
+                    employeeid: token.employeeID,
+                    warehouseid: warehouse.warehouseID,
+                },
+            },
+        );
+        return res ? res.data.data : null;
+    } catch (err) {
+        console.log(err);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        return err;
+    }
+};

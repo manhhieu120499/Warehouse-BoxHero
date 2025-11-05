@@ -13,6 +13,7 @@ const cx = classNames.bind(styles);
 
 const ModalBatchProductDetail = ({ isOpen, onClose, productID }) => {
     const batchOfProductSelected = useSelector((state) => state.BatchProductSlice.batchProductList);
+    const batchBoxListStore = useSelector((state) => state.BatchProductSlice.batchBoxProductList);
     const [batchList, setBatchProductList] = useState([]);
     const [batchIDSelected, setBatchIDSelected] = useState(null);
     const [isOpenBatchBox, setIsOpenBatchBox] = useState(false);
@@ -41,25 +42,19 @@ const ModalBatchProductDetail = ({ isOpen, onClose, productID }) => {
             dataIndex: 'location',
             key: 'location',
             render: (_, record) => (
-                <Button
-                    success
-                    small
-                    rounded
-                    onClick={() => {
-                        setBatchIDSelected(record.batchID);
-                        setIsOpenBatchBox(true);
-                    }}
-                >
-                    Xem vị trí
-                </Button>
+                <div className={cx('group-location')}>
+                    {record.location.map((re) => (
+                        <p className={cx('position-item')}>{`${re.boxName} - ${re.boxFloor} - ${re.shelf}`}</p>
+                    ))}
+                </div>
             ),
-            width: '15%',
+            width: '30%',
         },
         {
             title: 'Số lượng xuất',
             dataIndex: 'quantity',
             key: 'quantity',
-            width: '15%',
+            width: '12%',
             render: (text) => <p style={{ textAlign: 'right', marginRight: 5 }}>{text}</p>,
         },
         {
@@ -85,7 +80,16 @@ const ModalBatchProductDetail = ({ isOpen, onClose, productID }) => {
     useEffect(() => {
         if (!productID || !batchOfProductSelected) return;
         if (batchOfProductSelected[productID]?.length > 0) {
-            setBatchProductList(batchOfProductSelected[productID]);
+            const batchList = batchOfProductSelected[productID];
+            const addLocationBatchList = batchList.map((ba) => {
+                const batchLocation = batchBoxListStore[`${productID}-${ba.batchID}`];
+                return {
+                    ...ba,
+                    location: [...batchLocation],
+                };
+            });
+
+            setBatchProductList(addLocationBatchList);
         } else setBatchProductList([]);
     }, [batchOfProductSelected, productID]);
 

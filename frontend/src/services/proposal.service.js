@@ -129,7 +129,7 @@ export const getAllOrderReleaseProposal = async (page = 1, optionFilter = {}) =>
                 warehouseid: warehouse.warehouseID,
             },
         });
-        return res.data.data;
+        return res.data;
     } catch (err) {
         console.log(err);
         toast.error(

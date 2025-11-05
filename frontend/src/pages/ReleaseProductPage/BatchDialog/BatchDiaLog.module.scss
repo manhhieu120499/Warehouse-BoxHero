@@ -7,16 +7,16 @@
     }
 
     input[type='checkbox'] {
-            width: 15px;
-            height: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+        width: 15px;
+        height: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
 
-            &:focus {
-                border-color: #007bff;
-                outline: none;
-            }
+        &:focus {
+            border-color: #007bff;
+            outline: none;
         }
+    }
     .cell-text {
         text-align: center;
         width: 100%;
@@ -42,4 +42,21 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
+}
+.group-suggest {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 280px;
+
+    .label {
+        font-size: 1.4rem;
+        text-decoration: underline;
+    }
+}
+
+.custom-select {
+    font-size: 1.3rem;
+    width: 70%;
 }

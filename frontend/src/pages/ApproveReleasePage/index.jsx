@@ -23,6 +23,7 @@ const ApproveReleasePage = () => {
         employeeIDCreate: '',
         status: 'PENDING',
     });
+    const [totalPage, setTotalPage] = useState(0);
     const columnsFilter = [
         {
             label: 'Mã phiếu đề xuất',
@@ -122,8 +123,11 @@ const ApproveReleasePage = () => {
         if (!validFiler) return;
         console.log('Submit filter', filters);
         try {
-            const res = await getAllOrderReleaseProposal(1, filters);
-            setProposalReleaseList(res.length > 0 ? res : []);
+            const res = await getAllOrderReleaseProposal(page, filters);
+            console.log('res filter', res);
+            setProposalReleaseList(res.data.length > 0 ? res.data : []);
+            setPage(Number.parseInt(res?.pagination?.currentPage) || 0);
+            setTotalPage(res?.pagination?.totalPages || 0);
         } catch (err) {
             console.log(err);
             setProposalReleaseList([]);
@@ -131,7 +135,7 @@ const ApproveReleasePage = () => {
     };
 
     const handleResetFilter = () => {
-        fetchAllOrderReleaseProposal(1);
+        fetchAllOrderReleaseProposal(1, 'PENDING');
         setFilters({
             orderReleaseProposalID: '',
             createdAt: '',
@@ -140,18 +144,16 @@ const ApproveReleasePage = () => {
         });
     };
 
-    const handleNextPage = () => {
-        setPage(page + 1);
-    };
-    const handlePrevPage = () => {
-        if (page - 1 <= 0) return;
-        setPage(page - 1);
+    const onChangePage = (newPage) => {
+        setPage(newPage);
     };
 
     const fetchAllOrderReleaseProposal = async (page = 1, status = 'PENDING') => {
         try {
             const res = await getAllOrderReleaseProposal(page, { status });
-            setProposalReleaseList(res.length > 0 ? res : []);
+            setProposalReleaseList(res?.data?.length > 0 ? res.data : []);
+            setPage(Number.parseInt(res.pagination.currentPage) || 0);
+            setTotalPage(res.pagination.totalPages || 0);
         } catch (err) {
             console.log(err);
         }
@@ -168,8 +170,8 @@ const ApproveReleasePage = () => {
     };
 
     useEffect(() => {
-        fetchAllOrderReleaseProposal(page);
-    }, [page]);
+        fetchAllOrderReleaseProposal(page, 'PENDING');
+    }, []);
 
     useEffect(() => {
         if (!isProposalSelected) return;
@@ -191,11 +193,15 @@ const ApproveReleasePage = () => {
             <div className={cx('content')}>
                 <h1 className={cx('title-table')}>Danh sách phiếu đề xuất xuất</h1>
                 {/* Table content */}
-                <MyTable columns={tableColumns} data={proposalReleaseList} />
-                <div className={cx('footer-table')}>
-                    {' '}
-                    <PaginationUI currentPage={page} handleNextPage={handleNextPage} handlePrevPage={handlePrevPage} />
-                </div>
+                <MyTable
+                    columns={tableColumns}
+                    data={proposalReleaseList}
+                    onChangePage={onChangePage}
+                    currentPage={page}
+                    pagination={true}
+                    pageSize={5}
+                    total={totalPage * 5}
+                />
             </div>
 
             {/** create approve proposal */}

@@ -20,6 +20,7 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
     const [page, setPage] = useState(1);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [rows, setRows] = useState([]);
+    const [preview, setPreview] = useState(false);
     const dispatch = useDispatch();
 
     const [disabledKeys, setDisabledKeys] = useState([]);
@@ -87,9 +88,14 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
         const totalQty = getTotalSelectedQty(newRows, selectedRowKeys);
 
         if (totalQty === requireQuantity) {
-            setSelectedRowKeys([record.boxID]);
+            const updateSelectRowKey = [...selectedRowKeys, record.boxID];
+            setSelectedRowKeys((prev) => [...prev, record.boxID]);
 
-            setDisabledKeys(newRows.filter((r) => r.boxID !== record.boxID).map((r) => r.boxID));
+            setDisabledKeys(
+                newRows
+                    .filter((r) => r.boxID !== record.boxID && !updateSelectRowKey.includes(r.boxID))
+                    .map((r) => r.boxID),
+            );
         } else if (totalQty < requireQuantity) {
             setDisabledKeys([]);
         }
@@ -99,8 +105,15 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
 
     const rowSelection = {
         type: 'checkbox',
+        hideSelectAll: true,
         selectedRowKeys,
-        onChange: (keys) => setSelectedRowKeys(keys),
+        onChange: (keys) => {
+            if (preview) {
+                setDisabledKeys([]);
+                setPreview(false); // chỉ check lần đầu tiên
+            }
+            setSelectedRowKeys(keys);
+        },
         getCheckboxProps: (record) => ({
             disabled: isRowDisabled(record),
         }),
@@ -119,7 +132,7 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
             return;
         }
         if (totalBoxQuantity > requireQuantity || totalBoxQuantity < requireQuantity) {
-            toast.error(`Số lượng xuất phải đúng bằng ${requireQuantity}`, styleMessage);
+            toast.error(`Số lượng xuất phải đúng bằng số lượng yêu cầu là ${requireQuantity} thùng`, styleMessage);
             return;
         }
 
@@ -148,9 +161,11 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
                 amountAvailable: box.batch_boxes.quantity,
                 amountGet: 0,
                 status: box.status,
+                shelf: box?.floor?.shelf?.shelfName || '',
             }));
             const boxSelected = batchBoxProductList[`${product.productID}-${batch.batchID}`] || [];
             const boxSelectedIDs = boxSelected.map((box) => box.boxID);
+            const totalBoxQuantity = boxSelected.reduce((b, cur) => b + cur.qty, 0);
             const applyBatchBoxQuantity = formatBatch.map((box) =>
                 boxSelectedIDs.includes(box.boxID)
                     ? {
@@ -160,6 +175,13 @@ const BatchBoxDialog = ({ isOpen = true, onClose = () => {}, batch, product, req
                     : box,
             );
             setSelectedRowKeys(boxSelectedIDs);
+            if (boxSelected.length != 0 && totalBoxQuantity === requireQuantity) {
+                setDisabledKeys(
+                    applyBatchBoxQuantity.filter((box) => !boxSelectedIDs.includes(box.boxID)).map((it) => it.boxID),
+                );
+                setPreview(true);
+            }
+
             setRows(applyBatchBoxQuantity); // box data
         } catch (err) {
             console.log(err);

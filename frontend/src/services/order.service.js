@@ -284,7 +284,7 @@ export const filterOrderRelease = async (params) => {
                 },
             },
         );
-        return res.data.data;
+        return res.data;
     } catch (err) {
         throw new Error(err.response.data);
     }

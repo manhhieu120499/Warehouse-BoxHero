@@ -14,7 +14,7 @@ const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyle);
 
 const ReleaseProductPage = () => {
-    //const [productList, setProductList] = useState([]);
+    const [totalPages, setTotalPages] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedRow, setSelectedRow] = useState([]);
     const [filterProposalRelease, setFilterProposalRelease] = useState({
@@ -26,15 +26,6 @@ const ReleaseProductPage = () => {
     const [showModalCreateReleaseProposal, setShowModalCreateReleaseProposal] = useState(false);
     const [orderReleaseList, setOrderReleaseList] = useState([]);
     const [showOrderReleaseDetail, setShowOrderReleaseDetail] = useState(false);
-
-    const handleNextPage = () => {
-        setCurrentPage((prev) => prev + 1);
-    };
-
-    const handlePrevPage = () => {
-        if (currentPage == 1) return;
-        setCurrentPage((prev) => (prev == 1 ? 1 : prev - 1));
-    };
 
     const columnsFilter = [
         {
@@ -140,7 +131,9 @@ const ReleaseProductPage = () => {
             if (filterProposalRelease.receiverName) params.customerName = filterProposalRelease.receiverName;
 
             const res = await filterOrderRelease(params);
-            setOrderReleaseList(res);
+            setOrderReleaseList(res.data || []);
+            setCurrentPage(res?.pagination?.currentPage || 0);
+            setTotalPages(res?.pagination?.totalPages);
         } catch (err) {
             console.log(err);
         }
@@ -174,14 +167,18 @@ const ReleaseProductPage = () => {
                 },
             );
             setOrderReleaseList(res.data.data || []);
+            setCurrentPage(res?.data?.pagination?.currentPage || 1);
+            setTotalPages(res?.data?.pagination?.totalPages);
         } catch (err) {
             console.log(err);
         }
     };
 
+    const onChangePage = (newPage) => setCurrentPage(newPage);
+
     useEffect(() => {
         fetchOrderRelease(currentPage);
-    }, [currentPage]);
+    }, []);
 
     return (
         <div className={cx('wrapper-release-product')}>
@@ -214,14 +211,15 @@ const ReleaseProductPage = () => {
                     <p className={cx('table-title')}>Danh sách phiếu xuất kho</p>
                 </div>
 
-                <MyTable data={orderReleaseList} columns={tableColumnsExportProduct} />
-                <div className={cx('pagination-table')}>
-                    <PaginationUI
-                        currentPage={currentPage}
-                        handleNextPage={handleNextPage}
-                        handlePrevPage={handlePrevPage}
-                    />
-                </div>
+                <MyTable
+                    data={orderReleaseList}
+                    columns={tableColumnsExportProduct}
+                    currentPage={currentPage}
+                    onChangePage={onChangePage}
+                    pagination
+                    pageSize={5}
+                    total={totalPages * 5}
+                />
             </div>
 
             {/* Modal tạo phiếu xuất */}

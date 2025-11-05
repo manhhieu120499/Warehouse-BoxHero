@@ -2,15 +2,16 @@ import React, { useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './BatchDialog.module.scss';
 import { Modal } from '@/components';
-import { Button, Input, MyTable } from '../../../components';
+import { Button, Input, MyTable, Select } from '../../../components';
 import InputBase from '../../../components/InputBase';
 import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';
 import { useDispatch, useSelector } from 'react-redux';
 import { addBatchProductList, clearAllBatchProductList } from '../../../lib/redux/batchProduct/BatchProduct';
 import BatchBoxDialog from '../BatchBoxDialog';
-import { getAllBatchWithProductID } from '../../../services/batch.service';
+import { getAllBatchWithProductID, suggestBatchProductForExport } from '../../../services/batch.service';
 import { formatDate } from '../../../utils/formatDate';
+import SuggestBatchExportDialog from '../SuggestBatchExportDialog';
 
 const cx = classNames.bind(styles);
 
@@ -29,6 +30,8 @@ const BatchDialog = ({ product, isOpen, onClose }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 7;
     const [searchValue, setSearchValue] = useState('');
+    const [isShowSuggestBox, setIsShowSuggestBox] = useState(false);
+    const [selectSuggest, setSelectSuggest] = useState('');
 
     const onChangePage = (page) => {
         setCurrentPage(page);
@@ -216,13 +219,6 @@ const BatchDialog = ({ product, isOpen, onClose }) => {
         },
     ];
 
-    // const tableData = useMemo(() => {
-    //     return batchProductList.map((item, index) => ({
-    //         ...item,
-    //         key: item.batchID || index, // Đảm bảo có key unique
-    //     }));
-    // }, [batchProductList]);
-
     const handleSearchBatch = (batchID) => {
         if (!batchID || batchID.trim() === '') {
             if (selectedBatch.length > 0) {
@@ -250,18 +246,57 @@ const BatchDialog = ({ product, isOpen, onClose }) => {
         }
     };
 
+    const handleSuggestBatch = async (productID, priority) => {
+        try {
+            const res = await suggestBatchProductForExport(productID, priority);
+            if (res && res.length > 0) {
+                const formatBatch = res.map((it) => ({
+                    batchID: it.batchID,
+                    manufactureDate: it.manufactureDate,
+                    expiryDate: it.expiryDate,
+                    location: it?.location || [],
+                    available: it.remainAmount,
+                    uom: it.unit.unitName,
+                    unitID: it.unit.unitID,
+                    quantity: 0,
+                }));
+                setBatchProductList(formatBatch);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     return (
         <>
             <Modal isOpenInfo={isOpen} onClose={onClose} showButtonClose={false}>
                 <div className={cx('wrapper-batch-dialog')}>
                     <div className={cx('header-batch-dialog-wrapper')}>
                         <p className={cx('header-batch-dialog')}>Danh sách lô hàng cho sản phẩm</p>
-                        <InputBase
+                        {/* <InputBase
                             placeholder="Tìm kiếm theo mã lô"
                             value={searchValue}
                             onChange={(e) => setSearchValue(e.target.value)}
                             onClick={() => handleSearchBatch(searchValue)}
-                        />
+                        /> */}
+                        <div className={cx('group-suggest')}>
+                            <span className={cx('label')}>Sắp xếp</span>
+                            <Select
+                                classNames={cx('custom-select')}
+                                placeholder="Lựa chọn tiêu chí"
+                                options={[
+                                    {
+                                        name: 'Theo hạn sử dụng',
+                                        value: 'expirePriority',
+                                    },
+                                    {
+                                        name: 'Theo thời gian nhập kho',
+                                        value: 'rankPriority',
+                                    },
+                                ]}
+                                onChange={(e) => handleSuggestBatch(product.productID, e.target.value)}
+                            />
+                        </div>
                     </div>
 
                     <MyTable
@@ -315,6 +350,14 @@ const BatchDialog = ({ product, isOpen, onClose }) => {
                     requireQuantity={batchProductSelected.quantity}
                 />
             )}
+            {/* {isShowSuggestBox && (
+                <SuggestBatchExportDialog
+                    isOpen={isShowSuggestBox}
+                    onClose={() => setIsShowSuggestBox(false)}
+                    onSuggest={(priority) => handleSuggestBatch(product.productID, priority)}
+                    onReset={() => handleFetchBatchList(product.productID)}
+                />
+            )} */}
         </>
     );
 };

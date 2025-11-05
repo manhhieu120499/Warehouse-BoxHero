@@ -66,8 +66,14 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
     };
 
     const handleSave = async () => {
+        const checkProductHasBatch = [];
+        let isFlag = {
+            productIDMissing: [],
+            valid: false,
+        };
         const orderReleaseDetails = Object.keys(batchOfProducts)
             .map((productID) => {
+                if (batchOfProducts[productID].length !== 0) checkProductHasBatch.push(productID);
                 // lấy danh sách các batches
                 const batchList = (batchOfProducts[productID] || []).map((batch) => ({
                     batchID: batch.batchID,
@@ -92,6 +98,22 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
             })
             .flatMap((item) => item); // flatten mảng 2 chiều về 1 chiều
 
+        for (let i = 0; i < productListSelected.length; i++) {
+            if (checkProductHasBatch.includes(productListSelected[i].productID)) continue;
+            else {
+                isFlag = {
+                    productIDMissing: [...isFlag.productIDMissing, productListSelected[i].productID],
+                    valid: true,
+                };
+                break;
+            }
+        }
+        if (isFlag.valid) {
+            const messageError = isFlag.productIDMissing.map((it) => it).join(',');
+            toast.error(`Vui lòng chọn lô hàng cho sản phẩm có mã ${messageError}`, styleMessage);
+            return;
+        }
+
         let reqData = {
             orderReleaseID: formData.receiptCode,
             customerID: formData.customerID,
@@ -102,7 +124,7 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
             orderReleaseDetails: orderReleaseDetails || [],
         };
 
-        console.log('reqData', reqData);
+        console.log('req', reqData);
 
         if (!validate(reqData)) return;
 
@@ -169,9 +191,9 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
                 <header className={cx('dialog-header')}>
                     <h2 className={cx('dialog-title')}>Phiếu xuất kho</h2>
                     <div className={cx('header-action')}>
-                        <Button outline medium rounded className={cx('btn-reset')} onClick={handleResetForm}>
+                        {/* <Button outline medium rounded className={cx('btn-reset')} onClick={handleResetForm}>
                             Làm mới
-                        </Button>
+                        </Button> */}
                         <Button success medium rounded className={cx('btn-submit')} onClick={handleSave}>
                             Lưu phiếu
                         </Button>

@@ -4,7 +4,7 @@ import styles from './ModalCreateApproveRelease.module.scss';
 import { Modal, Button, MyTable } from '../../../components';
 import { useSelector } from 'react-redux';
 import { generateCode } from '../../../utils/generate';
-import { getProductById } from '../../../services/product.service';
+import { getProductById, getProductCanExportById } from '../../../services/product.service';
 import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';
 import { searchCustomer } from '../../../services/customer.service';
@@ -71,7 +71,7 @@ const ModalCreateApproveRelease = ({
             }
         } else {
             try {
-                const res = await getProductById(productID, warehouse.warehouseID);
+                const res = await getProductCanExportById(productID, warehouse.warehouseID);
                 console.log('res', res);
                 if (res.data.status != 'OK') setProductListExported([]);
                 else {
@@ -380,9 +380,9 @@ const ModalCreateApproveRelease = ({
                             <div className={cx('actions')}>
                                 {!typeDetail && (
                                     <>
-                                        <Button primary small borderRadiusSmall onClick={() => {}}>
+                                        {/* <Button primary small borderRadiusSmall onClick={() => {}}>
                                             <span>Gợi ý sản phẩm xuất kho</span>
-                                        </Button>
+                                        </Button> */}
                                         <Button primary small borderRadiusSmall onClick={() => {}}>
                                             <span>Quét mã</span>
                                         </Button>
