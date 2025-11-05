@@ -562,15 +562,17 @@ class BatchService {
                         message: 'Sản phẩm không tồn tại',
                     });
                 }
+                const today = new Date();
                 const batches = await Batch.findAll({
-                    where: { productID, warehouseID, remainAmount: { [Op.gt]: 0 } },
+                    where: { productID, warehouseID, remainAmount: { [Op.gt]: 0 }, expiryDate: { [Op.gte]: today } },
+
                     include: [
                         { model: Unit, as: 'unit', attributes: ['unitID', 'unitName'] },
                         {
                             model: Box,
                             as: 'boxes',
                             attributes: ['boxID', 'boxName'],
-                            through: { attributes: [] },
+                            through: { attributes: ['quantity'], where: { quantity: { [Op.gt]: 0 } } },
                             required: true,
                         },
                     ],
@@ -586,6 +588,72 @@ class BatchService {
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
                     message: 'Không thể lấy danh sách lô hàng: ' + error.message,
+                });
+            }
+        });
+    }
+    async suggestBatchBForExport(data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const { productID, type, warehouseID } = data;
+                const batchValid = await this.getAllBatchByProductID(productID, warehouseID);
+
+                switch (type) {
+                    case 'expirePriority': {
+                        const parseArray = JSON.parse(JSON.stringify(batchValid.data));
+                        const sortBatchValid = parseArray.sort((a, b) => a.expireDate - b.expireDate);
+
+                        resolve({
+                            status: 'OK',
+                            statusHttp: HTTP_OK,
+                            data: sortBatchValid,
+                        });
+                        break;
+                    }
+                    case 'positionPriority': {
+                        // xây map ưu tiên cho kệ
+                        const shelfMapPriority = new Map();
+                        let maxPriority = 10;
+                        const shelfList = await Shelf.findAll();
+
+                        JSON.parse(JSON.stringify(shelfList)).forEach((sh) => {
+                            shelfMapPriority.set(sh.shelfID, maxPriority);
+                            maxPriority--;
+                        });
+
+                        resolve({
+                            status: 'OK',
+                            statusHttp: HTTP_OK,
+                            data: [],
+                        });
+                        break;
+                    }
+                    case 'rankPriority': {
+                        const sortedByImportDate = batchValid.data.sort(
+                            (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+                        );
+
+                        resolve({
+                            status: 'OK',
+                            statusHttp: HTTP_OK,
+                            data: sortedByImportDate,
+                        });
+                        break;
+                    }
+                    default: {
+                        resolve({
+                            status: 'OK',
+                            statusHttp: HTTP_OK,
+                            data: [...(batchValid.data || [])],
+                        });
+                    }
+                }
+            } catch (err) {
+                console.log(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
                 });
             }
         });

@@ -78,6 +78,14 @@ class BatchController {
             return res.status(err.statusHttp).json(err);
         }
     }
+    async suggestBatchForExport(req, res) {
+        try {
+            const { statusHttp, ...response } = await BatchService.suggestBatchBForExport(req.body);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err);
+        }
+    }
 }
 
 module.exports = new BatchController();

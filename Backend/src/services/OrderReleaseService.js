@@ -144,9 +144,9 @@ class OrderReleaseService {
                         );
 
                         // update lại số lượng còn lại cùa lô hàng (batch)
-                        const updateRemainBatch = await Batch.update(
+                        const updateRemainBatch = await Batch.increment(
                             {
-                                remainAmount: batch.remainAmount - boxDetail.quantityExported,
+                                remainAmount: -boxDetail.quantityExported,
                             },
                             { where: { batchID: element.batchID }, transaction },
                         );
@@ -283,13 +283,19 @@ class OrderReleaseService {
                         },
                     ],
                     order: [['createdAt', 'DESC']],
-                    limit: LIMIT_PAGE,
-                    offset: (page - 1) * LIMIT_PAGE,
+                    // limit: LIMIT_PAGE,
+                    // offset: (page - 1) * LIMIT_PAGE,
                 });
+                const totalRecord = await OrderRelease.count({ where: { warehouseID } });
+                const totalPages = Math.ceil(totalRecord / LIMIT_PAGE);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     data: orderReleases,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
                     message: 'Lấy danh sách đơn xuất kho thành công',
                 });
             } catch (err) {
@@ -330,7 +336,7 @@ class OrderReleaseService {
                         statusHttp: HTTP_BAD_REQUEST,
                         message: 'Kho không tồn tại',
                     });
-                const orderReleases = await OrderRelease.findAll({
+                const { count, rows: orderReleases } = await OrderRelease.findAndCountAll({
                     where: { ...whereOption },
                     include: [
                         {
@@ -385,10 +391,15 @@ class OrderReleaseService {
                     ],
                     order: [['createdAt', 'DESC']],
                 });
+                const totalPages = Math.ceil(count / LIMIT_PAGE);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     data: orderReleases,
+                    pagination: {
+                        currentPage: data?.page || 1,
+                        totalPages,
+                    },
                     message: 'Lấy danh sách đơn xuất kho thành công',
                 });
             } catch (err) {

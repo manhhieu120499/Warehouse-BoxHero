@@ -41,4 +41,5 @@ router.get(
 );
 router.get('/box-details', authUser, checkGetBoxDetails, validate, BatchController.getBoxDetails);
 router.get('/all-batch-by-product', authUser, BatchController.getAllBatchByProductID);
+router.post('/suggest-batch-export', authUser, BatchController.suggestBatchForExport);
 module.exports = router;

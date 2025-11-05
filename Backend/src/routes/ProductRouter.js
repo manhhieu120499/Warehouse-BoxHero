@@ -9,6 +9,7 @@ const router = express.Router();
 router.get('/list', authUser, ProductController.getAllProduct);
 router.get('/', authUser, ProductController.getProductById);
 router.get('/filter', authUser, ProductController.searchProduct);
+router.get('/export/:id', authUser, ProductController.getProductCanExport);
 router.put('/update/:id', authUserIsManager, ProductController.updateProduct);
 router.post('/filter-option', authUser, ProductController.filterProduct);
 router.post('/create-product', authUserIsManager, ProductController.createProduct);

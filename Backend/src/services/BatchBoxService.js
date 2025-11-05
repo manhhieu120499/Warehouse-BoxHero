@@ -10,7 +10,6 @@ const Zone = db.Zone;
 const Unit = db.Unit;
 const BatchBox = db.BatchBox;
 const dotenv = require('dotenv');
-const BatchBox = db.BatchBox;
 
 dotenv.config();
 
@@ -248,6 +247,7 @@ class BatchBoxService {
                     const maxCapacity = Math.floor(box.remainingAcreage / unitVolume);
                     const isBatchLarger = batch.remainAmount > maxCapacity;
                     let placed;
+                    const remainingBoxesBefore = box.remainingAcreage;
 
                     if (isBatchLarger) {
                         placed = maxCapacity;
@@ -271,6 +271,7 @@ class BatchBoxService {
                     }
                     suggestion.locations.push({
                         ...boxInfo,
+                        remainingAcreage: remainingBoxesBefore,
                         quantity: placed,
                     });
                 }
@@ -486,7 +487,7 @@ class BatchBoxService {
                         return reject({
                             status: 'ERR',
                             statusHttp: HTTP_NOT_FOUND,
-                            message: `Box ${boxID} không tồn tại trong kho ${warehouseID}`,
+                            message: `Box ${boxID} không tồn tại trong kho`,
                         });
                     }
                     // tìm và lấy số lượng hiện tại trong batchbox
@@ -590,7 +591,7 @@ class BatchBoxService {
                             return reject({
                                 status: 'ERR',
                                 statusHttp: HTTP_NOT_FOUND,
-                                message: `Box ${boxID} không tồn tại trong kho ${warehouseID}`,
+                                message: `Box ${boxID} không tồn tại trong kho `,
                             });
                         }
 
@@ -679,9 +680,22 @@ class BatchBoxService {
                                 attributes: ['quantity'],
                                 where: { quantity: { [Op.gt]: 0 } },
                             },
+                            include: [
+                                {
+                                    model: Floor,
+                                    as: 'floor',
+                                    include: [
+                                        {
+                                            model: Shelf,
+                                            as: 'shelf', // sửa lại đúng chính tả (trước là 'sheleves')
+                                        },
+                                    ],
+                                },
+                            ],
                         },
                     ],
                 });
+
                 if (!batch) {
                     return reject({
                         status: 'ERR',
@@ -689,6 +703,7 @@ class BatchBoxService {
                         message: `Lô hàng ${batchID} không tồn tại`,
                     });
                 }
+
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
@@ -696,11 +711,11 @@ class BatchBoxService {
                     boxes: batch.boxes,
                 });
             } catch (err) {
-                console.log('lỗi', err);
+                console.error('Lỗi:', err);
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    message: [err.message] || err,
+                    message: err.message || err,
                 });
             }
         });

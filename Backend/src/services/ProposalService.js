@@ -585,15 +585,20 @@ class ProposalService {
                                 attributes: ['customerID', 'customerName'],
                             },
                         ],
-                        limit: LIMIT_PAGE,
-                        offset: (currentPage - 1) * LIMIT_PAGE,
                         order: [['createdAt', 'DESC']],
                     })) || [];
+
+                const totalRecord = await OrderReleaseProposal.count({ where: whereClause });
+                const totalPages = Math.ceil(totalRecord / LIMIT_PAGE);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách đề xuất xuất hàng thành công',
                     data: orderProposalsRelease,
+                    pagination: {
+                        currentPage: Number.parseInt(currentPage),
+                        totalPages,
+                    },
                 });
             } catch (err) {
                 console.log(err);

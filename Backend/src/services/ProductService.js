@@ -1,7 +1,6 @@
 const dotenv = require('dotenv');
 const db = require('../../models');
-const { Op } = require('sequelize');
-const { resolve } = require('path');
+const { Op, where } = require('sequelize');
 const Product = db.Product;
 const Batch = db.Batch;
 const Box = db.Box;
@@ -351,6 +350,70 @@ class ProductService {
                 });
             } catch (err) {
                 console.error(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+    async getProductCanExport(data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const productExist = await Product.findOne({ where: { productID: data } });
+
+                if (!productExist)
+                    reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_NOT_FOUND,
+                        message: `Sản phẩm có mã ${data} không tồn tại`,
+                    });
+
+                const productCanExport = await Product.findOne({ where: { productID: data, amount: { [Op.gt]: 0 } } });
+
+                // check có lô hàng trong kho
+                // const checkProductBatch = await Batch.findAll({
+                //     where: { productID: data },
+                //     include: [
+                //         {
+                //             model: Box,
+                //             as: 'boxes',
+                //             attributes: ['boxID', 'boxName'],
+                //             through: {
+                //                 attributes: ['quantity'],
+                //                 where: { quantity: { [Op.gt]: 0 } },
+                //             },
+                //         },
+                //     ],
+                // });
+
+                // const isValidCheckProductBatch = JSON.parse(JSON.stringify(checkProductBatch)).some(
+                //     (it) => it.boxes.length > 0,
+                // );
+
+                // if (!isValidCheckProductBatch)
+                //     reject({
+                //         status: 'ERR',
+                //         statusHttp: HTTP_NOT_FOUND,
+                //         message: 'Sản phẩm không có sẵn hàng trong kho để xuất',
+                //     });
+                if (!productCanExport) {
+                    reject({
+                        status: 'ERR',
+                        statusHttp: HTTP_NOT_FOUND,
+                        message: 'Sản phẩm không có sẵn hàng trong kho để xuất',
+                    });
+                }
+
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    product: productExist,
+                    message: 'Tìm kiếm sản phẩm thành công',
+                });
+            } catch (err) {
+                console.log(err);
                 reject({
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
