@@ -20,6 +20,7 @@ import {
     History,
     ClipboardPlus,
     Files,
+    FileChartPie,
 } from 'lucide-react';
 import logo from '../../../assets/logo_v2.jpg';
 import { useLocation } from 'react-router-dom';
@@ -135,6 +136,13 @@ const Sidebar = () => {
                     roles: ['SYSTEM_ADMIN', 'WARE_MANAGER'],
                 },
             ],
+        },
+        {
+            id: 9,
+            title: 'Thống kê',
+            iconName: FileChartPie,
+            path: '/report',
+            roles: ['SYSTEM_ADMIN', 'WARE_MANAGER'],
         },
     ];
 

@@ -12,7 +12,6 @@ import Input from './Input';
 import Modal from './Modal';
 import InfoWare from './InfoWare';
 import MyTable from './MyTable';
-import ModalOrder from './ModalOrder';
 import ProductDetail from './ProductDetail';
 import ProductEdit from './ProductEdit';
 import ModalEmployee from './ModalEmployee';
@@ -46,7 +45,6 @@ export {
     MyTable,
     ProductDetail,
     ProductEdit,
-    ModalOrder,
     ModalEmployee,
     ModelFilter,
     ModalUpdate,

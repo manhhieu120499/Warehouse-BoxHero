@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
-import { MyTable, Modal, ModalOrder } from '@/components';
+import { MyTable } from '@/components';
 import styles from './HistoryTransaction.module.scss';
 import ModelFilter from '@/components/ModelFilter';
 import { filterProductQuantityLog } from '@/services/productquantitylog.service';

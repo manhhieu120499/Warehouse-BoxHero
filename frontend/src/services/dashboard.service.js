@@ -79,10 +79,19 @@ export const getStaticPercentUseWarehouse = async () => {
     }
 };
 
+// lấy top 5 sản phẩm bán nhiều nhất
 export const getStaticTopProduct = async () => {
     try {
         const token = parseToken('tokenUser');
         const warehouse = parseToken('warehouse');
+        const res = await request.get('/api/dashboard/statistic-product-export-high', {
+            headers: {
+                token: `Beare ${token.accessToken}`,
+                employeeid: token.employeeID,
+                warehouseid: warehouse.warehouseID,
+            },
+        });
+        return res?.data?.data || [];
     } catch (err) {
         console.log(err);
         return;
@@ -104,6 +113,24 @@ export const getProductLowMinStock = async (page = 1) => {
             },
         });
         return res.data.data;
+    } catch (err) {
+        console.log(err);
+        return;
+    }
+};
+
+export const getTopFineProductMinExport = async () => {
+    try {
+        const token = parseToken('tokenUser');
+        const warehouse = parseToken('warehouse');
+        const res = await request.get('/api/dashboard/statistical-product-old', {
+            headers: {
+                token: `Beare ${token.accessToken}`,
+                employeeid: token.employeeID,
+                warehouse: warehouse.warehouseID,
+            },
+        });
+        return res?.data?.data || [];
     } catch (err) {
         console.log(err);
         return;
