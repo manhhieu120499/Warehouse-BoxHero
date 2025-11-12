@@ -1,6 +1,12 @@
 const db = require('../../models');
 const dotenv = require('dotenv');
 const Customer = db.Customer;
+const OrderRelease = db.OrderRelease;
+const OrderReleaseDetail = db.OrderReleaseDetail;
+const Employee = db.Employee;
+const Product = db.Product;
+const Batch = db.Batch;
+const Warehouse = db.Warehouse;
 const { Op } = require('sequelize');
 dotenv.config();
 
@@ -8,6 +14,8 @@ const HTTP_OK = process.env.HTTP_OK;
 const HTTP_NOT_FOUND = process.env.HTTP_NOT_FOUND;
 const HTTP_INTERNAL_SERVER_ERROR = process.env.HTTP_INTERNAL_SERVER_ERROR;
 const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
+
+const LIMIT_PAGE = 5;
 
 class CustomerService {
     async getAllCustomers() {
@@ -77,6 +85,70 @@ class CustomerService {
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
                     message: 'Lỗi khi lọc khách hàng',
+                });
+            }
+        });
+    }
+    async getHistoryOrderOfCustomer(data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const { customerID, page = 1 } = data;
+                const { count, rows: history } = await OrderRelease.findAndCountAll({
+                    where: { customerID },
+                    include: [
+                        {
+                            model: OrderReleaseDetail,
+                            as: 'orderReleaseDetails',
+                            include: [
+                                {
+                                    model: Batch,
+                                    as: 'batch',
+                                    attributes: ['batchID', 'productID'],
+                                    include: [
+                                        {
+                                            model: Product,
+                                            as: 'product',
+                                            attributes: ['productID', 'productName'],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            model: Employee,
+                            as: 'employees',
+                        },
+                        {
+                            model: Customer,
+                            as: 'customers',
+                        },
+                        {
+                            model: Warehouse,
+                            as: 'warehouses',
+                            attributes: ['warehouseID', 'warehouseName'],
+                        },
+                    ],
+                    distinct: true,
+                });
+
+                const totalPages = Math.ceil(count / LIMIT_PAGE);
+
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy danh sách lịch sử của khách hàng thành công',
+                    data: history,
+                    pagination: {
+                        currentPage: page,
+                        totalPages,
+                    },
+                });
+            } catch (err) {
+                console.log(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
                 });
             }
         });

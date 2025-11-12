@@ -1,4 +1,4 @@
-const { fn, col, literal, Op } = require('sequelize');
+const { fn, col, literal, Op, Sequelize } = require('sequelize');
 const db = require('../../models/index');
 const ProductBaseline = db.ProductBaseline;
 const Warehouse = db.Warehouse;
@@ -6,7 +6,9 @@ const Box = db.Box;
 const Product = db.Product;
 const Category = db.Category;
 const Batch = db.Batch;
+const OrderReleaseDetail = db.OrderReleaseDetail;
 const dotenv = require('dotenv');
+const { resolve } = require('path');
 
 dotenv.config();
 
@@ -311,27 +313,40 @@ class DashboardService {
     async getStaticTopProductExportInWarehouse() {
         return new Promise(async (resolve, reject) => {
             try {
-                const result = await ExportDetail.findAll({
+                const result = await OrderReleaseDetail.findAll({
                     include: [
                         {
                             model: Batch,
+                            as: 'batch',
                             attributes: ['batchID', 'productID'],
                             include: [
                                 {
                                     model: Product,
-                                    attributes: ['productID', 'productName'],
+                                    as: 'product',
+                                    include: [
+                                        {
+                                            model: Category,
+                                            as: 'category',
+                                            attributes: ['categoryID', 'categoryName'],
+                                        },
+                                    ],
                                 },
                             ],
                         },
                     ],
                     attributes: [
                         [Sequelize.col('Batch.Product.productID'), 'productID'],
-                        [Sequelize.fn('SUM', Sequelize.col('exportQty')), 'totalExportQty'],
+                        [Sequelize.fn('SUM', Sequelize.col('quantityExported')), 'totalExportQty'],
                     ],
                     group: ['Batch.Product.productID', 'Batch.Product.productName'],
                     order: [[Sequelize.literal('totalExportQty'), 'DESC']],
-                    limit: 1,
-                    //raw: true,
+                    limit: 5,
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy top 5 sản phẩm xuất nhiều nhất thành công',
+                    data: result,
                 });
             } catch (err) {
                 console.log(err);
@@ -343,10 +358,9 @@ class DashboardService {
             }
         });
     }
-    async getStaticProductHasLowStock(data) {
+    async getStaticProductHasLowStock() {
         return new Promise(async (resolve, reject) => {
             try {
-                const { page = 1 } = data;
                 const result = await Product.findAll({
                     where: {
                         amount: {
@@ -362,9 +376,6 @@ class DashboardService {
                     ],
 
                     order: [['amount', 'ASC']],
-                    // limit: 5,
-                    // offset: (page - 1) * LIMIT_TOP_PRODUCT,
-                    //raw: true, // trải phẳng object
                 });
                 resolve({
                     statusHttp: HTTP_OK,
@@ -382,42 +393,63 @@ class DashboardService {
             }
         });
     }
-    async getAllProductOld() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const leastExportedProducts = await Product.findAll({
-                    attributes: [
-                        'productID',
-                        'productName',
-                        [fn('SUM', col('Batch.OrderReleaseDetails.quantityExported')), 'totalExported'],
-                    ],
-                    include: [
-                        {
-                            model: Batch,
-                            as: 'Batches',
-                            attributes: [],
-                            include: [
-                                {
-                                    model: OrderReleaseDetail,
-                                    as: 'OrderReleaseDetails',
-                                    attributes: [],
-                                },
-                            ],
-                        },
-                    ],
-                    group: ['Product.productID'],
-                    order: [[literal('totalExported'), 'ASC']], // xuất ít nhất → sắp xếp tăng
-                    limit: 5, // lấy 10 sản phẩm xuất ít nhất
-                });
-            } catch (err) {
-                console.log(err);
-                return reject({
-                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                    status: 'ERR',
-                    message: 'Lỗi hệ thống',
-                });
-            }
-        });
+    async getTopFineProductExportLow() {
+        try {
+            const result = await OrderReleaseDetail.findAll({
+                include: [
+                    {
+                        model: Batch,
+                        as: 'batch',
+                        attributes: ['batchID', 'productID'],
+                        include: [
+                            {
+                                model: Product,
+                                as: 'product',
+                                attributes: ['productID', 'productName', 'amount', 'minStock', 'status'],
+                                include: [
+                                    {
+                                        model: Category,
+                                        as: 'category',
+                                        attributes: ['categoryID', 'categoryName'],
+                                        required: false,
+                                    },
+                                ],
+                                required: true,
+                            },
+                        ],
+                        required: true,
+                    },
+                ],
+                attributes: [
+                    [Sequelize.col('batch.product.productID'), 'productID'],
+                    [Sequelize.col('batch.product.productName'), 'productName'],
+                    [Sequelize.fn('SUM', Sequelize.col('quantityExported')), 'totalExportQty'],
+                ],
+                group: [
+                    'batch.product.productID',
+                    'batch.product.productName',
+                    'batch.product.category.categoryID',
+                    'batch.product.category.categoryName',
+                ],
+                order: [[Sequelize.literal('totalExportQty'), 'ASC']],
+                limit: 5,
+            });
+
+            resolve({
+                status: 'OK',
+                statusHttp: HTTP_OK,
+                message: 'Lấy top 5 sản phẩm xuất ít nhất thành công',
+                data: result,
+            });
+        } catch (err) {
+            console.error(err);
+            reject({
+                statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                status: 'ERR',
+                message: 'Lỗi hệ thống',
+                error: err.message,
+            });
+        }
     }
 }
 

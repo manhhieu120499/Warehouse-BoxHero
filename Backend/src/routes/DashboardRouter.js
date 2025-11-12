@@ -25,6 +25,8 @@ router.get('/statistical-percent-used-warehouse', authUser, DashboardController.
 
 router.get('/statistical-min-stock-product', authUser, DashboardController.getStatisticalMinStockProduct);
 
-router.get('/statistical-product-old', authUser, DashboardController.getStatisticalProductOld);
+router.get('/statistical-product-old', authUser, DashboardController.getTopFineProductExportLow);
+
+router.get('/statistic-product-export-high', authUser, DashboardController.getStaticTopProductExportInWarehouse);
 
 module.exports = router;

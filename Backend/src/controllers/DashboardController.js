@@ -33,20 +33,28 @@ class DashboardController {
     }
     async getStatisticalMinStockProduct(req, res) {
         try {
-            const { statusHttp, ...response } = await DashboardService.getStaticProductHasLowStock(req.query);
+            const { statusHttp, ...response } = await DashboardService.getStaticProductHasLowStock();
             return res.status(statusHttp).json(response);
         } catch (err) {
             console.log(err);
             return res.status(err.statusHttp).json(err);
         }
     }
-    async getStatisticalProductOld(req, res) {
+    async getTopFineProductExportLow(req, res) {
         try {
-            const { statusHttp, ...response } = await DashboardService.getAllProductOld(req.query);
+            const { statusHttp, ...response } = await DashboardService.getTopFineProductExportLow();
             return res.status(statusHttp).json(response);
         } catch (err) {
             console.log(err);
             return res.status(err.statusHttp).json(err);
+        }
+    }
+    async getStaticTopProductExportInWarehouse(req, res) {
+        try {
+            const { statusHttp, ...response } = await DashboardService.getStaticTopProductExportInWarehouse();
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            return res.status(err.statusHttp).json(err.message);
         }
     }
 }

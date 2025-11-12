@@ -23,6 +23,7 @@ const ShelfRouter = require('./ShelfRouter');
 const DashboardRouter = require('./DashboardRouter');
 const ProductQuantityLogRouter = require('./ProductQuantityLogRouter');
 const BatchMoveLogRouter = require('./BatchMoveLogRouter');
+const ReportRouter = require('./ReportRouter');
 
 const router = (app) => {
     app.use('/api/account', AccountRouter);
@@ -50,6 +51,7 @@ const router = (app) => {
     app.use('/api/dashboard', DashboardRouter);
     app.use('/api/product-quantity-log', ProductQuantityLogRouter);
     app.use('/api/batch-move-log', BatchMoveLogRouter);
+    app.use('/api/report', ReportRouter);
 };
 
 module.exports = router;

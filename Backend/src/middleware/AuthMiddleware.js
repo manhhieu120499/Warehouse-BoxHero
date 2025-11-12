@@ -50,6 +50,10 @@ const authUserIsManager = async (req, res, next) => {
 
         const token = req.headers.token;
 
+        console.log('employee', employeeID);
+        console.log('w', warehouseID);
+        console.log('to', token);
+
         if (token) {
             const accessToken = token.split(' ')[1];
             jwt.verify(accessToken, process.env.ACCESS_TOKEN, (err, user) => {
