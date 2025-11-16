@@ -21,6 +21,7 @@ import ModalProductCreate from '../../components/ModalProductCreate';
 import ProductHistory from '../../components/ProductHistory';
 import { authIsAdmin } from '../../common';
 import { set } from 'lodash';
+import CategoryDialog from './CategoryDialog';
 
 const cx = classNames.bind(styles);
 
@@ -64,6 +65,7 @@ const ProductPage = () => {
     const dispatch = useDispatch();
     const [showModalCreateProduct, setShowModalCreateProduct] = useState(false);
     const [totalPage, setTotalPage] = useState(0);
+    const [isOpenCategory, setIsOpenCategory] = useState(false);
 
     const handleOnChange = useCallback((page) => {
         setCurrentPage(page);
@@ -327,65 +329,78 @@ const ProductPage = () => {
     }, [currentPage]);
 
     return (
-        <div className={cx('wrapper-product')}>
-            <ModelFilter
-                columns={columnsModelFilter}
-                handleSubmitFilter={() => handleSearch({ ...filterProduct, page: 1 })}
-                handleResetFilters={handleResetFilterProduct}
-            >
-                {authIsAdmin(currentUser) && (
-                    <Button
-                        primary
-                        medium
-                        onClick={() => setShowModalCreateProduct(true)}
-                        leftIcon={<Plus size={20} />}
-                    >
-                        <span>Tạo sản phẩm</span>
-                    </Button>
+        <>
+            <div className={cx('wrapper-product')}>
+                <ModelFilter
+                    columns={columnsModelFilter}
+                    handleSubmitFilter={() => handleSearch({ ...filterProduct, page: 1 })}
+                    handleResetFilters={handleResetFilterProduct}
+                >
+                    {authIsAdmin(currentUser) && (
+                        <>
+                            <Button
+                                primary
+                                medium
+                                onClick={() => setIsOpenCategory(true)}
+                                leftIcon={<Plus size={20} />}
+                            >
+                                <span>Tạo nhóm sản phẩm</span>
+                            </Button>
+                            <Button
+                                primary
+                                medium
+                                onClick={() => setShowModalCreateProduct(true)}
+                                leftIcon={<Plus size={20} />}
+                            >
+                                <span>Tạo sản phẩm</span>
+                            </Button>
+                        </>
+                    )}
+                </ModelFilter>
+                <h1>Danh sách sản phẩm</h1>
+                <MyTable
+                    className={cx('my-table')}
+                    columns={tableColumns}
+                    data={productList}
+                    pageSize={5}
+                    pagination
+                    onChangePage={handleOnChange}
+                    currentPage={currentPage}
+                    total={totalPage * 5}
+                />
+                {action.productId && action.actionName === 'view' && (
+                    <ProductDetail
+                        data={productData}
+                        onClose={() => {
+                            setAction({ productId: null, actionName: null });
+                            navigate(location.pathname, { replace: true });
+                        }}
+                        classname={cx('modal-product-detail')}
+                    />
                 )}
-            </ModelFilter>
-            <h1>Danh sách sản phẩm</h1>
-            <MyTable
-                className={cx('my-table')}
-                columns={tableColumns}
-                data={productList}
-                pageSize={5}
-                pagination
-                onChangePage={handleOnChange}
-                currentPage={currentPage}
-                total={totalPage * 5}
-            />
-            {action.productId && action.actionName === 'view' && (
-                <ProductDetail
-                    data={productData}
-                    onClose={() => {
-                        setAction({ productId: null, actionName: null });
-                        navigate(location.pathname, { replace: true });
-                    }}
-                    classname={cx('modal-product-detail')}
-                />
-            )}
-            {action.productId && action.actionName === 'edit' && (
-                <ProductEdit
-                    data={productData}
-                    onClose={() => setAction({ productId: null, actionName: null })}
-                    handleUpdateProduct={handleUpdateProduct}
-                />
-            )}
-            {showModalCreateProduct && (
-                <ModalProductCreate
-                    isOpen={!!showModalCreateProduct}
-                    onClose={() => setShowModalCreateProduct(false)}
-                    prefectProductList={fetchProducts}
-                />
-            )}
-            {action.productId && action.actionName === 'history' && (
-                <ProductHistory
-                    data={action.productId}
-                    onClose={() => setAction({ productId: null, actionName: null })}
-                />
-            )}
-        </div>
+                {action.productId && action.actionName === 'edit' && (
+                    <ProductEdit
+                        data={productData}
+                        onClose={() => setAction({ productId: null, actionName: null })}
+                        handleUpdateProduct={handleUpdateProduct}
+                    />
+                )}
+                {showModalCreateProduct && (
+                    <ModalProductCreate
+                        isOpen={!!showModalCreateProduct}
+                        onClose={() => setShowModalCreateProduct(false)}
+                        prefectProductList={fetchProducts}
+                    />
+                )}
+                {action.productId && action.actionName === 'history' && (
+                    <ProductHistory
+                        data={action.productId}
+                        onClose={() => setAction({ productId: null, actionName: null })}
+                    />
+                )}
+            </div>
+            {isOpenCategory && <CategoryDialog isOpen={isOpenCategory} onClose={() => setIsOpenCategory(false)} />}
+        </>
     );
 };
 

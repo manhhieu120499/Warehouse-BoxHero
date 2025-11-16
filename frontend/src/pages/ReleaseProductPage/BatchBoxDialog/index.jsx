@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';
 import { useDispatch, useSelector } from 'react-redux';
 import { addLocationInBatchProductList } from '../../../lib/redux/batchProduct/BatchProduct';
+import { Button, Modal } from '../../../components';
 
 const cx = classNames.bind(styles);
 
