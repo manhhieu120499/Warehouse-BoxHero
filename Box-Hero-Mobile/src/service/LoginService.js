@@ -3,10 +3,11 @@ import axiosInstance from '../config/axiosConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
 import { getEmployeeInfo } from './EmployeeService';
+import request from '../config/axiosConfig';
 
 export const login = async (userName, password) => {
     try {
-        const res = await axiosInstance().post('/account/sign-in', {
+        const res = await request.post('/account/sign-in', {
             email: userName,
             password: password,
         });

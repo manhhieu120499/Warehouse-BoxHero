@@ -2,6 +2,9 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { MaterialIcons } from '@expo/vector-icons';
+import Button from '../components/Button';
+import { useEffect, useState } from 'react';
+import Modal from '../components/Modal';
 
 const style = StyleSheet.create({
     container: {
@@ -38,6 +41,11 @@ const style = StyleSheet.create({
 });
 
 export default function Shelf() {
+    const [showModal, setShowModal] = useState(false);
+
+    useEffect(() => {
+        console.log(showModal);
+    }, [showModal]);
     return (
         <DefaultLayout>
             <Header leftIcon={'menu'} handleOnPressLeftIcon={() => setIsOpenModal(true)} />
@@ -48,7 +56,14 @@ export default function Shelf() {
                     backgroundColor: '#f5f5f5',
                 }}
             >
-                <Text>Shelf Screen</Text>
+                <Text>Shelf Screen Test</Text>
+                <Button error onPress={() => setShowModal(!showModal)}>
+                    Test Button
+                </Button>
+
+                <Modal isOpenInfo={showModal} onClose={() => setShowModal(false)} showButtonClose={true}>
+                    <Text>This is a test modal content.</Text>
+                </Modal>
             </View>
         </DefaultLayout>
     );

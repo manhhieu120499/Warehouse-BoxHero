@@ -9,7 +9,7 @@ export default function Navigation() {
     return (
         <NavigationContainer>
             <Stack.Navigator
-                initialRouteName="Tabs"
+                initialRouteName="Login"
                 screenOptions={{
                     headerShown: false,
                 }}

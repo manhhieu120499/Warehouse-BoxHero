@@ -90,7 +90,6 @@ export default function Login() {
         userName: '',
         password: '',
     });
-    const [isLogin, setIsLogin] = useState(false);
 
     const [showPassword, setShowPassword] = useState(false);
 
@@ -112,18 +111,15 @@ export default function Login() {
             return;
         }
         try {
-            setIsLogin(true);
             const res = await login(user.userName, user.password);
 
             if (res) {
-                setIsLogin(false);
                 // chuyển trang khi login thành công
                 navigation.navigate('Tabs');
             } else {
                 return;
             }
         } catch (err) {
-            setIsLogin(false);
             return;
         }
     };
@@ -169,11 +165,6 @@ export default function Login() {
                     </TouchableOpacity>
                 </View>
             </View>
-            {isLogin && (
-                <View style={styles.overlay}>
-                    <ActivityIndicator size="large" color="#007bff" />
-                </View>
-            )}
         </DefaultLayout>
     );
 }
