@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
 import { getEmployeeInfo } from './EmployeeService';
 import request from '../config/axiosConfig';
+import { getWarehouseDetail } from './WarehouseService';
 
 export const login = async (userName, password) => {
     try {
@@ -13,20 +14,28 @@ export const login = async (userName, password) => {
         });
         if (res.data.status === 'OK') {
             // parse token
-            const token = jwtDecode(res.data.accessToken);
+            const { employeeID, roles, warehouseID, email } = jwtDecode(res.data.accessToken).payload;
 
             // get employee
-            const employeeInfo = await getEmployeeInfo(
-                res.data.accessToken,
-                token.payload.email,
-                token.payload.employeeID,
-            );
+            const employeeInfo = await getEmployeeInfo(res.data.accessToken, email, employeeID);
+
+            if (warehouseID) {
+                const responseWH = await getWarehouseDetail(res.data.accessToken, warehouseID, employeeID);
+                await AsyncStorage.setItem('warehouse', JSON.stringify({ ...responseWH.warehouse }));
+            }
 
             // lưu thông tin vào local
-            await AsyncStorage.setItem('user', JSON.stringify(employeeInfo));
+            await AsyncStorage.setItem(
+                'tokenUser',
+                JSON.stringify({
+                    email,
+                    employeeID,
+                    accessToken: res.data.accessToken,
+                    refreshToken: res.data.refreshToken,
+                }),
+            );
 
-            ToastMessage({ status: 'success', message: 'Đăng nhập thành công' });
-            return true;
+            return res;
         }
     } catch (err) {
         console.log('login failed', err);
@@ -36,6 +45,6 @@ export const login = async (userName, password) => {
                 ? err.response.data.message[0]
                 : err.response.data.message,
         });
-        return false;
+        return null;
     }
 };

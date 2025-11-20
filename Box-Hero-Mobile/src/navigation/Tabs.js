@@ -7,6 +7,7 @@ import Notification from '../screens/Notification';
 import Profile from '../screens/Profile';
 import { TouchableOpacity } from 'react-native';
 import { View } from 'react-native';
+import BatchPage from '../screens/BatchPage';
 
 const Tab = createBottomTabNavigator();
 
@@ -82,7 +83,7 @@ export default function Tabs() {
             />
             <Tab.Screen
                 name="Shelf"
-                component={Shelf}
+                component={BatchPage}
                 options={{
                     tabBarLabel: 'QL kệ',
                     tabBarLabelStyle: {

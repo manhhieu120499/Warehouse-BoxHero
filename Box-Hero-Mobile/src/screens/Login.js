@@ -87,8 +87,8 @@ export default function Login() {
     const navigation = useNavigation();
 
     const [user, setUser] = useState({
-        userName: '',
-        password: '',
+        userName: '123@gmail.com',
+        password: '123456',
     });
 
     const [showPassword, setShowPassword] = useState(false);
@@ -110,16 +110,11 @@ export default function Login() {
             ToastMessage({ status: 'error', message: 'Vui lòng nhập password' });
             return;
         }
-        try {
-            const res = await login(user.userName, user.password);
+        const res = await login(user.userName, user.password);
 
-            if (res) {
-                // chuyển trang khi login thành công
-                navigation.navigate('Tabs');
-            } else {
-                return;
-            }
-        } catch (err) {
+        if (res.data.status === 'OK') {
+            navigation.navigate('Tabs');
+        } else {
             return;
         }
     };

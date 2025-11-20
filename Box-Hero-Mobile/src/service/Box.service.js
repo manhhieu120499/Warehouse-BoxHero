@@ -4,14 +4,13 @@ import parseToken from '../utilities/parseToken';
 
 export const getBoxDetails = async (warehouseID, boxID) => {
     try {
-        const token = parseToken('tokenUser');
-        console.log(token);
+        const token = await parseToken('tokenUser');
 
-        const res = await request.get(`/api/batch/box-details`, {
+        const res = await request.get(`/batch/box-details`, {
             headers: {
                 token: `Bearer ${token.accessToken}`,
                 employeeID: token.employeeID,
-                warehouseID: token.warehouseID,
+                warehouseID: warehouseID,
             },
             params: {
                 boxID: boxID,
@@ -33,8 +32,8 @@ export const getBoxDetails = async (warehouseID, boxID) => {
 
 export const getBoxesByBatchID = async (batchID) => {
     try {
-        const token = parseToken('tokenUser');
-        const warehouse = parseToken('warehouse');
+        const token = await parseToken('tokenUser');
+        const warehouse = await parseToken('warehouse');
         const res = await request.get(`/api/batch-box/get-all-box-by-batch-id`, {
             headers: {
                 token: `Bearer ${token.accessToken}`,

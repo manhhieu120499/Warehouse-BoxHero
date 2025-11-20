@@ -4,10 +4,10 @@ import { ToastMessage } from '../components/common/ToastMessage';
 
 export const getBatchesWithoutLocation = async (warehouseID) => {
     try {
-        const token = parseToken('tokenUser');
+        const token = await parseToken('tokenUser');
         console.log(token);
 
-        const res = await request.get(`/api/batch/batches-without-location`, {
+        const res = await request.get(`/batch/batches-without-location`, {
             headers: {
                 token: `Bearer ${token.accessToken}`,
                 employeeID: token.employeeID,
