@@ -23,4 +23,6 @@ export const COLORS = {
     primaryHoverBackground: 'rgba(199, 199, 199, 0.2)',
     // --white: #fff;
     white: '#fff',
+    // --active-pagination
+    activePagination: '#3b82f6',
 };

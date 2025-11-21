@@ -1,5 +1,5 @@
-import { ToastMessage } from '../components/common/ToastMessage';
-import request from '../config/axiosConfig';
+import { Alert } from 'react-native';
+import axiosInstance from '../config/axiosConfig';
 
 export const getAllShelfOfWarehouse = async ({ warehouseID, token, employeeID }) => {
     try {
@@ -12,13 +12,11 @@ export const getAllShelfOfWarehouse = async ({ warehouseID, token, employeeID })
 
         return res.data;
     } catch (err) {
-        console.log('getAllShelfOfWarehouse failed', err);
-        ToastMessage({
-            status: 'error',
-            message: Array.isArray(err.response.data.message)
-                ? err.response.data.message[0]
-                : err.response.data.message,
-        });
+        console.log(err);
+        Alert.alert(
+            'Lỗi',
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
 
         return err;
     }

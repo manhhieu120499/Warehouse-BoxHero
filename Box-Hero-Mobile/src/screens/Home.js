@@ -1,8 +1,10 @@
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
-import { MaterialIcons } from '@expo/vector-icons';
+// import { MaterialIcons } from '@expo/vector-icons';
 import Panel from '../components/Panel';
+import Dashboard from './Dashboard';
+// import Dashboard from './Dashboard';
 
 const style = StyleSheet.create({
     // container: {
@@ -38,7 +40,7 @@ const style = StyleSheet.create({
     // },
     content: {
         flex: 4,
-        backgroundColor: 'blue',
+        backgroundColor: 'white',
     },
 });
 
@@ -56,7 +58,7 @@ export default function Home() {
                 {/** Panel app */}
                 <Panel />
                 <View style={style.content}>
-                    <Text>Hello</Text>
+                    <Dashboard />
                 </View>
             </ScrollView>
         </DefaultLayout>
