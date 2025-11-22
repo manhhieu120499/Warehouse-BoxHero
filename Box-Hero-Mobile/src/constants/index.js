@@ -80,3 +80,8 @@ export const typeTransaction = {
     RELEASE: 'Xuất hàng',
     INVENTORY_CHECK: 'Kiểm kê hàng',
 };
+
+export const formatStatusSupplier = {
+    ACTIVE: 'Đang hoạt động',
+    INACTIVE: 'Ngừng hoạt động',
+};
