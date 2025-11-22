@@ -4,7 +4,7 @@ import styles from './DefaultLayout.module.scss';
 import { Sidebar } from '../components';
 import Header from '../components/Header';
 import PageLayout from '../PageLayout';
-import { Bot, ChevronLeft } from 'lucide-react';
+import { Bot, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ChatBox } from '@/components';
 import { Spin } from 'antd';
 import { useSelector } from 'react-redux';
@@ -35,7 +35,11 @@ const DefaultLayout = ({ children }) => {
                     backgroundColor: `${sliceChatBox ? 'transparent' : '#e7e7e7'}`,
                 }}
             >
-                <ChevronLeft size={30} onClick={() => setSliceChatBox((prev) => !prev)} />
+                <ChevronLeft
+                    size={30}
+                    className={cx(sliceChatBox ? ['arrow', 'open'] : 'arrow')}
+                    onClick={() => setSliceChatBox((prev) => !prev)}
+                />
                 <button className={cx('btn-show-chat-box')} onClick={() => setShowChatBox((prev) => !prev)}>
                     <Bot size={30} color={'white'} />
                     <p className={cx('title-chat-box')}>Trợ lý</p>

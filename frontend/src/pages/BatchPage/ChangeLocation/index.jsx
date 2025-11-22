@@ -23,10 +23,6 @@ const ChangeLocation = ({ isOpen, onClose, shelvesData, batches, fetchData }) =>
         setLocalShelves(shelvesData?.map((s) => ({ ...s })));
     }, [batches, shelvesData]);
 
-    useEffect(() => {
-        console.log(localBatches);
-    }, [localBatches]);
-
     const handleCheckboxChange = (batchID) => {
         setSelectedBatch(batchID);
     };

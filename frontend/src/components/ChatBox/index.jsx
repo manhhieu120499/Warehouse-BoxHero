@@ -1,11 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, use } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ChatBox.module.scss';
 import { X as XClosed } from 'lucide-react';
 import { Input } from '@/components';
 import Button from '../Button';
-import { chatWithBot } from '../../services/aiService.service';
+import { chatWithBot, initChatBox } from '../../services/aiService.service';
 import logo from '@/assets/boxheroAI.png';
+import parseToken from '../../utils/parseToken';
 
 const cx = classNames.bind(styles);
 
@@ -13,6 +14,23 @@ const ChatBox = ({ classnames, isOpen, closed }) => {
     const [messages, setMessages] = useState([]);
     const [sessionId, setSessionId] = useState(null);
     const contentRef = useRef(null);
+    const [focusInput, setFocusInput] = useState(false);
+
+    useEffect(() => {
+        setFocusInput(isOpen);
+    }, [isOpen]);
+
+    useEffect(() => {
+        // function to intial user for dialog flow
+        const initUser = async () => {
+            const res = await initChatBox();
+            if (res.data.status === 'OK') {
+                setSessionId(res.data.sessionId);
+            }
+        };
+
+        initUser();
+    }, []);
 
     const handleSubmitInput = async (value) => {
         if (!value) return;
@@ -22,15 +40,8 @@ const ChatBox = ({ classnames, isOpen, closed }) => {
         // Mock backend response
         const res = await chatWithBot({ message: value, sessionId });
         if (res.data.status === 'OK') {
-            setSessionId(res.data.sessionId);
             setMessages((prev) => [...prev, ...res.data.data]);
         }
-    };
-
-    const handleButtonClick = (value) => {
-        // Push user message khi click button
-        setMessages((prev) => [...prev, { from: 'user', type: 'text', text: value }]);
-        // TODO: gọi API nếu cần
     };
 
     const handleCheckboxChange = (optionValue, checked) => {
@@ -67,7 +78,7 @@ const ChatBox = ({ classnames, isOpen, closed }) => {
                                 {m.buttons.map((btn, i) => (
                                     <Button
                                         key={i}
-                                        onClick={() => handleButtonClick(btn.value)}
+                                        onClick={() => handleSubmitInput(btn.value)}
                                         style={{ marginRight: 5 }}
                                     >
                                         {btn.label}
@@ -93,7 +104,7 @@ const ChatBox = ({ classnames, isOpen, closed }) => {
             </div>
 
             <div className={cx('wrapper-input')}>
-                <Input borderRadius={18} onSubmit={handleSubmitInput} />
+                <Input focusInput={focusInput} borderRadius={18} onSubmit={handleSubmitInput} />
             </div>
         </div>
     );

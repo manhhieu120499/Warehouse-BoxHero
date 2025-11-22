@@ -5,7 +5,6 @@ import Tippy from '@tippyjs/react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';
-import { set } from 'react-hook-form';
 import { updateLocationBatch } from '../../../services/batchBox.service';
 import parseToken from '../../../utils/parseToken';
 const cx = classNames.bind(styles);

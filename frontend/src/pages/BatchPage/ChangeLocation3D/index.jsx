@@ -375,7 +375,7 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
                                     }}
                                 >
                                     <div style={{ width: 14, height: 14, background: '#a3e4d7', borderRadius: 3 }} />{' '}
-                                    <span>Chưa có sản phẩm</span>
+                                    <span>Trống hoàn toàn</span>
                                 </div>
                                 <div
                                     style={{
@@ -387,7 +387,7 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
                                     }}
                                 >
                                     <div style={{ width: 14, height: 14, background: '#58d68d', borderRadius: 3 }} />{' '}
-                                    <span>Còn trống</span>
+                                    <span>Còn nhiều chỗ</span>
                                 </div>
                                 <div
                                     style={{
@@ -399,7 +399,19 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
                                     }}
                                 >
                                     <div style={{ width: 14, height: 14, background: '#f5b041', borderRadius: 3 }} />{' '}
-                                    <span>Sắp hết vị trí</span>
+                                    <span>Còn một nửa</span>
+                                </div>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        gap: 6,
+                                        alignItems: 'center',
+                                        fontSize: 13,
+                                        marginBottom: 4,
+                                    }}
+                                >
+                                    <div style={{ width: 14, height: 14, background: '#e74c3c', borderRadius: 3 }} />{' '}
+                                    <span>Sắp hết chỗ</span>
                                 </div>
                                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
                                     <div style={{ width: 14, height: 14, background: '#bdc3c7', borderRadius: 3 }} />{' '}
