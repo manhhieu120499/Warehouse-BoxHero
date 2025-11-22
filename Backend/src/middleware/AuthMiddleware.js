@@ -10,6 +10,7 @@ const authUser = async (req, res, next) => {
     try {
         const employeeID = req.headers['employeeid'];
         const token = req.headers.token;
+
         if (token) {
             const accessToken = token.split(' ')[1];
             jwt.verify(accessToken, process.env.ACCESS_TOKEN, (err, user) => {
