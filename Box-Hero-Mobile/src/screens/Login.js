@@ -1,5 +1,16 @@
-import { Text, View, StyleSheet, Image, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { DefaultLayout } from '../layouts';
+import {
+    Text,
+    View,
+    StyleSheet,
+    Image,
+    TextInput,
+    TouchableOpacity,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Alert,
+} from 'react-native';
 import { useState } from 'react';
 import { ToastMessage } from '../components/common/ToastMessage';
 import { login } from '../service/LoginService';
@@ -10,77 +21,114 @@ export default function Login() {
     const styles = StyleSheet.create({
         container: {
             flex: 1,
-            backgroundColor: 'white',
-            padding: 20,
+            backgroundColor: '#f0f4f8',
         },
-        logoContainer: {
-            flex: 3,
-            justifyContent: 'center',
+        headerBackground: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 300,
+            backgroundColor: '#2563eb',
+            borderBottomLeftRadius: 50,
+            borderBottomRightRadius: 50,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+        },
+        scrollContent: {
+            flexGrow: 1,
+            paddingHorizontal: 24,
+            paddingTop: 80,
             alignItems: 'center',
         },
+        logoContainer: {
+            alignItems: 'center',
+            marginBottom: 40,
+            zIndex: 1,
+        },
         logo: {
-            width: 200,
-            height: 200,
-            borderRadius: 120,
-            boxShadow: '0 0 8px rgba(0,0,0,0.1)',
-            objectFit: 'cover',
+            width: 120,
+            height: 120,
+            borderRadius: 60,
+            marginBottom: 16,
+            borderWidth: 4,
+            borderColor: 'white',
+        },
+        welcomeText: {
+            fontSize: 28,
+            color: 'white',
+            marginBottom: 8,
+            marginTop: 10,
+        },
+        subText: {
+            fontSize: 16,
+            color: '#e0e7ff',
+            marginBottom: 30,
         },
         formContainer: {
-            flex: 3,
-            justifyContent: 'flex-start',
+            width: '100%',
+            backgroundColor: 'white',
+            borderRadius: 16,
+            padding: 24,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 3.84,
+            elevation: 5,
         },
         inputGroup: {
             marginBottom: 20,
         },
         label: {
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: '600',
-            color: '#333',
+            color: '#374151',
             marginBottom: 8,
         },
         inputWrapper: {
-            position: 'relative',
-            justifyContent: 'center',
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#e5e7eb',
+            borderRadius: 12,
+            backgroundColor: '#f9fafb',
+            paddingHorizontal: 12,
+            height: 50,
+        },
+        inputIcon: {
+            marginRight: 10,
         },
         input: {
-            borderWidth: 1,
-            borderColor: '#ddd',
-            borderRadius: 8,
-            paddingHorizontal: 15,
-            paddingVertical: 12,
+            flex: 1,
             fontSize: 16,
-            backgroundColor: '#f9f9f9',
-            paddingRight: 40, // Chừa khoảng cho icon
+            color: '#1f2937',
+            height: '100%',
         },
         iconEye: {
-            position: 'absolute',
-            right: 10,
-            top: '45%',
-            transform: [{ translateY: -11 }],
             padding: 4,
         },
         loginButton: {
-            backgroundColor: '#007bff',
-            borderRadius: 8,
-            paddingVertical: 15,
+            backgroundColor: '#2563eb',
+            borderRadius: 12,
+            paddingVertical: 16,
             alignItems: 'center',
-            marginTop: 20,
+            marginTop: 10,
+            shadowColor: '#2563eb',
+            shadowOffset: {
+                width: 0,
+                height: 4,
+            },
+            shadowOpacity: 0.3,
+            shadowRadius: 4.65,
+            elevation: 8,
         },
         loginButtonText: {
             color: 'white',
-            fontSize: 18,
-            fontWeight: '600',
-        },
-        overlay: {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.2)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 999,
+            fontSize: 16,
+            fontWeight: 'bold',
         },
     });
 
@@ -92,6 +140,7 @@ export default function Login() {
     });
 
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const handleOnChange = (key, value) => {
         setUser((prev) => ({ ...prev, [key]: value }));
@@ -99,67 +148,85 @@ export default function Login() {
 
     const handleLogin = async (user) => {
         if (!user.userName && !user.password) {
-            ToastMessage({ status: 'error', message: 'Vui lòng nhập đầy đủ username và password' });
+            Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ email và mật khẩu');
             return;
         }
         if (!user.userName) {
-            ToastMessage({ status: 'error', message: 'Vui lòng nhập username' });
+            Alert.alert('Lỗi', 'Vui lòng nhập email');
             return;
         }
         if (!user.password) {
-            ToastMessage({ status: 'error', message: 'Vui lòng nhập password' });
+            Alert.alert('Lỗi', 'Vui lòng nhập mật khẩu');
             return;
         }
-        const res = await login(user.userName, user.password);
 
-        if (res.data.status === 'OK') {
-            navigation.navigate('Tabs');
-        } else {
-            return;
+        setLoading(true);
+        try {
+            const res = await login(user.userName, user.password);
+            if (res.data.status === 'OK') {
+                navigation.navigate('Tabs');
+            }
+        } catch (error) {
+            console.log('Login error:', error);
+            Alert.alert('Lỗi', 'Đăng nhập thất bại');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <DefaultLayout>
-            <View style={styles.container}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+            <View style={styles.headerBackground} />
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.logoContainer}>
                     <Image source={require('../../assets/logo_v2.jpg')} style={styles.logo} />
+                    <Text style={styles.welcomeText}>Welcome Back!</Text>
+                    <Text style={styles.subText}>Đăng nhập để tiếp tục</Text>
                 </View>
 
                 <View style={styles.formContainer}>
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Username</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Nhập username"
-                            placeholderTextColor="#999"
-                            value={user.userName}
-                            onChangeText={(text) => handleOnChange('userName', text)}
-                        />
+                        <Text style={styles.label}>Email</Text>
+                        <View style={styles.inputWrapper}>
+                            <Feather name="user" size={20} color="#9ca3af" style={styles.inputIcon} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Nhập email"
+                                placeholderTextColor="#9ca3af"
+                                value={user.userName}
+                                onChangeText={(text) => handleOnChange('userName', text)}
+                                autoCapitalize="none"
+                            />
+                        </View>
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Password</Text>
+                        <Text style={styles.label}>Mật khẩu</Text>
                         <View style={styles.inputWrapper}>
+                            <Feather name="lock" size={20} color="#9ca3af" style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
-                                placeholder="Nhập password"
-                                placeholderTextColor="#999"
+                                placeholder="Nhập mật khẩu"
+                                placeholderTextColor="#9ca3af"
                                 secureTextEntry={!showPassword}
                                 value={user.password}
                                 onChangeText={(text) => handleOnChange('password', text)}
                             />
                             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.iconEye}>
-                                <Feather name={showPassword ? 'eye-off' : 'eye'} size={22} color="#999" />
+                                <Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color="#9ca3af" />
                             </TouchableOpacity>
                         </View>
                     </View>
 
-                    <TouchableOpacity style={styles.loginButton} onPress={() => handleLogin(user)}>
-                        <Text style={styles.loginButtonText}>Login</Text>
+                    <TouchableOpacity style={styles.loginButton} onPress={() => handleLogin(user)} disabled={loading}>
+                        {loading ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <Text style={styles.loginButtonText}>Đăng nhập</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
-            </View>
-        </DefaultLayout>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }

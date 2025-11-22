@@ -10,44 +10,59 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        backgroundColor: '#003b95',
+        backgroundColor: '#2563eb', // Modern Blue
         alignItems: 'center',
         justifyContent: 'center',
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
+        zIndex: 1000, // Ensure it sits on top
     },
     containerTitle: {
         width: '100%',
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-around',
+        justifyContent: 'center', // Center title by default
         position: 'relative',
+        paddingHorizontal: 16,
     },
     title: {
         fontSize: 20,
-        fontWeight: 550,
+        fontWeight: '700', // Bold
         color: 'white',
+        letterSpacing: 0.5,
     },
     iconLeftInContainerTitle: {
-        height: 30,
-        width: 30,
+        height: 40, // Larger touch target
+        width: 40,
         alignItems: 'center',
         justifyContent: 'center',
         position: 'absolute',
-        left: 20,
+        left: 16,
+        zIndex: 1,
     },
     iconRightInContainerTitle: {
-        height: 30,
-        width: 30,
+        height: 40, // Larger touch target
+        width: 40,
         alignItems: 'center',
         justifyContent: 'center',
         position: 'absolute',
-        right: 20,
+        right: 16,
+        zIndex: 1,
     },
 
     content: {
         width: '100%',
         paddingHorizontal: 20,
         alignItems: 'center',
-        paddingBottom: 5,
+        paddingBottom: 10, // Increased padding
     },
 });
 
@@ -73,7 +88,14 @@ const renderHeightHeaderByScreen = (nameScreen, platForm) => {
     }
 };
 
-export default function Header({ children, leftIcon, handleOnPressLeftIcon, nameScreen = '' }) {
+export default function Header({
+    children,
+    leftIcon,
+    handleOnPressLeftIcon,
+    nameScreen = '',
+    title = 'Quản lý kho thông minh',
+    RightComponent,
+}) {
     return (
         <View
             style={[
@@ -97,7 +119,8 @@ export default function Header({ children, leftIcon, handleOnPressLeftIcon, name
                         <MaterialIcons name={leftIcon} size={24} color={'white'} />
                     </Pressable>
                 )}
-                <Text style={styles.title}>Quản lý kho thông minh</Text>
+                <Text style={styles.title}>{title}</Text>
+                {RightComponent && <View style={styles.iconRightInContainerTitle}>{RightComponent}</View>}
             </View>
             {children && <View style={styles.content}>{children}</View>}
         </View>

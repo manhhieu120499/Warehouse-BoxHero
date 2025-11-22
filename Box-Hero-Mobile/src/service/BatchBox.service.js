@@ -82,12 +82,10 @@ export const suggestBoxes = async (payload) => {
         return res;
     } catch (err) {
         console.log('suggestBoxes failed', err);
-        ToastMessage({
-            status: 'error',
-            message: Array.isArray(err.response.data.message)
-                ? err.response.data.message[0]
-                : err.response.data.message,
-        });
+        Alert.alert(
+            'Lỗi',
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
 
         return err;
     }

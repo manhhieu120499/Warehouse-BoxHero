@@ -2,7 +2,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Home from '../screens/Home';
 import { Entypo, Feather, FontAwesome5 } from '@expo/vector-icons';
-import Shelf from '../screens/Shelf';
 import Notification from '../screens/Notification';
 import Profile from '../screens/Profile';
 import { TouchableOpacity } from 'react-native';

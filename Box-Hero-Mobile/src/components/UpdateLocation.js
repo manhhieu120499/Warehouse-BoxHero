@@ -13,6 +13,8 @@ import {
 import Modal from './Modal'; // Use custom Modal
 import parseToken from '../utilities/parseToken';
 import { updateLocationBatch } from '../service/BatchBox.service';
+import ModalSuggestLocation from './ModalSuggestLocation';
+import { handleCopy } from './common/Common';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,6 +24,7 @@ const UpdateLocation = ({ isOpen, onClose, shelvesData, batches, fetchData }) =>
     const [localBatches, setLocalBatches] = useState([]);
     const [localShelves, setLocalShelves] = useState([]);
     const [selectedShelfID, setSelectedShelfID] = useState(null);
+    const [showModalSuggestLocation, setShowModalSuggestLocation] = useState(false);
 
     useEffect(() => {
         if (batches) {
@@ -177,6 +180,41 @@ const UpdateLocation = ({ isOpen, onClose, shelvesData, batches, fetchData }) =>
         }
     };
 
+    const handleSuggestLocationSubmit = (dataSubmit) => {
+        try {
+            const localShelvesConvert = handleCopy(shelvesData);
+            const localBatchesConvert = batches.map((b) => ({ ...b }));
+            dataSubmit.forEach((item) => {
+                const batchFind = localBatchesConvert.find((b) => b.batchID === item.batchID);
+                let totalAssigned = 0;
+                item.locations.forEach((loc) => {
+                    totalAssigned += loc.quantity;
+                    const totalVolume = batchFind.unit.length * batchFind.unit.width * batchFind.unit.height;
+
+                    localShelvesConvert.forEach((shelf) => {
+                        shelf.floor.forEach((col) => {
+                            col.boxes.forEach((b) => {
+                                if (b.boxID === loc.boxID) {
+                                    b.remainingAcreage -= loc.quantity * totalVolume;
+                                }
+                            });
+                        });
+                    });
+                });
+                batchFind.remainAmount -= totalAssigned;
+            });
+
+            setLocations(dataSubmit);
+
+            setLocalShelves(localShelvesConvert);
+            setLocalBatches(localBatchesConvert);
+            setSelectedBatch(dataSubmit[0]?.batchID || null);
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Lỗi', 'Có lỗi xảy ra khi gợi ý vị trí');
+        }
+    };
+
     // Render Batch Card
     const renderBatchCard = ({ item }) => {
         const isSelected = selectedBatch === item.batchID;
@@ -323,10 +361,22 @@ const UpdateLocation = ({ isOpen, onClose, shelvesData, batches, fetchData }) =>
 
                 {/* Footer */}
                 <View style={styles.footer}>
+                    <TouchableOpacity onPress={() => setShowModalSuggestLocation(true)} style={styles.btnSuggestFooter}>
+                        <Text style={styles.btnUpdateFooterText}>Gợi ý vị trí</Text>
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={handleUpdateLocation} style={styles.btnUpdateFooter}>
                         <Text style={styles.btnUpdateFooterText}>Cập nhật</Text>
                     </TouchableOpacity>
                 </View>
+
+                {showModalSuggestLocation && (
+                    <ModalSuggestLocation
+                        batches={batches}
+                        isOpen={showModalSuggestLocation}
+                        onClose={() => setShowModalSuggestLocation(false)}
+                        handleSuggestLocationSubmit={handleSuggestLocationSubmit}
+                    />
+                )}
             </View>
         </Modal>
     );
@@ -528,17 +578,26 @@ const styles = StyleSheet.create({
 
     // Footer
     footer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
         paddingTop: 15,
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderTopColor: '#e5e7eb',
-        alignItems: 'flex-end',
     },
     btnUpdateFooter: {
         backgroundColor: '#3b82f6',
         paddingHorizontal: 24,
         paddingVertical: 10,
         borderRadius: 8,
+    },
+    btnSuggestFooter: {
+        backgroundColor: '#191919',
+        paddingHorizontal: 24,
+        paddingVertical: 10,
+        borderRadius: 8,
+        marginRight: 10,
     },
     btnUpdateFooterText: {
         color: '#fff',

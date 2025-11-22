@@ -13,7 +13,7 @@ export const setGlobalLoadingHandler = (callback) => {
 
 // 2. Khởi tạo Instance Axios
 // Thay thế import.meta.env.VITE_API_BASE_URL bằng một hằng số
-const API_BASE_URL = 'https://4a75e1004b25.ngrok-free.app/api';
+const API_BASE_URL = 'https://4c5f6b3c0d55.ngrok-free.app/api';
 
 const request = axios.create({
     baseURL: API_BASE_URL,

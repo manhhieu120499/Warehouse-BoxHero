@@ -150,12 +150,14 @@ const ChangeLocation = ({ isOpen, onClose, shelvesData, batches, fetchData }) =>
 
     const handleChangeInputQuantity = (boxID, value) => {
         const newQuantity = parseInt(value);
-        if (isNaN(newQuantity)) return;
+        if (isNaN(newQuantity)) {
+            Alert.alert('Lỗi', 'Số lượng phải là số dương');
+            return;
+        }
 
         const batchLocation = locations.find((item) => item.batchID == selectedBatch);
         const batchFind = localBatches.find((item) => item.batchID === selectedBatch);
         const locationFind = batchLocation.locations.find((loc) => loc.boxID === boxID);
-        console.log('batchFind ', batchFind);
 
         const boxFind = localShelves
             .flatMap((shelf) => shelf.floor)
@@ -341,6 +343,7 @@ const ChangeLocation = ({ isOpen, onClose, shelvesData, batches, fetchData }) =>
                                                             style={styles.input}
                                                             value={String(location.quantity)}
                                                             keyboardType="numeric"
+                                                            selectTextOnFocus={true}
                                                             onChangeText={(val) =>
                                                                 handleChangeInputQuantity(location.boxID, val)
                                                             }

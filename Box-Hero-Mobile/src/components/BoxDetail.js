@@ -245,7 +245,7 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                                         </View>
                                         <View style={styles.infoItem}>
                                             <Text style={styles.label}>Cao:</Text>
-                                            <Text style={styles.valueText}>10</Text>
+                                            <Text style={styles.valueText}>2</Text>
                                         </View>
                                         <View style={styles.infoItem}>
                                             <Text style={styles.label}>Tổng V:</Text>
@@ -267,9 +267,11 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                                     <Text style={styles.cardTitle}>
                                         {boxID ? 'Danh sách lô trong ô' : 'Danh sách lô chưa có vị trí'}
                                     </Text>
-                                    <TouchableOpacity onPress={handleCLoseModel} style={styles.btnClose}>
-                                        <Text style={styles.btnCloseText}>Đóng</Text>
-                                    </TouchableOpacity>
+                                    {!boxID && (
+                                        <TouchableOpacity onPress={handleCLoseModel} style={styles.btnClose}>
+                                            <Text style={styles.btnCloseText}>Đóng</Text>
+                                        </TouchableOpacity>
+                                    )}
                                 </View>
 
                                 {/* Filter Area */}

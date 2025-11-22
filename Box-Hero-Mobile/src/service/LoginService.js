@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import { getEmployeeInfo } from './EmployeeService';
 import request from '../config/axiosConfig';
 import { getWarehouseDetail } from './WarehouseService';
+import { Alert } from 'react-native';
 
 export const login = async (userName, password) => {
     try {
@@ -39,12 +40,10 @@ export const login = async (userName, password) => {
         }
     } catch (err) {
         console.log('login failed', err);
-        ToastMessage({
-            status: 'error',
-            message: Array.isArray(err.response.data.message)
-                ? err.response.data.message[0]
-                : err.response.data.message,
-        });
+        Alert.alert(
+            'Lỗi',
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
         return null;
     }
 };
