@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Package, ArrowUpCircle, ArrowDownCircle, X, Info, RotateCcw, MapPin } from 'lucide-react-native';
 import parseToken from '../utilities/parseToken';
-import { getAllShelfOfWarehouse } from '../service/Shelf.service';
+import { getAllShelfOfWarehouse } from '../service/shelf.service';
 import BoxDetail from '../components/BoxDetail';
 import UpdateLocation from '../components/UpdateLocation';
 import ChangeLocation from '../components/ChangeLocation';

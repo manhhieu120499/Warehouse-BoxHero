@@ -4,7 +4,6 @@ import { jwtDecode } from 'jwt-decode';
 import { getEmployeeInfo } from './employee.service';
 import request from '../config/axiosConfig';
 import { getWarehouseDetail } from './WarehouseService';
-import { Alert } from 'react-native';
 
 export const login = async (userName, password) => {
     try {
