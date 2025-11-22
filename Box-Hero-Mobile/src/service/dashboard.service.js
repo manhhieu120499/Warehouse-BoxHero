@@ -60,14 +60,19 @@ export const getStatisticalImportExport = async (type, year) => {
 export const getStaticPercentUseWarehouse = async () => {
     try {
         const userJSON = await AsyncStorage.getItem('tokenUser');
-        const { employeeID, warehouseID, accessToken } = JSON.parse(userJSON);
-        const res = await request.get(`/dashboard/statistical-percent-used-warehouse?warehouseID=${warehouseID}`, {
-            headers: {
-                token: `Bearer ${accessToken}`,
-                employeeID: employeeID,
-                warehouseID: warehouseID,
+        const warehouseJSON = await AsyncStorage.getItem('warehouse');
+        const parseWarehouse = JSON.parse(warehouseJSON);
+        const { employeeID, accessToken } = JSON.parse(userJSON);
+        const res = await request.get(
+            `/dashboard/statistical-percent-used-warehouse?warehouseID=${parseWarehouse.warehouseID}`,
+            {
+                headers: {
+                    token: `Bearer ${accessToken}`,
+                    employeeID: employeeID,
+                    warehouseID: parseWarehouse.warehouseID,
+                },
             },
-        });
+        );
         return res.data.data;
     } catch (err) {
         console.log(err);
