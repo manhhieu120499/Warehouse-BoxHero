@@ -12,10 +12,11 @@ import {
     Alert,
 } from 'react-native';
 import { useState } from 'react';
-import { ToastMessage } from '../components/common/ToastMessage';
-import { login } from '../service/LoginService';
+
+import { login } from '../service/login.service';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
 
 export default function Login() {
     const styles = StyleSheet.create({
@@ -133,6 +134,7 @@ export default function Login() {
     });
 
     const navigation = useNavigation();
+    const dispatch = useDispatch();
 
     const [user, setUser] = useState({
         userName: '123@gmail.com',
@@ -162,7 +164,7 @@ export default function Login() {
 
         setLoading(true);
         try {
-            const res = await login(user.userName, user.password);
+            const res = await login(user.userName, user.password, dispatch);
             if (res.data.status === 'OK') {
                 navigation.navigate('Tabs');
             }

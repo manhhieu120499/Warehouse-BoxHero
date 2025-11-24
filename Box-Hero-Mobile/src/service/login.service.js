@@ -1,13 +1,13 @@
-import { ToastMessage } from '../components/common/ToastMessage';
-import axiosInstance from '../config/axiosConfig';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode';
-import { getEmployeeInfo } from './EmployeeService';
+import { getEmployeeInfo } from './employee.service';
 import request from '../config/axiosConfig';
 import { getWarehouseDetail } from './WarehouseService';
-import { Alert } from 'react-native';
+import { setEmployee } from '../redux/employee.reducer';
+import { setWarehouse } from '../redux/warehouse.reducer';
 
-export const login = async (userName, password) => {
+export const login = async (userName, password, dispatch) => {
     try {
         const res = await request.post('/account/sign-in', {
             email: userName,
@@ -19,10 +19,12 @@ export const login = async (userName, password) => {
 
             // get employee
             const employeeInfo = await getEmployeeInfo(res.data.accessToken, email, employeeID);
+            dispatch(setEmployee({ ...employeeInfo, roles }));
 
             if (warehouseID) {
                 const responseWH = await getWarehouseDetail(res.data.accessToken, warehouseID, employeeID);
                 await AsyncStorage.setItem('warehouse', JSON.stringify({ ...responseWH.warehouse }));
+                dispatch(setWarehouse(responseWH.warehouse));
             }
 
             // lưu thông tin vào local

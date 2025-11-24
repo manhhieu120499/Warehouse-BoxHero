@@ -20,7 +20,8 @@ const handleCopy = (data) => {
 };
 
 const authIsAdmin = (user) => {
-    return user?.empRole?.some((role) => role.roleName === 'SYSTEM_ADMIN' || role.roleName === 'WARE_MANAGER');
+    console.log(user);
+    return user?.roles?.some((role) => role.roleName === 'SYSTEM_ADMIN' || role.roleName === 'WARE_MANAGER');
 };
 
 export { convertDateVN, handleCopy, authIsAdmin };

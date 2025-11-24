@@ -15,8 +15,8 @@ export default function useShelvesData() {
     async function fetchData() {
         try {
             setLoading(true);
-            const token = parseToken('tokenUser');
-            const warehouse = parseToken('warehouse');
+            const token = await parseToken('tokenUser');
+            const warehouse = await parseToken('warehouse');
             const headers = {
                 token: `Bearer ${token.accessToken}`,
                 employeeID: token.employeeID,
