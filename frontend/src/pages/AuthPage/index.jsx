@@ -73,22 +73,22 @@ const tableColumns = [
         dataIndex: 'empStatus',
         key: 'empStatus',
     },
-    {
-        title: 'Thao tác',
-        dataIndex: 'action',
-        key: 'action',
-        render: (_, record) => {
-            return (
-                <div className={cxGlobal('action-table')}>
-                    <Tippy content={'Xem lịch sử hoạt động'} placement="bottom-end">
-                        <button className={cxGlobal('action-table-icon')} onClick={() => console.log(record.empId)}>
-                            <Eye size={20} />
-                        </button>
-                    </Tippy>
-                </div>
-            );
-        },
-    },
+    // {
+    //     title: 'Thao tác',
+    //     dataIndex: 'action',
+    //     key: 'action',
+    //     render: (_, record) => {
+    //         return (
+    //             <div className={cxGlobal('action-table')}>
+    //                 <Tippy content={'Xem lịch sử hoạt động'} placement="bottom-end">
+    //                     <button className={cxGlobal('action-table-icon')} onClick={() => console.log(record.empId)}>
+    //                         <Eye size={20} />
+    //                     </button>
+    //                 </Tippy>
+    //             </div>
+    //         );
+    //     },
+    // },
 ];
 
 const dataSource = [
