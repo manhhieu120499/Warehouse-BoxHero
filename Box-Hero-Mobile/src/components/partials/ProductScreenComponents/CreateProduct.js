@@ -88,6 +88,10 @@ const CreateProduct = ({ isOpen, onClose, refetchData }) => {
             Alert.alert('Lỗi', 'Số lượng tồn tối thiểu phải là số không âm');
             return false;
         }
+        if (!formData.image) {
+            Alert.alert('Lỗi', 'Vui lòng chọn ảnh cho sản phẩm');
+            return false;
+        }
 
         return true;
     };
@@ -111,7 +115,7 @@ const CreateProduct = ({ isOpen, onClose, refetchData }) => {
 
             if (!result.canceled) {
                 setImageUri(result.assets[0].uri);
-                setFormData({ ...formData, image: result.assets[0] });
+                setFormData({ ...formData, image: result.assets[0].uri });
             }
         } catch (error) {
             console.error('Error picking image:', error);
@@ -147,6 +151,10 @@ const CreateProduct = ({ isOpen, onClose, refetchData }) => {
             };
 
             try {
+                // upload image
+                const resultImage = await uploadImageFromURI(formData.image);
+                if (resultImage) productData.image = resultImage;
+
                 const res = await createProduct(productData);
                 if (res) {
                     onClose();

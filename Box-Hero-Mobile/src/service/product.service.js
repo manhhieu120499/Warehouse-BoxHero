@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import request from '../config/axiosConfig';
 import { uploadImage } from '../utilities/uploadImage';
 import { Alert } from 'react-native';
-import { parseToken } from '../utilities/parseToken';
+import parseToken from '../utilities/parseToken';
 export const fetchProduct = async (page = 1) => {
     try {
         // call api
@@ -129,13 +129,13 @@ export const getProductCanExportById = async (productID, warehouseID) => {
                 warehouseID: warehouseID,
             },
         });
-        return res;
+        return res?.data?.product || null;
     } catch (err) {
+        console.log(err);
         Alert.alert(
             'Lỗi',
             Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
         );
-        console.log(err);
 
         return err;
     }

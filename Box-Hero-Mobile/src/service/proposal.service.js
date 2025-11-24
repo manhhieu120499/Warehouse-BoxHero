@@ -96,12 +96,13 @@ export const fetchFilterProposal = async (params) => {
 export const createOrderReleaseProposal = async (data) => {
     try {
         const tokenUser = await parseToken('tokenUser');
+        const warehouse = await parseToken('warehouse');
 
         const res = await request.post('/proposal/create-release-proposal', data, {
             headers: {
                 token: `Bearer ${tokenUser.accessToken}`,
                 employeeID: tokenUser.employeeID,
-                warehouseID: tokenUser.warehouseID,
+                warehouseID: warehouse.warehouseID,
             },
         });
         return res;
@@ -165,14 +166,18 @@ export const getOrderReleaseProposal = async (orderReleaseProposalID) => {
 export const updateStatusOrderReleaseProposal = async (data) => {
     try {
         const tokenUser = await parseToken('tokenUser');
+        const warehouse = await parseToken('warehouse');
 
         const res = await request.post('/proposal/approve-release-proposal', data, {
             headers: {
                 token: `Bearer ${tokenUser.accessToken}`,
                 employeeID: tokenUser.employeeID,
-                warehouseID: tokenUser.warehouseID,
+                warehouseID: warehouse.warehouseID,
             },
         });
+        if (res && res.data.status === 'OK') {
+            Alert.alert('Thông báo', 'Cập nhật trạng thái phiếu đề xuất xuất thành công');
+        }
         return res;
     } catch (err) {
         console.log(err);

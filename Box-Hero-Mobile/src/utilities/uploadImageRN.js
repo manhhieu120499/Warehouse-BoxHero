@@ -2,7 +2,7 @@ import request from '../config/axiosConfig';
 
 export const uploadImageFromURI = async (imageAsset) => {
     try {
-        if (!imageAsset || !imageAsset.uri) {
+        if (!imageAsset) {
             throw new Error('Invalid image asset');
         }
 
@@ -10,9 +10,9 @@ export const uploadImageFromURI = async (imageAsset) => {
 
         // Create file object for React Native
         const file = {
-            uri: imageAsset.uri,
-            type: imageAsset.type || 'image/jpeg', // Default to jpeg if type not specified
-            name: imageAsset.fileName || `image_${Date.now()}.jpg`,
+            uri: imageAsset,
+            type: imageAsset?.type || 'image/jpeg', // Default to jpeg if type not specified
+            name: imageAsset?.fileName || `image_${Date.now()}.jpg`,
         };
 
         formData.append('image', file);

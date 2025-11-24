@@ -12,6 +12,7 @@ import {
     ScrollView,
 } from 'react-native';
 import { DefaultLayout } from '../layouts';
+import Header from '../layouts/Header';
 import { COLORS } from '../components/style/Globalstyle';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ChevronLeft } from 'lucide-react-native';
@@ -136,15 +137,8 @@ export default function Customer() {
 
     return (
         <DefaultLayout>
+            <Header title="Khách hàng" leftIcon="arrow-back" handleOnPressLeftIcon={() => navigation.goBack()} />
             <View style={styles.container}>
-                {/* Header - Fixed */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <ChevronLeft size={24} color="black" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Khách hàng</Text>
-                </View>
-
                 {/* Scrollable Content */}
                 <KeyboardAvoidingView behavior="padding" style={styles.keyboardAvoidingView} keyboardVerticalOffset={0}>
                     <ScrollView
@@ -304,23 +298,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f9fafb',
-    },
-    header: {
-        backgroundColor: '#fff',
-        paddingHorizontal: 10,
-        paddingTop: 16,
-        paddingBottom: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        height: 85,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#333',
-        marginStart: 15,
     },
     keyboardAvoidingView: {
         flex: 1,

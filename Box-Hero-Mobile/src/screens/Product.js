@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { formatStatusProduct } from '../constants';
 import { DefaultLayout } from '../layouts';
+import Header from '../layouts/Header';
 import { Archive, ChevronLeft, TriangleAlert } from 'lucide-react-native';
 import { fetchProduct, fetchProductById, getProductById, handleFilterProduct } from '../service/product.service';
 import ProductDetail from '../components/partials/ProductScreenComponents/ProductDetail';
@@ -205,15 +206,8 @@ export default function Product() {
 
     return (
         <DefaultLayout>
+            <Header title="Sản phẩm" leftIcon="arrow-back" handleOnPressLeftIcon={() => navigation.goBack()} />
             <View style={styles.container}>
-                {/* Header with Search */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <ChevronLeft size={24} color="black" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Sản phẩm</Text>
-                </View>
-
                 <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                     {/* Filter Section */}
                     <View style={styles.filterSection}>
@@ -421,24 +415,7 @@ export default function Product() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f5f5f5',
-    },
-    header: {
-        backgroundColor: '#fff',
-        paddingHorizontal: 10,
-        paddingTop: 16,
-        paddingBottom: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e0e0e0',
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        height: 85,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#333',
-        marginStart: 15,
+        backgroundColor: '#f3f4f6',
     },
     searchBar: {
         flexDirection: 'row',

@@ -85,3 +85,8 @@ export const formatStatusSupplier = {
     ACTIVE: 'Đang hoạt động',
     INACTIVE: 'Ngừng hoạt động',
 };
+
+export const employeeStatus = {
+    ACTIVE: 'Đang làm',
+    INACTIVE: 'Nghỉ việc',
+};

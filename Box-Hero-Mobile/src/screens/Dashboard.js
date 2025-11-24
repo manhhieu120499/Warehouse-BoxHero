@@ -140,13 +140,13 @@ export default function Dashboard() {
         filterReportProductFunc(filterReportProduct);
     }, [filterReportProduct]);
 
-    if (loading) {
-        return (
-            <View style={styles.loading}>
-                <ActivityIndicator size="large" color="#007bff" />
-            </View>
-        );
-    }
+    // if (loading) {
+    //     return (
+    //         <View style={styles.loading}>
+    //             <ActivityIndicator size="large" color="#007bff" />
+    //         </View>
+    //     );
+    // }
 
     // Biểu diễn các component
     return (
