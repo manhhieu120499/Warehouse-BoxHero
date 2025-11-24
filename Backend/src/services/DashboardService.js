@@ -394,62 +394,64 @@ class DashboardService {
         });
     }
     async getTopFineProductExportLow() {
-        try {
-            const result = await OrderReleaseDetail.findAll({
-                include: [
-                    {
-                        model: Batch,
-                        as: 'batch',
-                        attributes: ['batchID', 'productID'],
-                        include: [
-                            {
-                                model: Product,
-                                as: 'product',
-                                attributes: ['productID', 'productName', 'amount', 'minStock', 'status'],
-                                include: [
-                                    {
-                                        model: Category,
-                                        as: 'category',
-                                        attributes: ['categoryID', 'categoryName'],
-                                        required: false,
-                                    },
-                                ],
-                                required: true,
-                            },
-                        ],
-                        required: true,
-                    },
-                ],
-                attributes: [
-                    [Sequelize.col('batch.product.productID'), 'productID'],
-                    [Sequelize.col('batch.product.productName'), 'productName'],
-                    [Sequelize.fn('SUM', Sequelize.col('quantityExported')), 'totalExportQty'],
-                ],
-                group: [
-                    'batch.product.productID',
-                    'batch.product.productName',
-                    'batch.product.category.categoryID',
-                    'batch.product.category.categoryName',
-                ],
-                order: [[Sequelize.literal('totalExportQty'), 'ASC']],
-                limit: 5,
-            });
+        return new Promise(async (resolve, reject) => {
+            try {
+                const result = await OrderReleaseDetail.findAll({
+                    include: [
+                        {
+                            model: Batch,
+                            as: 'batch',
+                            attributes: ['batchID', 'productID'],
+                            include: [
+                                {
+                                    model: Product,
+                                    as: 'product',
+                                    attributes: ['productID', 'productName', 'amount', 'minStock', 'status'],
+                                    include: [
+                                        {
+                                            model: Category,
+                                            as: 'category',
+                                            attributes: ['categoryID', 'categoryName'],
+                                            required: false,
+                                        },
+                                    ],
+                                    required: true,
+                                },
+                            ],
+                            required: true,
+                        },
+                    ],
+                    attributes: [
+                        [Sequelize.col('batch.product.productID'), 'productID'],
+                        [Sequelize.col('batch.product.productName'), 'productName'],
+                        [Sequelize.fn('SUM', Sequelize.col('quantityExported')), 'totalExportQty'],
+                    ],
+                    group: [
+                        'batch.product.productID',
+                        'batch.product.productName',
+                        'batch.product.category.categoryID',
+                        'batch.product.category.categoryName',
+                    ],
+                    order: [[Sequelize.literal('totalExportQty'), 'ASC']],
+                    limit: 5,
+                });
 
-            resolve({
-                status: 'OK',
-                statusHttp: HTTP_OK,
-                message: 'Lấy top 5 sản phẩm xuất ít nhất thành công',
-                data: result,
-            });
-        } catch (err) {
-            console.error(err);
-            reject({
-                statusHttp: HTTP_INTERNAL_SERVER_ERROR,
-                status: 'ERR',
-                message: 'Lỗi hệ thống',
-                error: err.message,
-            });
-        }
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy top 5 sản phẩm xuất ít nhất thành công',
+                    data: result,
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    status: 'ERR',
+                    message: 'Lỗi hệ thống',
+                    error: err.message,
+                });
+            }
+        });
     }
 }
 

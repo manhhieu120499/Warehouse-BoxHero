@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const CategoryProductController = require('../controllers/CategoryProductController');
 const { checkCreateCategoryProductValidate } = require('../validates/categoryProduct.validation');
-const { authUserIsManagerWithoutWarehouse } = require('../middleware/AuthMiddleware');
+const { authUserIsManagerWithoutWarehouse, authUser } = require('../middleware/AuthMiddleware');
 const validate = require('../validates/validate');
 
 router.post(
@@ -14,5 +14,7 @@ router.post(
 );
 
 router.get('/get-all-categories', authUserIsManagerWithoutWarehouse, CategoryProductController.getAllCategories);
+
+router.post('/search-category', authUser, CategoryProductController.searchCategory);
 
 module.exports = router;

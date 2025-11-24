@@ -3,7 +3,7 @@ const CustomerService = require('../services/CustomerService');
 class CustomerController {
     async getAllCustomers(req, res) {
         try {
-            const { statusHttp, ...response } = await CustomerService.getAllCustomers();
+            const { statusHttp, ...response } = await CustomerService.getAllCustomers(req.query.page);
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp || 500).json(err.message);

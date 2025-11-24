@@ -578,6 +578,13 @@ class ProposalService {
                                 model: OrderReleaseProposalDetail,
                                 as: 'orderReleaseProposalDetails',
                                 attributes: ['productID', 'productName', 'note'],
+                                include: [
+                                    {
+                                        model: Product,
+                                        as: 'product',
+                                        attributes: ['image'],
+                                    },
+                                ],
                             },
                             {
                                 model: Customer,
@@ -586,6 +593,8 @@ class ProposalService {
                             },
                         ],
                         order: [['createdAt', 'DESC']],
+                        limit: LIMIT_PAGE,
+                        offset: (currentPage - 1) * LIMIT_PAGE,
                     })) || [];
 
                 const totalRecord = await OrderReleaseProposal.count({ where: whereClause });

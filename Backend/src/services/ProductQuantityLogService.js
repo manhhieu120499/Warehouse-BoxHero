@@ -257,6 +257,14 @@ class ProductQuantityLogService {
                             ],
                         },
                     );
+
+                    if (employeeCreate) {
+                        whereClause[Op.or] = [
+                            { '$orderPurchase.employeeID$': employeeCreate },
+                            { '$orderRelease.employeeID$': employeeCreate },
+                            { '$inventoryCheck.employeeID$': employeeCreate },
+                        ];
+                    }
                 }
 
                 // 🔹 Truy vấn chính
@@ -268,7 +276,11 @@ class ProductQuantityLogService {
                     offset: (page - 1) * limit,
                 });
 
-                const total = await db.ProductQuantityLog.count({ where: whereClause });
+                const total = await db.ProductQuantityLog.count({
+                    where: whereClause,
+                    include: includes,
+                    distinct: true,
+                });
                 const totalPages = Math.ceil(total / limit);
 
                 resolve({

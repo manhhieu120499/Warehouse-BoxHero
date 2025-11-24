@@ -18,14 +18,23 @@ const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
 const LIMIT_PAGE = 5;
 
 class CustomerService {
-    async getAllCustomers() {
+    async getAllCustomers(page = 1) {
         return new Promise(async (resolve, reject) => {
             try {
-                const customers = await Customer.findAll();
+                const currentPage = Number.parseInt(page || 0) || 1;
+                const { count, rows: customers } = await Customer.findAndCountAll({
+                    limit: LIMIT_PAGE,
+                    offset: (currentPage - 1) * LIMIT_PAGE,
+                });
+                const totalPages = Math.ceil(count / LIMIT_PAGE);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     data: customers,
+                    pagination: {
+                        currentPage,
+                        totalPages,
+                    },
                 });
             } catch (error) {
                 console.error(error);

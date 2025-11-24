@@ -23,14 +23,23 @@ class CategoryProductController {
     // get /get-all-categories
     async getAllCategories(req, res) {
         try {
-            const { statusHttp, ...response } = await CategoryProductService.getAllCategories();
+            const { statusHttp, ...response } = await CategoryProductService.getAllCategories(req.query.page);
             return res.status(statusHttp).json(response);
         } catch (e) {
             console.log(e);
             return res.status(HTTP_INTERNAL_SERVER_ERROR).json({
                 status: 'ERR',
-                message: [err.message],
+                message: [e.message],
             });
+        }
+    }
+    async searchCategory(req, res) {
+        try {
+            const { statusHttp, ...response } = await CategoryProductService.searchCategoryProduct(req.body);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            const { statusHttp, ...response } = err;
+            return res.status(err.statusHttp).json(response);
         }
     }
 }

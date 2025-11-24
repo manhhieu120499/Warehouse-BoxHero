@@ -13,6 +13,8 @@ const HTTP_NOT_FOUND = process.env.HTTP_NOT_FOUND;
 const HTTP_INTERNAL_SERVER_ERROR = process.env.HTTP_INTERNAL_SERVER_ERROR;
 const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
 
+const LIMIT_PAGE = 5;
+
 class EmployeeService {
     findEmployee(employeeID) {
         return new Promise(async (resolve, reject) => {
@@ -60,10 +62,11 @@ class EmployeeService {
             }
         });
     }
-    findAllEmployee(adminId) {
+    findAllEmployee(adminId, page = 1) {
         return new Promise(async (resolve, reject) => {
             try {
-                const employees = await Employee.findAll({
+                const currentPage = Number.parseInt(page || 0) || 1;
+                const { count, rows: employees } = await Employee.findAndCountAll({
                     where: {
                         employeeID: { [Op.ne]: adminId },
                         status: 'ACTIVE',
@@ -81,7 +84,10 @@ class EmployeeService {
                             ],
                         },
                     ],
+                    limit: LIMIT_PAGE,
+                    offset: (currentPage - 1) * LIMIT_PAGE,
                 });
+                const totalPages = Math.ceil(count / LIMIT_PAGE);
                 const responseEmployee = [];
                 employees.forEach((emp) => {
                     const { account, ...response } = emp.toJSON();
@@ -94,6 +100,10 @@ class EmployeeService {
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách nhân viên thành công',
                     employees: responseEmployee,
+                    pagination: {
+                        currentPage,
+                        totalPages,
+                    },
                 });
             } catch (err) {
                 console.log(err);
@@ -202,6 +212,7 @@ class EmployeeService {
     searchEmployee(adminId, keyword) {
         return new Promise(async (resolve, reject) => {
             try {
+                const currentPage = keyword?.page || 1;
                 let where = {
                     [Op.and]: [
                         { employeeID: { [Op.ne]: adminId } }, // loại bỏ employeeID request
@@ -211,7 +222,7 @@ class EmployeeService {
                 if (keyword.phoneNumber) where.phoneNumber = { [Op.like]: `%${keyword.phoneNumber}%` };
                 if (keyword.status) where.status = keyword.status;
                 console.log(where);
-                const resultSearch = await Employee.findAll({
+                const { count, rows: resultSearch } = await Employee.findAndCountAll({
                     where,
                     include: [
                         {
@@ -226,8 +237,11 @@ class EmployeeService {
                             ],
                         },
                     ],
+                    limit: LIMIT_PAGE,
+                    offset: (currentPage - 1) * LIMIT_PAGE,
                 });
                 if (resultSearch) {
+                    const totalPages = Math.ceil(count / LIMIT_PAGE);
                     const formatResultSearch = [];
                     resultSearch.forEach((emp) => {
                         const { account, ...response } = emp.toJSON();
@@ -235,6 +249,7 @@ class EmployeeService {
                         formatResultSearch.push({
                             ...response,
                             roles,
+                            account,
                         });
                     });
                     resolve({
@@ -242,10 +257,15 @@ class EmployeeService {
                         statusHttp: HTTP_OK,
                         message: 'Lọc danh sách thành công',
                         employeeFilter: formatResultSearch,
+                        pagination: {
+                            currentPage: Number.parseInt(currentPage),
+                            totalPages,
+                        },
                     });
                 }
                 //console.log(1)
             } catch (err) {
+                console.log(err);
                 //console.log(3);
                 // throw err
                 reject({
