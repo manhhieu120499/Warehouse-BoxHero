@@ -23,6 +23,8 @@ class ProductQuantityLogController {
     // get /filter
     async filterLogByProductID(req, res) {
         try {
+            console.log(req.query);
+
             const { statusHttp, ...response } = await ProductQuantityLogService.filterLogByProductID({
                 ...req.query,
             });
