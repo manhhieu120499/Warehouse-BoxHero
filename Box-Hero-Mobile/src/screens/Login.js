@@ -16,6 +16,8 @@ import { useState } from 'react';
 import { login } from '../service/login.service';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
+import { logout, login as loginRedux } from '../redux/auth/authSlice';
 
 export default function Login() {
     const styles = StyleSheet.create({
@@ -133,6 +135,7 @@ export default function Login() {
     });
 
     const navigation = useNavigation();
+    const dispatch = useDispatch();
 
     const [user, setUser] = useState({
         userName: '123@gmail.com',
@@ -140,7 +143,6 @@ export default function Login() {
     });
 
     const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
 
     const handleOnChange = (key, value) => {
         setUser((prev) => ({ ...prev, [key]: value }));
@@ -160,17 +162,14 @@ export default function Login() {
             return;
         }
 
-        setLoading(true);
         try {
-            const res = await login(user.userName, user.password);
+            const { res, employeeInfo, roles } = await login(user.userName, user.password);
             if (res.data.status === 'OK') {
                 navigation.navigate('Tabs');
+                dispatch(loginRedux({ ...employeeInfo, empRole: roles }));
             }
         } catch (error) {
             console.log('Login error:', error);
-            Alert.alert('Lỗi', 'Đăng nhập thất bại');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -218,12 +217,8 @@ export default function Login() {
                         </View>
                     </View>
 
-                    <TouchableOpacity style={styles.loginButton} onPress={() => handleLogin(user)} disabled={loading}>
-                        {loading ? (
-                            <ActivityIndicator color="white" />
-                        ) : (
-                            <Text style={styles.loginButtonText}>Đăng nhập</Text>
-                        )}
+                    <TouchableOpacity style={styles.loginButton} onPress={() => handleLogin(user)}>
+                        <Text style={styles.loginButtonText}>Đăng nhập</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

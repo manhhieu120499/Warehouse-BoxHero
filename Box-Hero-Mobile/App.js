@@ -4,6 +4,8 @@ import Navigation from './src/navigation/Navigation';
 import Toast from 'react-native-toast-message';
 import { setGlobalLoadingHandler } from './src/config/axiosConfig';
 import { useEffect, useState } from 'react';
+import { Provider } from 'react-redux';
+import store from './src/redux/store';
 
 export default function App() {
     const [loading, setLoading] = useState(false);
@@ -12,15 +14,17 @@ export default function App() {
         setGlobalLoadingHandler(setLoading);
     }, []);
     return (
-        <View style={styles.container}>
-            <Navigation />
-            <Toast />
-            {loading && (
-                <View style={styles.overlay}>
-                    <ActivityIndicator size="large" color="#007bff" />
-                </View>
-            )}
-        </View>
+        <Provider store={store}>
+            <View style={styles.container}>
+                <Navigation />
+                <Toast />
+                {loading && (
+                    <View style={styles.overlay}>
+                        <ActivityIndicator size="large" color="#007bff" />
+                    </View>
+                )}
+            </View>
+        </Provider>
     );
 }
 

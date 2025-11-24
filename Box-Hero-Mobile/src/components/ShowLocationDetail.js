@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, FlatList, Dimensions, Modal } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    Alert,
+    FlatList,
+    Dimensions,
+    TextInput,
+    Modal,
+} from 'react-native';
 import { X, Check } from 'lucide-react-native';
 import { getAllShelfOfWarehouse } from '../service/shelf.service';
 import { getBoxContainProduct } from '../service/batch.service';
@@ -25,17 +36,13 @@ const ShowLocationDetail = ({ isOpen, onClose, fetchData }) => {
 
     const fetchShelfData = async () => {
         try {
-            const userJSON = await parseToken('tokenUser');
+            const tokenUser = await parseToken('tokenUser');
             const warehouse = await parseToken('warehouse');
 
-            const headers = {
-                token: `Bearer ${userJSON.accessToken}`,
-                employeeID: userJSON.employeeID,
-                warehouseID: warehouse.warehouseID,
-            };
             const data = await getAllShelfOfWarehouse({
                 warehouseID: warehouse.warehouseID,
-                headers,
+                token: tokenUser.accessToken,
+                employeeID: tokenUser.employeeID,
             });
             if (data.status === 'OK') {
                 setLocalShelves(data.data);
@@ -82,6 +89,78 @@ const ShowLocationDetail = ({ isOpen, onClose, fetchData }) => {
         }
     };
 
+    const isAllShelfSelected = () => {
+        if (!currentShelf) return false;
+        const validBoxes = [];
+        currentShelf.floor.forEach((floor) => {
+            floor.boxes.forEach((box) => {
+                if (!checkBoxAvailable(box)) {
+                    validBoxes.push(box);
+                }
+            });
+        });
+        if (validBoxes.length === 0) return false;
+        return validBoxes.every((box) => selectedBox.some((b) => b.boxID === box.boxID));
+    };
+
+    const handleSelectAll = async () => {
+        if (!currentShelf) return;
+
+        const validBoxes = [];
+        currentShelf.floor.forEach((floor) => {
+            floor.boxes.forEach((box) => {
+                if (!checkBoxAvailable(box)) {
+                    validBoxes.push(box);
+                }
+            });
+        });
+
+        if (validBoxes.length === 0) {
+            Alert.alert('Thông báo', 'Kệ này không có hộp nào để chọn');
+            return;
+        }
+
+        const isAllSelected = validBoxes.every((box) => selectedBox.some((b) => b.boxID === box.boxID));
+
+        if (isAllSelected) {
+            // Deselect all
+            const boxIDsToRemove = validBoxes.map((b) => b.boxID);
+            setSelectedBox((prev) => prev.filter((b) => !boxIDsToRemove.includes(b.boxID)));
+            setListBatchBoxCheck((prev) => prev.filter((b) => !boxIDsToRemove.includes(b.boxID)));
+        } else {
+            // Select all
+            const boxesToSelect = validBoxes.filter((box) => !selectedBox.some((b) => b.boxID === box.boxID));
+
+            try {
+                const warehouse = await parseToken('warehouse');
+                const promises = boxesToSelect.map((box) => getBoxDetails(warehouse.warehouseID, box.boxID));
+                const responses = await Promise.all(promises);
+
+                const newSelected = [];
+                const newDetails = [];
+
+                responses.forEach((res, index) => {
+                    if (res.data.status === 'OK') {
+                        const box = boxesToSelect[index];
+                        const location = `${res.data.data.floor.shelf.shelfName} - ${res.data.data.floor.floorName} - ${res.data.data.boxName}`;
+                        const batches = res.data.data.batches.filter((batch) => batch.batch_boxes.quantity > 0);
+
+                        if (batches.length > 0) {
+                            newSelected.push({ boxID: box.boxID });
+                            newDetails.push({ boxID: box.boxID, location, batches });
+                        }
+                    }
+                });
+
+                setSelectedBox((prev) => [...prev, ...newSelected]);
+                setListBatchBoxCheck((prev) => [...prev, ...newDetails]);
+            } catch (error) {
+                console.log('Error selecting all:', error);
+                Alert.alert('Lỗi', 'Không thể chọn tất cả hộp. Vui lòng thử lại.');
+            }
+        }
+    };
+
     const handleCreateInventoryCheck = () => {
         if (listBatchBoxCheck.length === 0) {
             Alert.alert('Lỗi', 'Vui lòng chọn vị trí để kiểm kê');
@@ -102,6 +181,7 @@ const ShowLocationDetail = ({ isOpen, onClose, fetchData }) => {
             <TouchableOpacity
                 style={[styles.shelfTab, isSelected && styles.shelfTabSelected]}
                 onPress={() => setSelectedShelfID(item.shelfID)}
+                alignItems="center"
             >
                 <Text style={[styles.shelfTabText, isSelected && styles.shelfTabTextSelected]}>{item.shelfName}</Text>
             </TouchableOpacity>
@@ -117,47 +197,20 @@ const ShowLocationDetail = ({ isOpen, onClose, fetchData }) => {
                     {/* Header */}
                     <View style={styles.header}>
                         <Text style={styles.headerTitle}>Chọn vị trí kiểm kê</Text>
-                        <TouchableOpacity onPress={onClose}>
+                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                             <X size={24} color="#374151" />
                         </TouchableOpacity>
                     </View>
-
                     <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-                        {/* Selected List Summary */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Danh sách lô hàng cần kiểm kê</Text>
-                            <View style={styles.tableContainer}>
-                                <View style={styles.tableHeader}>
-                                    <Text style={[styles.th, styles.wLocation]}>Vị trí</Text>
-                                    <Text style={[styles.th, styles.wBatch]}>Mã lô</Text>
-                                    <Text style={[styles.th, styles.wName]}>Tên SP</Text>
-                                    <Text style={[styles.th, styles.wNum]}>SL</Text>
-                                </View>
-                                {listBatchBoxCheck.length === 0 ? (
-                                    <Text style={styles.emptyText}>Chưa chọn vị trí nào</Text>
-                                ) : (
-                                    listBatchBoxCheck.map((boxItem) =>
-                                        boxItem.batches.map((batch, idx) => (
-                                            <View key={`${boxItem.boxID}-${idx}`} style={styles.tableRow}>
-                                                <Text style={[styles.td, styles.wLocation]}>{boxItem.location}</Text>
-                                                <Text style={[styles.td, styles.wBatch]}>{batch.batchID}</Text>
-                                                <Text style={[styles.td, styles.wName]}>
-                                                    {batch.product.productName}
-                                                </Text>
-                                                <Text style={[styles.td, styles.wNum]}>
-                                                    {batch.batch_boxes.quantity}
-                                                </Text>
-                                            </View>
-                                        )),
-                                    )
-                                )}
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>Sơ đồ kho</Text>
+                                <TouchableOpacity onPress={handleSelectAll}>
+                                    <Text style={styles.selectAllText}>
+                                        {isAllShelfSelected() ? 'Bỏ chọn kệ' : 'Chọn cả kệ'}
+                                    </Text>
+                                </TouchableOpacity>
                             </View>
-                        </View>
-
-                        {/* Shelf Visual */}
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Sơ đồ kho (Chạm để chọn)</Text>
-
                             {/* Shelf Tabs */}
                             <FlatList
                                 data={localShelves}
@@ -166,12 +219,17 @@ const ShowLocationDetail = ({ isOpen, onClose, fetchData }) => {
                                 horizontal
                                 showsHorizontalScrollIndicator={false}
                                 style={styles.shelfTabsContainer}
+                                contentContainerStyle={{ paddingHorizontal: 4 }}
                             />
 
                             {/* Shelf Content */}
                             {currentShelf && (
                                 <View style={styles.shelfContent}>
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+                                    <ScrollView
+                                        horizontal
+                                        showsHorizontalScrollIndicator={true}
+                                        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+                                    >
                                         <View style={styles.shelfBody}>
                                             {currentShelf.floor?.map((column, index) => (
                                                 <View style={styles.floor} key={index}>
@@ -193,10 +251,18 @@ const ShowLocationDetail = ({ isOpen, onClose, fetchData }) => {
                                                                 onPress={() => handleClickBox(box)}
                                                                 style={boxStyle}
                                                             >
-                                                                <Text style={styles.boxText}>{box.boxName}</Text>
+                                                                <Text
+                                                                    style={[
+                                                                        styles.boxText,
+                                                                        isSelected && styles.boxTextSelected,
+                                                                        !isAvailable && styles.boxTextOccupied,
+                                                                    ]}
+                                                                >
+                                                                    {box.boxName}
+                                                                </Text>
                                                                 {isSelected && (
                                                                     <View style={styles.checkIcon}>
-                                                                        <Check size={12} color="white" />
+                                                                        <Check size={10} color="white" />
                                                                     </View>
                                                                 )}
                                                             </TouchableOpacity>
@@ -206,6 +272,20 @@ const ShowLocationDetail = ({ isOpen, onClose, fetchData }) => {
                                             ))}
                                         </View>
                                     </ScrollView>
+                                    <View style={styles.legendContainer}>
+                                        <View style={styles.legendItem}>
+                                            <View style={[styles.legendBox, styles.boxOccupied]} />
+                                            <Text style={styles.legendText}>Có hàng</Text>
+                                        </View>
+                                        <View style={styles.legendItem}>
+                                            <View style={[styles.legendBox, styles.boxSelected]} />
+                                            <Text style={styles.legendText}>Đang chọn</Text>
+                                        </View>
+                                        <View style={styles.legendItem}>
+                                            <View style={[styles.legendBox, styles.boxAvailable]} />
+                                            <Text style={styles.legendText}>Trống</Text>
+                                        </View>
+                                    </View>
                                 </View>
                             )}
                         </View>
@@ -214,9 +294,6 @@ const ShowLocationDetail = ({ isOpen, onClose, fetchData }) => {
 
                     {/* Footer */}
                     <View style={styles.footer}>
-                        <TouchableOpacity style={[styles.btn, styles.btnClose]} onPress={onClose}>
-                            <Text style={[styles.btnText, { color: '#374151' }]}>Hủy</Text>
-                        </TouchableOpacity>
                         <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={handleCreateInventoryCheck}>
                             <Text style={styles.btnText}>Tạo đơn kiểm kê</Text>
                         </TouchableOpacity>
@@ -245,10 +322,10 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        height: '95%',
+        backgroundColor: '#F9FAFB',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        height: '92%',
         display: 'flex',
         flexDirection: 'column',
     },
@@ -256,14 +333,20 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 16,
+        padding: 20,
+        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+        borderBottomColor: '#E5E7EB',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
     },
     headerTitle: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: '700',
         color: '#111827',
+    },
+    closeButton: {
+        padding: 4,
     },
     body: {
         flex: 1,
@@ -271,64 +354,109 @@ const styles = StyleSheet.create({
     },
     section: {
         marginBottom: 24,
+        backgroundColor: '#fff',
+        padding: 16,
+        borderRadius: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
     },
     sectionTitle: {
         fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 12,
-        color: '#374151',
+        fontWeight: '700',
+        color: '#111827',
+        marginBottom: 5,
     },
-    emptyText: {
-        textAlign: 'center',
-        color: '#9ca3af',
-        padding: 20,
-        fontStyle: 'italic',
+    selectAllText: {
+        color: '#3B82F6',
+        fontWeight: '600',
+        fontSize: 14,
     },
 
-    // Table
-    tableContainer: {
+    // Selected List
+    selectedList: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    selectedItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: '#F3F4F6',
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: '#E5E7EB',
+        minWidth: 160,
+        marginRight: 12,
+    },
+    selectedItemInfo: {
+        flex: 1,
+    },
+    selectedItemTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#111827',
+        marginBottom: 2,
+    },
+    selectedItemSubtitle: {
+        fontSize: 12,
+        color: '#6B7280',
+    },
+    removeButton: {
+        padding: 8,
+        backgroundColor: '#FEE2E2',
         borderRadius: 8,
-        overflow: 'hidden',
+        marginLeft: 12,
     },
-    tableHeader: {
-        flexDirection: 'row',
-        backgroundColor: '#f3f4f6',
-        padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+    emptyContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        borderWidth: 2,
+        borderColor: '#F3F4F6',
+        borderStyle: 'dashed',
+        borderRadius: 12,
     },
-    tableRow: {
-        flexDirection: 'row',
-        padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+    emptyText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#9CA3AF',
+        marginBottom: 4,
     },
-    th: { fontSize: 12, fontWeight: '600', color: '#4b5563' },
-    td: { fontSize: 12, color: '#1f2937' },
-    wLocation: { flex: 2 },
-    wBatch: { flex: 1 },
-    wName: { flex: 2 },
-    wNum: { flex: 0.5, textAlign: 'right' },
+    emptySubText: {
+        fontSize: 12,
+        color: '#D1D5DB',
+    },
 
     // Shelf Tabs
     shelfTabsContainer: {
-        marginBottom: 10,
+        marginBottom: 16,
     },
     shelfTab: {
         paddingHorizontal: 16,
         paddingVertical: 8,
-        backgroundColor: '#e5e7eb',
+        backgroundColor: '#F3F4F6',
         borderRadius: 20,
         marginRight: 8,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
     },
     shelfTabSelected: {
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#3B82F6',
+        borderColor: '#3B82F6',
     },
     shelfTabText: {
         fontSize: 14,
-        color: '#4b5563',
+        color: '#6B7280',
         fontWeight: '600',
     },
     shelfTabTextSelected: {
@@ -337,88 +465,122 @@ const styles = StyleSheet.create({
 
     // Shelf Visual
     shelfContent: {
-        backgroundColor: '#f8fafc',
-        padding: 20,
+        backgroundColor: '#F8FAFC',
+        padding: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#e2e8f0',
+        borderColor: '#E2E8F0',
         minHeight: 220,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     shelfBody: {
         flexDirection: 'row',
-        padding: 10,
+        padding: 12,
         backgroundColor: '#fff',
-        borderRadius: 8,
+        borderRadius: 12,
         borderWidth: 4,
-        borderColor: '#cbd5e1',
+        borderColor: '#CBD5E1',
     },
     floor: {
         flexDirection: 'column',
-        marginHorizontal: 6,
+        marginHorizontal: 4,
         borderRightWidth: 1,
-        borderRightColor: '#f1f5f9',
+        borderRightColor: '#F1F5F9',
     },
     box: {
-        width: 50,
-        height: 50,
+        width: 56,
+        height: 56,
         marginVertical: 4,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 6,
+        borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#cbd5e1',
+        borderColor: '#CBD5E1',
     },
     boxAvailable: {
-        backgroundColor: '#f1f5f9', // Empty/Available
-        opacity: 0.5,
+        backgroundColor: '#F1F5F9',
+        opacity: 0.6,
     },
     boxOccupied: {
-        backgroundColor: '#cce5cc', // Has items
-        borderColor: '#86efac',
+        backgroundColor: '#DCFCE7',
+        borderColor: '#86EFAC',
     },
     boxSelected: {
-        backgroundColor: '#3b82f6',
-        borderColor: '#2563eb',
+        backgroundColor: '#3B82F6',
+        borderColor: '#2563EB',
     },
     boxText: {
-        fontSize: 10,
-        color: '#1f2937',
-        fontWeight: '700',
+        fontSize: 12,
+        color: '#6B7280',
+        fontWeight: '600',
+    },
+    boxTextSelected: {
+        color: '#fff',
+    },
+    boxTextOccupied: {
+        color: '#166534',
     },
     checkIcon: {
         position: 'absolute',
-        top: 2,
-        right: 2,
+        top: 4,
+        right: 4,
+    },
+    legendContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 16,
+        gap: 16,
+    },
+    legendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    legendBox: {
+        width: 16,
+        height: 16,
+        borderRadius: 4,
+        borderWidth: 1,
+    },
+    legendText: {
+        fontSize: 12,
+        color: '#6B7280',
     },
 
     // Footer
     footer: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
         padding: 16,
+        backgroundColor: '#fff',
         borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
-        gap: 10,
+        borderTopColor: '#E5E7EB',
+        gap: 12,
+        marginBottom: 20,
     },
     btn: {
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 8,
+        flex: 1,
+        paddingVertical: 14,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
     },
     btnPrimary: {
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#3B82F6',
     },
     btnClose: {
-        backgroundColor: '#e5e7eb',
+        backgroundColor: '#F3F4F6',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        elevation: 0,
     },
     btnText: {
         color: '#fff',
         fontWeight: '600',
-        fontSize: 14,
+        fontSize: 16,
     },
 });
 

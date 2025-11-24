@@ -42,7 +42,6 @@ const statusColors = {
 export default function CheckPage() {
     const navigation = useNavigation();
     const [listInventoryCheck, setListInventoryCheck] = useState([]);
-    const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [showFilter, setShowFilter] = useState(false);
@@ -63,7 +62,6 @@ export default function CheckPage() {
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     const fetchData = async (currentPage = 1) => {
-        setLoading(true);
         try {
             const warehouse = await parseToken('warehouse');
             if (!warehouse) return;
@@ -101,8 +99,6 @@ export default function CheckPage() {
             }
         } catch (error) {
             console.log('Error fetching inventory checks:', error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -176,19 +172,13 @@ export default function CheckPage() {
                 }
             />
             <View style={styles.container}>
-                {loading ? (
-                    <View style={styles.center}>
-                        <ActivityIndicator size="large" color="#2563eb" />
-                    </View>
-                ) : (
-                    <FlatList
-                        data={listInventoryCheck}
-                        renderItem={renderItem}
-                        keyExtractor={(item) => item._id || item.inventoryCheckID}
-                        contentContainerStyle={styles.listContent}
-                        ListEmptyComponent={<Text style={styles.emptyText}>Không có phiếu kiểm kê nào</Text>}
-                    />
-                )}
+                <FlatList
+                    data={listInventoryCheck}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item._id || item.inventoryCheckID}
+                    contentContainerStyle={styles.listContent}
+                    ListEmptyComponent={<Text style={styles.emptyText}>Không có phiếu kiểm kê nào</Text>}
+                />
 
                 {/* Floating Action Button */}
                 <TouchableOpacity style={styles.fab} onPress={() => setShowCreateInventoryCheck(true)}>

@@ -34,7 +34,7 @@ export const login = async (userName, password) => {
                 }),
             );
 
-            return res;
+            return { res, employeeInfo, roles };
         }
     } catch (err) {
         console.log('login failed', err);
