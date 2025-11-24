@@ -7,8 +7,6 @@ import Shelf3D from '@/components/Shelf3D';
 import TemporaryWarehouse from '../../components/TemporaryWarehouse';
 import Forklift from '@/components/Forklift';
 import BoxDetail from '../BatchPage/BoxDetail';
-import UpdateLocation from '../BatchPage/UpdateLocation';
-import ChangeLocation from '../BatchPage/ChangeLocation';
 import UpdateLocation3D from '../BatchPage/UpdateLocation3D';
 import ChangeLocation3D from '../BatchPage/ChangeLocation3D';
 import { countBatchesWithoutLocation, getBoxContainBatch, getBoxContainProduct } from '../../services/batch.service';
@@ -90,23 +88,31 @@ export default function Warehouse3D() {
     }, []);
 
     return (
-        <div style={{ width: '100%', height: '100vh', position: 'relative', background: '#f0f0f0' }}>
+        <div
+            style={{
+                width: '100%',
+                height: `calc(100vh - 70px)`,
+                overflow: 'hidden',
+                position: 'relative',
+                background: '#f0f0f0',
+                marginTop: '-10px',
+            }}
+        >
             {/* Legend + nút đóng popup (HTML overlay góc trái) */}
             <div className={cx('legend-container')}>
                 <div style={{ fontWeight: '700', marginBottom: 6 }}>Mô tả</div>
                 <div className={cx('legend-item')}>
                     <div className={cx('legend-color')} style={{ background: '#a3e4d7' }} />{' '}
-                    <span>Chưa có sản phẩm</span>
+                    <span>Trống hoàn toàn</span>
                 </div>
                 <div className={cx('legend-item')}>
-                    <div className={cx('legend-color')} style={{ background: '#58d68d' }} /> <span>Còn trống</span>
+                    <div className={cx('legend-color')} style={{ background: '#58d68d' }} /> <span>Còn nhiều chỗ</span>
                 </div>
                 <div className={cx('legend-item')}>
-                    <div className={cx('legend-color')} style={{ background: '#f5b041' }} /> <span>Sắp hết vị trí</span>
+                    <div className={cx('legend-color')} style={{ background: '#f5b041' }} /> <span>Còn một nửa</span>
                 </div>
                 <div className={cx('legend-item')}>
-                    <div className={cx('legend-color')} style={{ background: '#e74c3c' }} />{' '}
-                    <span>Không còn chỗ trống</span>
+                    <div className={cx('legend-color')} style={{ background: '#e74c3c' }} /> <span>Sắp hết chỗ</span>
                 </div>
             </div>
 

@@ -115,13 +115,14 @@ const HistoryTransaction = () => {
     };
 
     const handleSubmitFilter = () => {
+        setPage(1);
         fetchData({
             startDateFilter,
             endDateFilter,
             typeTransactionFilter,
             employeeCreateFilter,
             productFilter,
-            page,
+            page: 1,
         });
     };
 
@@ -207,9 +208,7 @@ const HistoryTransaction = () => {
     };
 
     useEffect(() => {
-        // Fetch initial data if needed
-        fetchData({ page });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        fetchData({ page, startDateFilter, endDateFilter, typeTransactionFilter, employeeCreateFilter, productFilter });
     }, [page]);
 
     return (

@@ -8,7 +8,7 @@ const limitCharacter = import.meta.env.VITE_LIMIT_CHARACTER;
 
 const cx = classNames.bind(styles);
 
-export default function Input({ borderRadius = 8, onSubmit }) {
+export default function Input({ borderRadius = 8, onSubmit, focusInput = false }) {
     const [value, setValue] = useState('');
     const [rowInput, setRowInput] = useState(1);
     const btnPostRef = useRef();
@@ -61,6 +61,12 @@ export default function Input({ borderRadius = 8, onSubmit }) {
         }
         setRowInput(Math.ceil(scrollHeight / lineHeight));
     }, [value]);
+
+    useEffect(() => {
+        if (focusInput && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [focusInput]);
 
     return (
         <div className={cx('wrapper')}>
