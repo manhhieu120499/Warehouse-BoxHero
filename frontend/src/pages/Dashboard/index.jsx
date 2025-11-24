@@ -22,8 +22,10 @@ import { Button } from '@/components';
 import {
     getProductLowMinStock,
     getStaticPercentUseWarehouse,
+    getStaticTopProduct,
     getStatisticalImportExport,
     getStatisticalInventory,
+    getTopFineProductMinExport,
 } from '../../services/dashboard.service';
 import { formatStatusProduct } from '../../constants';
 import MyTable from '../../components/MyTable';
@@ -222,45 +224,73 @@ const Dashboard = () => {
         async function filterReportProductFunc(keyword) {
             switch (keyword) {
                 case 'productRelease': {
-                    setProductList([
-                        {
-                            productID: 'SP3',
-                            productName: 'Sữa tiệt trùng vinamilk',
-                            amount: 20,
-                            minStock: 10,
-                            status: 'AVAILABLE',
-                            category: { categoryID: 'CA3', categoryName: 'Sữa tươi' },
-                        },
-                        {
-                            productID: 'SP4',
-                            productName: 'Sữa TH TrueMilk',
-                            amount: 30,
-                            minStock: 10,
-                            status: 'AVAILABLE',
-                            category: { categoryID: 'CA1', categoryName: 'Sữa tươi' },
-                        },
-                    ]);
+                    try {
+                        const res = await getStaticTopProduct();
+                        const formatListProduct = res.map((it) => ({
+                            productID: it.productID,
+                            productName: it?.batch?.product?.productName || '',
+                            amount: it?.batch?.product?.amount,
+                            minStock: it?.batch?.product?.minStock,
+                            status: it?.batch?.product?.status,
+                            category: it?.batch?.product?.category,
+                        }));
+                        setProductList(formatListProduct);
+                    } catch (err) {
+                        console.log(err);
+                    }
+                    // setProductList([
+                    //     {
+                    //         productID: 'SP3',
+                    //         productName: 'Sữa tiệt trùng vinamilk',
+                    //         amount: 20,
+                    //         minStock: 10,
+                    //         status: 'AVAILABLE',
+                    //         category: { categoryID: 'CA3', categoryName: 'Sữa tươi' },
+                    //     },
+                    //     {
+                    //         productID: 'SP4',
+                    //         productName: 'Sữa TH TrueMilk',
+                    //         amount: 30,
+                    //         minStock: 10,
+                    //         status: 'AVAILABLE',
+                    //         category: { categoryID: 'CA1', categoryName: 'Sữa tươi' },
+                    //     },
+                    // ]);
                     break;
                 }
                 case 'productOld': {
-                    setProductList([
-                        {
-                            productID: 'SP6',
-                            productName: 'Sữa đậu nành Việt Nam Vinasoy',
-                            amount: 50,
-                            minStock: 100,
-                            status: 'AVAILABLE',
-                            category: { categoryID: 'CA3', categoryName: 'Sữa tươi' },
-                        },
-                        {
-                            productID: 'SP7',
-                            productName: 'Sữa đậu nành fami',
-                            amount: 30,
-                            minStock: 80,
-                            status: 'AVAILABLE',
-                            category: { categoryID: 'CA1', categoryName: 'Sữa hộp' },
-                        },
-                    ]);
+                    try {
+                        const res = await getTopFineProductMinExport();
+                        const formatListProduct = res.map((it) => ({
+                            productID: it.productID,
+                            productName: it?.batch?.product?.productName || '',
+                            amount: it?.batch?.product?.amount,
+                            minStock: it?.batch?.product?.minStock,
+                            status: it?.batch?.product?.status,
+                            category: it?.batch?.product?.category,
+                        }));
+                        setProductList(formatListProduct);
+                    } catch (err) {
+                        console.log(err);
+                    }
+                    // setProductList([
+                    //     {
+                    //         productID: 'SP6',
+                    //         productName: 'Sữa đậu nành Việt Nam Vinasoy',
+                    //         amount: 50,
+                    //         minStock: 100,
+                    //         status: 'AVAILABLE',
+                    //         category: { categoryID: 'CA3', categoryName: 'Sữa tươi' },
+                    //     },
+                    //     {
+                    //         productID: 'SP7',
+                    //         productName: 'Sữa đậu nành fami',
+                    //         amount: 30,
+                    //         minStock: 80,
+                    //         status: 'AVAILABLE',
+                    //         category: { categoryID: 'CA1', categoryName: 'Sữa hộp' },
+                    //     },
+                    // ]);
                     break;
                 }
                 case 'productLow': {

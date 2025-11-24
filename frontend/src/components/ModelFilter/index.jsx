@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ModelFilter.module.scss';
-import { MyTable, Button, Popper, Modal, ModalOrder } from '@/components';
+import { MyTable, Button, Popper } from '@/components';
 import { RotateCcw, Search } from 'lucide-react';
 
 const cx = classNames.bind(styles);

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
-import { MyTable, Modal, ModalOrder } from '@/components';
+import { MyTable } from '@/components';
 import styles from './CustomerPage.module.scss';
 import { Eye } from 'lucide-react';
 import Tippy from '@tippyjs/react';
 import globalStyle from '../../components/GlobalStyle/GlobalStyle.module.scss';
 import ModelFilter from '../../components/ModelFilter';
 import { filterCustomer, getAllCustomer } from '../../services/customer.service';
+import ModalHistoryOrderCustomer from './ModalHistoryOrderCustomer';
 
 const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle);
@@ -17,7 +18,7 @@ const CustomerPage = () => {
     const [nameFilter, setNameFilter] = useState('');
     const [phoneFilter, setPhoneFilter] = useState('');
     const [emailFilter, setEmailFilter] = useState('');
-    const [isOpenInfo, setIsOpenInfo] = useState(false);
+    const [isOpenInfo, setIsOpenInfo] = useState(null);
     const [customerList, setCustomerList] = useState([]);
 
     const columns = [
@@ -69,7 +70,7 @@ const CustomerPage = () => {
                         <Tippy content={'Xem chi tiết'} placement="bottom-end">
                             <button
                                 className={cxGlobal('action-table-icon')}
-                                onClick={() => console.log(record.customerId)}
+                                onClick={() => setIsOpenInfo(record.customerID)}
                             >
                                 <Eye size={20} />
                             </button>
@@ -191,9 +192,11 @@ const CustomerPage = () => {
                     onChangePage={onChangePage}
                 />
             </div>
-            <Modal isOpenInfo={isOpenInfo} onClose={closeModal}>
-                <ModalOrder isAdmin={true} dataOrderHistory={dataOrderHistory} />
-            </Modal>
+            <ModalHistoryOrderCustomer
+                isOpen={!!isOpenInfo}
+                onClose={() => setIsOpenInfo(null)}
+                customerID={isOpenInfo}
+            />
         </div>
     );
 };

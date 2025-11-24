@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
-import { MyTable, Modal, ModalOrder } from '@/components';
+import { MyTable } from '@/components';
 import styles from './HistoryLocation.module.scss';
 import ModelFilter from '@/components/ModelFilter';
 import { convertDateVN } from '@/common';
@@ -9,7 +9,6 @@ import globalStyle from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import { Eye } from 'lucide-react';
 import Tippy from '@tippyjs/react';
 import DetailHistoryLocation from './DetailHistoryLocation';
-import { set } from 'lodash';
 const cxGlobal = classNames.bind(globalStyle);
 
 const cx = classNames.bind(styles);

@@ -64,8 +64,9 @@ const ModalChooseProposalToExport = ({ isOpen, onClose, fetchData }) => {
     }, [debounceProposalIDFilter]);
 
     const handleRefreshData = () => {
-        handleFetchOrderReleaseProposal();
+        //handleFetchOrderReleaseProposal();
         fetchData();
+        onClose();
     };
 
     useEffect(() => {
