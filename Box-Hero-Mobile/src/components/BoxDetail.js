@@ -18,8 +18,8 @@ import Button from './Button';
 import Modal from './Modal';
 import parseToken from '../utilities/parseToken';
 import { authIsAdmin, convertDateVN } from './common/Common';
-import { getBatchesWithoutLocation } from '../service/Batch.service';
-import { getBoxDetails } from '../service/Box.service';
+import { getBatchesWithoutLocation } from '../service/batch.service';
+import { getBoxDetails } from '../service/box.service';
 
 // Card Item cho danh sách Batch
 const BatchCard = React.memo(({ batch, isSelected, onCheckboxChange, currentUser, boxID }) => {

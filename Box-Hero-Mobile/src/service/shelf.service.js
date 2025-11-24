@@ -1,5 +1,4 @@
 import { Alert } from 'react-native';
-import axiosInstance from '../config/axiosConfig';
 import request from '../config/axiosConfig';
 
 export const getAllShelfOfWarehouse = async ({ warehouseID, token, employeeID }) => {

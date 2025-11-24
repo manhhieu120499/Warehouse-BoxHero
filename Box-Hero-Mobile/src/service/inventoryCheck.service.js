@@ -5,16 +5,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const getAllInventoryCheck = async (warehouseID, currentPage) => {
     try {
         const userJSON = await AsyncStorage.getItem('tokenUser');
-        const { employeeID, warehouseID, accessToken } = JSON.parse(userJSON);
+        const { employeeID, accessToken } = JSON.parse(userJSON);
 
         const res = await request.get(`/inventory-check/get-all-inventory-checks`, {
             headers: {
                 token: `Bearer ${accessToken}`,
                 employeeID: employeeID,
-                warehouseID: warehouseID,
+                warehouseID,
             },
             params: {
-                warehouseID: warehouseID,
+                warehouseID,
                 page: currentPage,
             },
         });
@@ -70,16 +70,16 @@ export const getFilterInventoryCheck = async ({
 }) => {
     try {
         const userJSON = await AsyncStorage.getItem('tokenUser');
-        const { employeeID, warehouseID, accessToken } = JSON.parse(userJSON);
+        const { employeeID, accessToken } = JSON.parse(userJSON);
 
         const res = await request.get(`/inventory-check/filter-inventory-checks`, {
             headers: {
                 token: `Bearer ${accessToken}`,
                 employeeID: employeeID,
-                warehouseID: warehouseID,
+                warehouseID,
             },
             params: {
-                warehouseID: warehouseID,
+                warehouseID,
                 inventoryCheckID: inventoryCheckID,
                 status: status,
                 checkStatus: checkStatus,

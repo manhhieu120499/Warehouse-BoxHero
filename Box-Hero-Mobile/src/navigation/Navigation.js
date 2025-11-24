@@ -10,6 +10,7 @@ import Supplier from '../screens/Supplier';
 import Employee from '../screens/Employee';
 import ProposalRelease from '../screens/ProposalRelease';
 import CreateProposalRelease from '../screens/CreateProposalRelease';
+import CheckPage from '../screens/CheckPage';
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +33,7 @@ export default function Navigation() {
                 <Stack.Screen name="Staff" component={Employee} />
                 <Stack.Screen name="ExportRequest" component={ProposalRelease} />
                 <Stack.Screen name="CreateExportRequest" component={CreateProposalRelease} />
+                <Stack.Screen name="Inventory" component={CheckPage} />
             </Stack.Navigator>
         </NavigationContainer>
     );
