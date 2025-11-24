@@ -10,12 +10,13 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    Modal,
 } from 'react-native';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { COLORS } from '../components/style/Globalstyle';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Filter, X, ChevronRight, Plus } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
     getAllSupplier,
@@ -36,6 +37,7 @@ export default function Supplier() {
     const [refreshing, setRefreshing] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [showFilter, setShowFilter] = useState(false);
 
     // Search filters
     const [filters, setFilters] = useState({
@@ -98,6 +100,12 @@ export default function Supplier() {
         });
         setCurrentPage(1);
         fetchSuppliers(1);
+        setShowFilter(false);
+    };
+
+    const handleApplyFilter = () => {
+        handleSearch();
+        setShowFilter(false);
     };
 
     const handleCreateSupplier = () => {
@@ -147,57 +155,32 @@ export default function Supplier() {
     const renderSupplierCard = ({ item }) => (
         <View style={styles.card}>
             <View style={styles.cardHeader}>
-                <View style={styles.supplierIDContainer}>
-                    <Icon name="business" size={16} color={COLORS.white} />
-                    <Text style={styles.supplierID}>{item.supplierID}</Text>
-                </View>
-                <View style={styles.actionButtons}>
-                    <TouchableOpacity style={styles.detailsButton} onPress={() => handleViewProduct(item)}>
-                        <Icon name="visibility" size={20} color="#ffffff" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.detailsButton} onPress={() => handleViewDetails(item)}>
-                        <Icon name="edit" size={20} color="#ffffff" />
-                    </TouchableOpacity>
+                <Text style={styles.cardId}>{item.supplierID}</Text>
+                <View style={[styles.statusTag, { backgroundColor: item.status === 'ACTIVE' ? '#10b981' : '#ef4444' }]}>
+                    <Text style={styles.statusText}>{formatStatusSupplier[item.status]}</Text>
                 </View>
             </View>
 
-            <View style={styles.cardContent}>
-                <View style={styles.infoRow}>
-                    <Icon name="store" size={18} color="#6b7280" />
-                    <Text style={styles.infoLabel}>Tên nhà cung cấp:</Text>
-                    <Text style={styles.infoValue}>{item.supplierName}</Text>
-                </View>
+            <View style={styles.cardBody}>
+                <Text style={styles.infoText}>Tên NCC: {item.supplierName}</Text>
+                <Text style={styles.infoText}>SĐT: {item.phoneNumber}</Text>
+                <Text style={styles.infoText}>Địa chỉ: {item.address}</Text>
+                <Text style={styles.infoText}>Email: {item.email}</Text>
+            </View>
 
-                <View style={styles.infoRow}>
-                    <Icon name="phone" size={18} color="#6b7280" />
-                    <Text style={styles.infoLabel}>SĐT:</Text>
-                    <Text style={styles.infoValue}>{item.phoneNumber}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                    <Icon name="location-on" size={18} color="#6b7280" />
-                    <Text style={styles.infoLabel}>Địa chỉ:</Text>
-                    <Text style={styles.infoValue}>{item.address}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                    <Icon name="email" size={18} color="#6b7280" />
-                    <Text style={styles.infoLabel}>Email:</Text>
-                    <Text style={styles.infoValue}>{item.email}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                    <Icon name="toggle-on" size={18} color={item.status === 'ACTIVE' ? '#22c55d' : '#ef4444'} />
-                    <Text style={styles.infoLabel}>Trạng thái:</Text>
-                    <View
-                        style={[
-                            styles.statusBadge,
-                            { backgroundColor: item.status === 'ACTIVE' ? '#22c55d' : '#ef4444' },
-                        ]}
-                    >
-                        <Text style={styles.statusText}>{formatStatusSupplier[item.status]}</Text>
-                    </View>
-                </View>
+            <View style={styles.cardFooter}>
+                <TouchableOpacity
+                    style={[styles.detailButton, { flex: 1, marginRight: 6 }]}
+                    onPress={() => handleViewProduct(item)}
+                >
+                    <Text style={styles.detailButtonText}>Sản phẩm</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.detailButton, { flex: 1, marginLeft: 6 }]}
+                    onPress={() => handleViewDetails(item)}
+                >
+                    <Text style={styles.detailButtonText}>Chỉnh sửa</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );
@@ -211,76 +194,30 @@ export default function Supplier() {
 
     return (
         <DefaultLayout>
-            <Header title="Nhà cung cấp" leftIcon="arrow-back" handleOnPressLeftIcon={() => navigation.goBack()} />
+            <Header
+                title="Nhà cung cấp"
+                leftIcon="arrow-back"
+                handleOnPressLeftIcon={() => navigation.goBack()}
+                RightComponent={
+                    <TouchableOpacity onPress={() => setShowFilter(true)}>
+                        <Filter size={24} color="white" />
+                    </TouchableOpacity>
+                }
+            />
             <View style={styles.container}>
                 {/* Scrollable Content */}
                 <KeyboardAvoidingView behavior="padding" style={styles.keyboardAvoidingView} keyboardVerticalOffset={0}>
                     <ScrollView
                         style={styles.scrollView}
+                        contentContainerStyle={{ paddingBottom: 100 }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
                     >
-                        {/* Search Filters */}
-                        <View style={styles.filtersContainer}>
-                            <View style={styles.filterRow}>
-                                <View style={styles.filterItem}>
-                                    <Text style={styles.filterLabel}>Mã nhà cung cấp</Text>
-                                    <TextInput
-                                        style={styles.filterInput}
-                                        placeholder="Nhập Mã nhà cung cấp"
-                                        placeholderTextColor="#9ca3af"
-                                        value={filters.supplierID}
-                                        onChangeText={(text) => setFilters({ ...filters, supplierID: text })}
-                                    />
-                                </View>
-
-                                <View style={styles.filterItem}>
-                                    <Text style={styles.filterLabel}>Số điện thoại</Text>
-                                    <TextInput
-                                        style={styles.filterInput}
-                                        placeholder="Nhập Số điện thoại"
-                                        placeholderTextColor="#9ca3af"
-                                        value={filters.phone}
-                                        onChangeText={(text) => setFilters({ ...filters, phone: text })}
-                                        keyboardType="phone-pad"
-                                    />
-                                </View>
-                            </View>
-
-                            {/* Email Full Width */}
-                            <View style={styles.filterRowFull}>
-                                <Text style={styles.filterLabel}>Email</Text>
-                                <TextInput
-                                    style={styles.filterInput}
-                                    placeholder="Nhập Email"
-                                    placeholderTextColor="#9ca3af"
-                                    value={filters.email}
-                                    onChangeText={(text) => setFilters({ ...filters, email: text })}
-                                    keyboardType="email-address"
-                                />
-                            </View>
-
-                            {/* Search and Reset Buttons */}
-                            <View style={styles.actionButtonsRow}>
-                                <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                                    <Icon name="search" size={18} color={COLORS.white} />
-                                    <Text style={styles.searchButtonText}>Tìm kiếm</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-                                    <Icon name="refresh" size={18} color="#374151" />
-                                    <Text style={styles.resetButtonText}>Đặt lại</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Create Button */}
-                            <TouchableOpacity style={styles.createButtonFull} onPress={handleCreateSupplier}>
-                                <Icon name="add" size={18} color={COLORS.white} />
-                                <Text style={styles.createButtonText}>Tạo nhà cung cấp</Text>
-                            </TouchableOpacity>
+                        {/* Supplier List */}
+                        <View style={styles.listHeader}>
+                            <Text style={styles.listTitle}>Danh sách nhà cung cấp</Text>
                         </View>
 
-                        {/* Supplier List */}
                         {refreshing ? (
                             <View style={styles.loadingContainer}>
                                 <ActivityIndicator size="large" color={COLORS.primary} />
@@ -290,73 +227,38 @@ export default function Supplier() {
                                 {suppliers.map((item, index) => (
                                     <View key={item.supplierID || index}>{renderSupplierCard({ item })}</View>
                                 ))}
-
-                                {/* Pagination Controls */}
-                                {totalPages >= 1 && (
-                                    <View style={styles.paginationContainer}>
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.paginationButton,
-                                                currentPage === 1 && styles.paginationButtonDisabled,
-                                            ]}
-                                            onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                            disabled={currentPage === 1}
-                                        >
-                                            <Icon
-                                                name="chevron-left"
-                                                size={20}
-                                                color={currentPage === 1 ? '#ccc' : '#374151'}
-                                            />
-                                        </TouchableOpacity>
-
-                                        <View style={styles.pageNumbersContainer}>
-                                            {[...Array(totalPages)].map((_, index) => {
-                                                const pageNumber = index + 1;
-                                                return (
-                                                    <TouchableOpacity
-                                                        key={pageNumber}
-                                                        style={[
-                                                            styles.pageNumber,
-                                                            currentPage === pageNumber && styles.pageNumberActive,
-                                                        ]}
-                                                        onPress={() => setCurrentPage(pageNumber)}
-                                                    >
-                                                        <Text
-                                                            style={[
-                                                                styles.pageNumberText,
-                                                                currentPage === pageNumber &&
-                                                                    styles.pageNumberTextActive,
-                                                            ]}
-                                                        >
-                                                            {pageNumber}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                );
-                                            })}
-                                        </View>
-
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.paginationButton,
-                                                currentPage === totalPages && styles.paginationButtonDisabled,
-                                            ]}
-                                            onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                            disabled={currentPage === totalPages}
-                                        >
-                                            <Icon
-                                                name="chevron-right"
-                                                size={20}
-                                                color={currentPage === totalPages ? '#ccc' : '#374151'}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
                             </View>
                         ) : (
                             renderEmptyList()
                         )}
                     </ScrollView>
                 </KeyboardAvoidingView>
+
+                {/* Floating Action Button */}
+                <TouchableOpacity style={styles.fab} onPress={handleCreateSupplier}>
+                    <Plus size={24} color="white" />
+                </TouchableOpacity>
+
+                {/* Pagination */}
+                <View style={styles.footer}>
+                    <TouchableOpacity
+                        disabled={currentPage <= 1}
+                        onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        style={[styles.pageBtn, currentPage <= 1 && styles.disabledBtn]}
+                    >
+                        <ChevronLeft size={20} color={currentPage <= 1 ? '#9ca3af' : '#374151'} />
+                    </TouchableOpacity>
+                    <Text style={styles.pageText}>
+                        Trang {currentPage} / {totalPages || 1}
+                    </Text>
+                    <TouchableOpacity
+                        disabled={currentPage >= totalPages}
+                        onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        style={[styles.pageBtn, currentPage >= totalPages && styles.disabledBtn]}
+                    >
+                        <ChevronRight size={20} color={currentPage >= totalPages ? '#9ca3af' : '#374151'} />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {/* Create/Update Supplier Modal */}
@@ -374,6 +276,63 @@ export default function Supplier() {
                 products={productList}
                 refetchData={fetchProductOfSupplier}
             />
+
+            {/* Filter Modal */}
+            <Modal visible={showFilter} animationType="slide" transparent={true}>
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Bộ lọc</Text>
+                            <TouchableOpacity onPress={() => setShowFilter(false)}>
+                                <X size={24} color="#333" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <View style={styles.filterSection}>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Mã nhà cung cấp</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Nhập Mã nhà cung cấp"
+                                        value={filters.supplierID}
+                                        onChangeText={(text) => setFilters({ ...filters, supplierID: text })}
+                                    />
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Số điện thoại</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Nhập Số điện thoại"
+                                        value={filters.phone}
+                                        onChangeText={(text) => setFilters({ ...filters, phone: text })}
+                                        keyboardType="phone-pad"
+                                    />
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Email</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Nhập Email"
+                                        value={filters.email}
+                                        onChangeText={(text) => setFilters({ ...filters, email: text })}
+                                        keyboardType="email-address"
+                                    />
+                                </View>
+                            </View>
+                        </ScrollView>
+                        <View style={styles.modalFooter}>
+                            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+                                <Text style={styles.resetButtonText}>Đặt lại</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.applyButton} onPress={handleApplyFilter}>
+                                <Text style={styles.applyButtonText}>Áp dụng</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </DefaultLayout>
     );
 }
@@ -486,72 +445,58 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     card: {
-        backgroundColor: COLORS.white,
-        borderRadius: 8,
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 16,
         marginBottom: 12,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
-        overflow: 'hidden',
+        shadowRadius: 4,
+        elevation: 3,
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#60a5fa',
-        paddingHorizontal: 12,
-        paddingVertical: 10,
+        marginBottom: 12,
     },
-    supplierIDContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    supplierID: {
-        color: COLORS.white,
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    actionButtons: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 15,
-    },
-    detailsButton: {
-        padding: 4,
-    },
-    cardContent: {
-        padding: 12,
-        gap: 10,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    infoLabel: {
-        fontSize: 13,
-        color: '#6b7280',
-        fontWeight: '500',
-        minWidth: 130,
-    },
-    infoValue: {
-        flex: 1,
-        fontSize: 13,
+    cardId: {
+        fontSize: 16,
+        fontWeight: 'bold',
         color: '#1f2937',
     },
-    statusBadge: {
-        paddingHorizontal: 10,
+    statusTag: {
+        paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
-        backgroundColor: '#16a34a',
     },
     statusText: {
+        color: 'white',
         fontSize: 12,
         fontWeight: '600',
-        color: '#ffffff',
+    },
+    cardBody: {
+        marginBottom: 12,
+    },
+    infoText: {
+        fontSize: 14,
+        color: '#4b5563',
+        marginBottom: 4,
+    },
+    cardFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    detailButton: {
+        alignItems: 'center',
+        padding: 10,
+        borderRadius: 8,
+        backgroundColor: '#eff6ff',
+    },
+    detailButtonText: {
+        color: '#2563eb',
+        fontWeight: '600',
     },
     loadingContainer: {
         paddingVertical: 40,
@@ -568,49 +513,137 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
         marginTop: 12,
     },
-    paginationContainer: {
+    // FAB
+    fab: {
+        position: 'absolute',
+        bottom: 80,
+        right: 20,
+        backgroundColor: '#2563eb',
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    // Pagination
+    footer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 20,
-        marginBottom: 20,
-        paddingVertical: 10,
-        gap: 10,
+        padding: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#e5e7eb',
+        gap: 20,
+        paddingBottom: 20,
     },
-    paginationButton: {
+    pageBtn: {
         padding: 8,
-        borderRadius: 6,
-        minWidth: 36,
-        minHeight: 36,
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderRadius: 8,
+        backgroundColor: '#f3f4f6',
     },
-    paginationButtonDisabled: {
+    disabledBtn: {
         opacity: 0.5,
     },
-    pageNumbersContainer: {
-        flexDirection: 'row',
-        gap: 8,
+    pageText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#374151',
     },
-    pageNumber: {
+    listHeader: {
         paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingTop: 16,
+        paddingBottom: 8,
+    },
+    listTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+    },
+    // Filter Modal
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
+        height: '80%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    filterSection: {
+        marginBottom: 20,
+    },
+    inputGroup: {
+        marginBottom: 16,
+    },
+    inputLabel: {
+        fontSize: 14,
+        fontWeight: '500',
+        marginBottom: 6,
+        color: '#555',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ddd',
         borderRadius: 6,
-        backgroundColor: '#f5f5f5',
-        minWidth: 36,
-        minHeight: 36,
-        justifyContent: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 14,
+        backgroundColor: '#fff',
+    },
+    modalFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 'auto',
+        paddingTop: 20,
+        marginBottom: 15,
+    },
+    resetButton: {
+        padding: 15,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        flex: 1,
+        marginRight: 10,
+        alignItems: 'center',
+        backgroundColor: 'white',
+    },
+    resetButtonText: {
+        color: '#666',
+        fontWeight: '600',
+    },
+    applyButton: {
+        backgroundColor: '#2563eb',
+        padding: 15,
+        borderRadius: 10,
+        flex: 1,
+        marginLeft: 10,
         alignItems: 'center',
     },
-    pageNumberActive: {
-        backgroundColor: '#60a5fa',
-    },
-    pageNumberText: {
-        fontSize: 14,
+    applyButtonText: {
+        color: 'white',
         fontWeight: '600',
-        color: '#666',
-    },
-    pageNumberTextActive: {
-        color: '#fff',
     },
 });

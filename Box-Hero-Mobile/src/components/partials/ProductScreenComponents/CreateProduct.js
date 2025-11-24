@@ -187,6 +187,7 @@ const CreateProduct = ({ isOpen, onClose, refetchData }) => {
                     label: it.categoryName,
                     value: it.categoryID,
                 }));
+                console.log('category', res.data);
                 setCategoryList(formatDataCategory);
             } catch (error) {
                 console.error('Error fetching categories:', error);

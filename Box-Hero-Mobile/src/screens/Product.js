@@ -7,6 +7,7 @@ import {
     FlatList,
     StyleSheet,
     ActivityIndicator,
+    Modal,
     ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -14,7 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { formatStatusProduct } from '../constants';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
-import { Archive, ChevronLeft, TriangleAlert } from 'lucide-react-native';
+import { Archive, ChevronLeft, TriangleAlert, Filter, X, Plus, ChevronRight } from 'lucide-react-native';
 import { fetchProduct, fetchProductById, getProductById, handleFilterProduct } from '../service/product.service';
 import ProductDetail from '../components/partials/ProductScreenComponents/ProductDetail';
 import ProductEdit from '../components/partials/ProductScreenComponents/ProductEdit';
@@ -22,6 +23,12 @@ import ProductImportExportHistory from '../components/partials/ProductScreenComp
 import { getLogByProductID } from '../service/productquantitylog.service';
 import CreateProduct from '../components/partials/ProductScreenComponents/CreateProduct';
 import parseToken from '../utilities/parseToken';
+
+const statusColors = {
+    AVAILABLE: '#10b981', // Green
+    OUT_OF_STOCK: '#f59e0b', // Orange
+    DISCONTINUED: '#ef4444', // Red
+};
 
 export default function Product() {
     const [loading, setLoading] = useState(false);
@@ -49,6 +56,7 @@ export default function Product() {
 
     // open modal create product
     const [openModalCreateProduct, setOpenCreateProduct] = useState(false);
+    const [showFilter, setShowFilter] = useState(false);
 
     const navigation = useNavigation();
 
@@ -91,20 +99,17 @@ export default function Product() {
         setMinStock('');
         setCurrentPage(1);
         // refetch data product
+        // fetchData(1); // fetchData is not defined, it is fetchProducts
+        // But fetchProducts uses currentPage state which is not updated immediately.
+        // Better to call fetchProducts(1) manually or rely on useEffect if we setPage(1).
+        // The original code called fetchProducts(1).
         fetchProducts(1);
+        setShowFilter(false);
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'AVAILABLE':
-                return '#4CAF50';
-            case 'OUT_OF_STOCK':
-                return '#FF9800';
-            case 'DISCONTINUED':
-                return '#F44336';
-            default:
-                return '#757575';
-        }
+    const handleApplyFilter = () => {
+        handleSearch({ productID: productCode, productName, minStock, page: 1 });
+        setShowFilter(false);
     };
 
     // Pagination handlers
@@ -131,7 +136,7 @@ export default function Product() {
                     <Text style={styles.productGroup}>{item?.category?.categoryName}</Text>
                     <Text style={styles.productCode}>{item.productID}</Text>
                 </View>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+                <View style={[styles.statusBadge, { backgroundColor: statusColors[item.status] || '#9ca3af' }]}>
                     <Text style={styles.statusText}>{formatStatusProduct[item.status]}</Text>
                 </View>
             </View>
@@ -195,7 +200,7 @@ export default function Product() {
             try {
                 const page = 1;
                 const res = await getLogByProductID({ productID, page });
-                setProductImportExportHistory(res);
+                setProductImportExportHistory(res.data);
             } catch (err) {
                 console.log(err);
                 return;
@@ -206,82 +211,22 @@ export default function Product() {
 
     return (
         <DefaultLayout>
-            <Header title="Sản phẩm" leftIcon="arrow-back" handleOnPressLeftIcon={() => navigation.goBack()} />
+            <Header
+                title="Sản phẩm"
+                leftIcon="arrow-back"
+                handleOnPressLeftIcon={() => navigation.goBack()}
+                RightComponent={
+                    <TouchableOpacity onPress={() => setShowFilter(true)}>
+                        <Filter size={24} color="white" />
+                    </TouchableOpacity>
+                }
+            />
             <View style={styles.container}>
-                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                    {/* Filter Section */}
-                    <View style={styles.filterSection}>
-                        <Text style={styles.filterTitle}>Bộ lọc</Text>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Mã sản phẩm</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Nhập Mã sản phẩm"
-                                value={productCode}
-                                onChangeText={setProductCode}
-                            />
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Tên sản phẩm</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Nhập Tên sản phẩm"
-                                value={productName}
-                                onChangeText={setProductName}
-                            />
-                        </View>
-
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.inputLabel}>Tồn kho tối thiểu</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Nhập Tồn kho tối thiểu"
-                                value={minStock}
-                                onChangeText={setMinStock}
-                                keyboardType="numeric"
-                            />
-                        </View>
-
-                        {/* Action Buttons */}
-                        <View style={styles.actionButtonsRow}>
-                            {/* <TouchableOpacity
-                                style={[styles.primaryButton, styles.buttonFlex]}
-                                onPress={async () => {
-                                    const token = await parseToken('user');
-                                    console.log(token);
-                                }}
-                            >
-                                <Icon name="add" size={18} color="#fff" />
-                                <Text style={styles.primaryButtonText}>Tạo nhóm SP</Text>
-                            </TouchableOpacity> */}
-                            <TouchableOpacity
-                                style={[styles.primaryButton, styles.buttonFlex]}
-                                onPress={() => setOpenCreateProduct(true)}
-                            >
-                                <Icon name="add" size={18} color="#fff" />
-                                <Text style={styles.primaryButtonText}>Tạo SP</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.actionButtonsRow}>
-                            <TouchableOpacity
-                                style={[styles.secondaryButton, styles.buttonFlex]}
-                                onPress={() =>
-                                    handleSearch({ productID: productCode, productName, minStock, page: currentPage })
-                                }
-                            >
-                                <Icon name="search" size={18} color="#fff" />
-                                <Text style={styles.secondaryButtonText}>Tìm kiếm</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.outlineButton, styles.buttonFlex]} onPress={handleReset}>
-                                <Icon name="refresh" size={18} color="#666" />
-                                <Text style={styles.outlineButtonText}>Đặt lại</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-
+                <ScrollView
+                    style={styles.content}
+                    contentContainerStyle={{ paddingBottom: 100 }}
+                    showsVerticalScrollIndicator={false}
+                >
                     {/* Product List */}
                     <View style={styles.listSection}>
                         <Text style={styles.listTitle}>Danh sách sản phẩm</Text>
@@ -303,72 +248,93 @@ export default function Product() {
                                         <Text style={styles.noProductText}>Không có sản phẩm</Text>
                                     </View>
                                 )}
-
-                                {/* Pagination Controls */}
-                                {totalPages >= 1 && (
-                                    <View style={styles.paginationContainer}>
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.paginationButton,
-                                                currentPage === 1 && styles.paginationButtonDisabled,
-                                            ]}
-                                            onPress={handlePrevPage}
-                                            disabled={currentPage === 1}
-                                        >
-                                            <Icon
-                                                name="chevron-left"
-                                                size={20}
-                                                color={currentPage === 1 ? '#ccc' : '#2196F3'}
-                                            />
-                                        </TouchableOpacity>
-
-                                        <View style={styles.pageNumbersContainer}>
-                                            {[...Array(totalPages)].map((_, index) => {
-                                                const pageNumber = index + 1;
-                                                return (
-                                                    <TouchableOpacity
-                                                        key={pageNumber}
-                                                        style={[
-                                                            styles.pageNumber,
-                                                            currentPage === pageNumber && styles.pageNumberActive,
-                                                        ]}
-                                                        onPress={() => handlePageClick(pageNumber)}
-                                                    >
-                                                        <Text
-                                                            style={[
-                                                                styles.pageNumberText,
-                                                                currentPage === pageNumber &&
-                                                                    styles.pageNumberTextActive,
-                                                            ]}
-                                                        >
-                                                            {pageNumber}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                );
-                                            })}
-                                        </View>
-
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.paginationButton,
-                                                currentPage === totalPages && styles.paginationButtonDisabled,
-                                            ]}
-                                            onPress={handleNextPage}
-                                            disabled={currentPage === totalPages}
-                                        >
-                                            <Icon
-                                                name="chevron-right"
-                                                size={20}
-                                                color={currentPage === totalPages ? '#ccc' : '#2196F3'}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
                             </>
                         )}
                     </View>
                 </ScrollView>
+
+                {/* Floating Action Button */}
+                <TouchableOpacity style={styles.fab} onPress={() => setOpenCreateProduct(true)}>
+                    <Plus size={24} color="white" />
+                </TouchableOpacity>
+
+                {/* Pagination */}
+                <View style={styles.footer}>
+                    <TouchableOpacity
+                        disabled={currentPage <= 1}
+                        onPress={handlePrevPage}
+                        style={[styles.pageBtn, currentPage <= 1 && styles.disabledBtn]}
+                    >
+                        <ChevronLeft size={20} color={currentPage <= 1 ? '#9ca3af' : '#374151'} />
+                    </TouchableOpacity>
+                    <Text style={styles.pageText}>
+                        Trang {currentPage} / {totalPages || 1}
+                    </Text>
+                    <TouchableOpacity
+                        disabled={currentPage >= totalPages}
+                        onPress={handleNextPage}
+                        style={[styles.pageBtn, currentPage >= totalPages && styles.disabledBtn]}
+                    >
+                        <ChevronRight size={20} color={currentPage >= totalPages ? '#9ca3af' : '#374151'} />
+                    </TouchableOpacity>
+                </View>
             </View>
+
+            {/* Filter Modal */}
+            <Modal visible={showFilter} animationType="slide" transparent={true}>
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Bộ lọc</Text>
+                            <TouchableOpacity onPress={() => setShowFilter(false)}>
+                                <X size={24} color="#333" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <View style={styles.filterSection}>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Mã sản phẩm</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Nhập Mã sản phẩm"
+                                        value={productCode}
+                                        onChangeText={setProductCode}
+                                    />
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Tên sản phẩm</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Nhập Tên sản phẩm"
+                                        value={productName}
+                                        onChangeText={setProductName}
+                                    />
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Tồn kho tối thiểu</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Nhập Tồn kho tối thiểu"
+                                        value={minStock}
+                                        onChangeText={setMinStock}
+                                        keyboardType="numeric"
+                                    />
+                                </View>
+                            </View>
+                        </ScrollView>
+                        <View style={styles.modalFooter}>
+                            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+                                <Text style={styles.resetButtonText}>Đặt lại</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.applyButton} onPress={handleApplyFilter}>
+                                <Text style={styles.applyButtonText}>Áp dụng</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
             {productDetail && (
                 <ProductDetail
                     isOpen={!!productDetail}
@@ -569,11 +535,11 @@ const styles = StyleSheet.create({
     statusBadge: {
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: 4,
+        borderRadius: 12,
     },
     statusText: {
         color: '#fff',
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: '600',
     },
     productName: {
@@ -670,5 +636,106 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: '#666',
+    },
+    // FAB
+    fab: {
+        position: 'absolute',
+        bottom: 80,
+        right: 20,
+        backgroundColor: '#2563eb',
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    // Pagination
+    footer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#e5e7eb',
+        gap: 20,
+        paddingBottom: 20,
+    },
+    pageBtn: {
+        padding: 8,
+        borderRadius: 8,
+        backgroundColor: '#f3f4f6',
+    },
+    disabledBtn: {
+        opacity: 0.5,
+    },
+    pageText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#374151',
+    },
+    // Filter Modal
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
+        height: '80%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    modalFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 'auto',
+        paddingTop: 20,
+        marginBottom: 15,
+    },
+    resetButton: {
+        padding: 15,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        flex: 1,
+        marginRight: 10,
+        alignItems: 'center',
+    },
+    resetButtonText: {
+        color: '#666',
+        fontWeight: '600',
+    },
+    applyButton: {
+        backgroundColor: '#2563eb',
+        padding: 15,
+        borderRadius: 10,
+        flex: 1,
+        marginLeft: 10,
+        alignItems: 'center',
+    },
+    applyButtonText: {
+        color: 'white',
+        fontWeight: '600',
     },
 });

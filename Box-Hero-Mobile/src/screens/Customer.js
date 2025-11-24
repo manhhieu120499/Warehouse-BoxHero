@@ -10,12 +10,13 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    Modal,
 } from 'react-native';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { COLORS } from '../components/style/Globalstyle';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Filter, X, ChevronRight } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { filterCustomer, getAllCustomer } from '../service/customer.service';
 
@@ -25,6 +26,7 @@ export default function Customer() {
     const [refreshing, setRefreshing] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [showFilter, setShowFilter] = useState(false);
 
     // Search filters
     const [filters, setFilters] = useState({
@@ -82,6 +84,12 @@ export default function Customer() {
         });
         setCurrentPage(1);
         fetchCustomers(1);
+        setShowFilter(false);
+    };
+
+    const handleApplyFilter = () => {
+        handleSearch();
+        setShowFilter(false);
     };
 
     const handleViewHistory = (customer) => {
@@ -91,40 +99,19 @@ export default function Customer() {
     const renderCustomerCard = ({ item }) => (
         <View style={styles.card}>
             <View style={styles.cardHeader}>
-                <View style={styles.customerCodeContainer}>
-                    <Icon name="badge" size={16} color={COLORS.white} />
-                    <Text style={styles.customerCode}>{item.customerID}</Text>
-                </View>
-                <TouchableOpacity style={styles.historyButton} onPress={() => handleViewHistory(item)}>
-                    <Icon name="visibility" size={20} color="#ffffff" />
-                </TouchableOpacity>
+                <Text style={styles.cardId}>{item.customerID}</Text>
             </View>
 
-            <View style={styles.cardContent}>
-                <View style={styles.infoRow}>
-                    <Icon name="person" size={18} color="#6b7280" />
-                    <Text style={styles.infoLabel}>Tên khách hàng:</Text>
-                    <Text style={styles.infoValue}>{item.customerName}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                    <Icon name="phone" size={18} color="#6b7280" />
-                    <Text style={styles.infoLabel}>SĐT:</Text>
-                    <Text style={styles.infoValue}>{item.phone}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                    <Icon name="location-on" size={18} color="#6b7280" />
-                    <Text style={styles.infoLabel}>Địa chỉ:</Text>
-                    <Text style={styles.infoValue}>{item.address}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                    <Icon name="email" size={18} color="#6b7280" />
-                    <Text style={styles.infoLabel}>Email:</Text>
-                    <Text style={styles.infoValue}>{item.email}</Text>
-                </View>
+            <View style={styles.cardBody}>
+                <Text style={styles.infoText}>Tên khách hàng: {item.customerName}</Text>
+                <Text style={styles.infoText}>SĐT: {item.phone}</Text>
+                <Text style={styles.infoText}>Địa chỉ: {item.address}</Text>
+                <Text style={styles.infoText}>Email: {item.email}</Text>
             </View>
+
+            <TouchableOpacity style={styles.detailButton} onPress={() => handleViewHistory(item)}>
+                <Text style={styles.detailButtonText}>Xem lịch sử</Text>
+            </TouchableOpacity>
         </View>
     );
 
@@ -137,82 +124,30 @@ export default function Customer() {
 
     return (
         <DefaultLayout>
-            <Header title="Khách hàng" leftIcon="arrow-back" handleOnPressLeftIcon={() => navigation.goBack()} />
+            <Header
+                title="Khách hàng"
+                leftIcon="arrow-back"
+                handleOnPressLeftIcon={() => navigation.goBack()}
+                RightComponent={
+                    <TouchableOpacity onPress={() => setShowFilter(true)}>
+                        <Filter size={24} color="white" />
+                    </TouchableOpacity>
+                }
+            />
             <View style={styles.container}>
                 {/* Scrollable Content */}
                 <KeyboardAvoidingView behavior="padding" style={styles.keyboardAvoidingView} keyboardVerticalOffset={0}>
                     <ScrollView
                         style={styles.scrollView}
+                        contentContainerStyle={{ paddingBottom: 100 }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
                     >
-                        {/* Search Filters */}
-                        <View style={styles.filtersContainer}>
-                            <View style={styles.filterRow}>
-                                <View style={styles.filterItem}>
-                                    <Text style={styles.filterLabel}>Mã khách hàng</Text>
-                                    <TextInput
-                                        style={styles.filterInput}
-                                        placeholder="Nhập Mã khách hàng"
-                                        placeholderTextColor="#9ca3af"
-                                        value={filters.customerCode}
-                                        onChangeText={(text) => setFilters({ ...filters, customerCode: text })}
-                                    />
-                                </View>
-
-                                <View style={styles.filterItem}>
-                                    <Text style={styles.filterLabel}>Tên khách hàng</Text>
-                                    <TextInput
-                                        style={styles.filterInput}
-                                        placeholder="Nhập Tên khách hàng"
-                                        placeholderTextColor="#9ca3af"
-                                        value={filters.customerName}
-                                        onChangeText={(text) => setFilters({ ...filters, customerName: text })}
-                                    />
-                                </View>
-                            </View>
-
-                            <View style={styles.filterRow}>
-                                <View style={styles.filterItem}>
-                                    <Text style={styles.filterLabel}>Số điện thoại</Text>
-                                    <TextInput
-                                        style={styles.filterInput}
-                                        placeholder="Nhập Số điện thoại"
-                                        placeholderTextColor="#9ca3af"
-                                        value={filters.phone}
-                                        onChangeText={(text) => setFilters({ ...filters, phone: text })}
-                                        keyboardType="phone-pad"
-                                    />
-                                </View>
-
-                                <View style={styles.filterItem}>
-                                    <Text style={styles.filterLabel}>Email</Text>
-                                    <TextInput
-                                        style={styles.filterInput}
-                                        placeholder="Nhập Email"
-                                        placeholderTextColor="#9ca3af"
-                                        value={filters.email}
-                                        onChangeText={(text) => setFilters({ ...filters, email: text })}
-                                        keyboardType="email-address"
-                                    />
-                                </View>
-                            </View>
-
-                            {/* Action Buttons */}
-                            <View style={styles.actionButtons}>
-                                <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                                    <Icon name="search" size={18} color={COLORS.white} />
-                                    <Text style={styles.searchButtonText}>Tìm kiếm</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-                                    <Icon name="refresh" size={18} color="#374151" />
-                                    <Text style={styles.resetButtonText}>Đặt lại</Text>
-                                </TouchableOpacity>
-                            </View>
+                        {/* Customer List */}
+                        <View style={styles.listHeader}>
+                            <Text style={styles.listTitle}>Danh sách khách hàng</Text>
                         </View>
 
-                        {/* Customer List */}
                         {refreshing ? (
                             <View style={styles.loadingContainer}>
                                 <ActivityIndicator size="large" color={COLORS.primary} />
@@ -222,74 +157,101 @@ export default function Customer() {
                                 {customers.map((item, index) => (
                                     <View key={item.customerID || index}>{renderCustomerCard({ item })}</View>
                                 ))}
-
-                                {/* Pagination Controls */}
-                                {totalPages > 1 && (
-                                    <View style={styles.paginationContainer}>
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.paginationButton,
-                                                currentPage === 1 && styles.paginationButtonDisabled,
-                                            ]}
-                                            onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                            disabled={currentPage === 1}
-                                        >
-                                            <Icon
-                                                name="chevron-left"
-                                                size={20}
-                                                color={currentPage === 1 ? '#ccc' : '#374151'}
-                                            />
-                                        </TouchableOpacity>
-
-                                        <View style={styles.pageNumbersContainer}>
-                                            {[...Array(totalPages)].map((_, index) => {
-                                                const pageNumber = index + 1;
-                                                return (
-                                                    <TouchableOpacity
-                                                        key={pageNumber}
-                                                        style={[
-                                                            styles.pageNumber,
-                                                            currentPage === pageNumber && styles.pageNumberActive,
-                                                        ]}
-                                                        onPress={() => setCurrentPage(pageNumber)}
-                                                    >
-                                                        <Text
-                                                            style={[
-                                                                styles.pageNumberText,
-                                                                currentPage === pageNumber &&
-                                                                    styles.pageNumberTextActive,
-                                                            ]}
-                                                        >
-                                                            {pageNumber}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                );
-                                            })}
-                                        </View>
-
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.paginationButton,
-                                                currentPage === totalPages && styles.paginationButtonDisabled,
-                                            ]}
-                                            onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                            disabled={currentPage === totalPages}
-                                        >
-                                            <Icon
-                                                name="chevron-right"
-                                                size={20}
-                                                color={currentPage === totalPages ? '#ccc' : '#374151'}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
                             </View>
                         ) : (
                             renderEmptyList()
                         )}
                     </ScrollView>
                 </KeyboardAvoidingView>
+
+                {/* Pagination */}
+                <View style={styles.footer}>
+                    <TouchableOpacity
+                        disabled={currentPage <= 1}
+                        onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        style={[styles.pageBtn, currentPage <= 1 && styles.disabledBtn]}
+                    >
+                        <ChevronLeft size={20} color={currentPage <= 1 ? '#9ca3af' : '#374151'} />
+                    </TouchableOpacity>
+                    <Text style={styles.pageText}>
+                        Trang {currentPage} / {totalPages || 1}
+                    </Text>
+                    <TouchableOpacity
+                        disabled={currentPage >= totalPages}
+                        onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        style={[styles.pageBtn, currentPage >= totalPages && styles.disabledBtn]}
+                    >
+                        <ChevronRight size={20} color={currentPage >= totalPages ? '#9ca3af' : '#374151'} />
+                    </TouchableOpacity>
+                </View>
             </View>
+
+            {/* Filter Modal */}
+            <Modal visible={showFilter} animationType="slide" transparent={true}>
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Bộ lọc</Text>
+                            <TouchableOpacity onPress={() => setShowFilter(false)}>
+                                <X size={24} color="#333" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <View style={styles.filterSection}>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Mã khách hàng</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Nhập Mã khách hàng"
+                                        value={filters.customerCode}
+                                        onChangeText={(text) => setFilters({ ...filters, customerCode: text })}
+                                    />
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Tên khách hàng</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Nhập Tên khách hàng"
+                                        value={filters.customerName}
+                                        onChangeText={(text) => setFilters({ ...filters, customerName: text })}
+                                    />
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Số điện thoại</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Nhập Số điện thoại"
+                                        value={filters.phone}
+                                        onChangeText={(text) => setFilters({ ...filters, phone: text })}
+                                        keyboardType="phone-pad"
+                                    />
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Email</Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Nhập Email"
+                                        value={filters.email}
+                                        onChangeText={(text) => setFilters({ ...filters, email: text })}
+                                        keyboardType="email-address"
+                                    />
+                                </View>
+                            </View>
+                        </ScrollView>
+                        <View style={styles.modalFooter}>
+                            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+                                <Text style={styles.resetButtonText}>Đặt lại</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.applyButton} onPress={handleApplyFilter}>
+                                <Text style={styles.applyButtonText}>Áp dụng</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </DefaultLayout>
     );
 }
@@ -384,56 +346,44 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     card: {
-        backgroundColor: COLORS.white,
-        borderRadius: 8,
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 16,
         marginBottom: 12,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
-        overflow: 'hidden',
+        shadowRadius: 4,
+        elevation: 3,
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#60a5fa',
-        paddingHorizontal: 12,
-        paddingVertical: 10,
+        marginBottom: 12,
     },
-    customerCodeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    customerCode: {
-        color: COLORS.white,
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    historyButton: {
-        padding: 4,
-    },
-    cardContent: {
-        padding: 12,
-        gap: 10,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    infoLabel: {
-        fontSize: 13,
-        color: '#6b7280',
-        fontWeight: '500',
-        minWidth: 110,
-    },
-    infoValue: {
-        flex: 1,
-        fontSize: 13,
+    cardId: {
+        fontSize: 16,
+        fontWeight: 'bold',
         color: '#1f2937',
+    },
+    cardBody: {
+        marginBottom: 12,
+    },
+    infoText: {
+        fontSize: 14,
+        color: '#4b5563',
+        marginBottom: 4,
+    },
+    detailButton: {
+        alignItems: 'center',
+        padding: 10,
+        borderRadius: 8,
+        backgroundColor: '#eff6ff',
+    },
+    detailButtonText: {
+        color: '#2563eb',
+        fontWeight: '600',
     },
     loadingContainer: {
         paddingVertical: 40,
@@ -450,49 +400,120 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
         marginTop: 12,
     },
-    paginationContainer: {
+    // Pagination
+    footer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 20,
-        marginBottom: 20,
-        paddingVertical: 10,
-        gap: 10,
+        padding: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#e5e7eb',
+        gap: 20,
+        paddingBottom: 20,
     },
-    paginationButton: {
+    pageBtn: {
         padding: 8,
-        borderRadius: 6,
-        minWidth: 36,
-        minHeight: 36,
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderRadius: 8,
+        backgroundColor: '#f3f4f6',
     },
-    paginationButtonDisabled: {
+    disabledBtn: {
         opacity: 0.5,
     },
-    pageNumbersContainer: {
-        flexDirection: 'row',
-        gap: 8,
+    pageText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#374151',
     },
-    pageNumber: {
+    listHeader: {
         paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingTop: 16,
+        paddingBottom: 8,
+    },
+    listTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+    },
+    // Filter Modal
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
+        height: '80%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    filterSection: {
+        marginBottom: 20,
+    },
+    inputGroup: {
+        marginBottom: 16,
+    },
+    inputLabel: {
+        fontSize: 14,
+        fontWeight: '500',
+        marginBottom: 6,
+        color: '#555',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ddd',
         borderRadius: 6,
-        backgroundColor: '#f5f5f5',
-        minWidth: 36,
-        minHeight: 36,
-        justifyContent: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 14,
+        backgroundColor: '#fff',
+    },
+    modalFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 'auto',
+        paddingTop: 20,
+        marginBottom: 15,
+    },
+    resetButton: {
+        padding: 15,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        flex: 1,
+        marginRight: 10,
+        alignItems: 'center',
+        backgroundColor: 'white',
+    },
+    resetButtonText: {
+        color: '#666',
+        fontWeight: '600',
+    },
+    applyButton: {
+        backgroundColor: '#2563eb',
+        padding: 15,
+        borderRadius: 10,
+        flex: 1,
+        marginLeft: 10,
         alignItems: 'center',
     },
-    pageNumberActive: {
-        backgroundColor: '#60a5fa',
-    },
-    pageNumberText: {
-        fontSize: 14,
+    applyButtonText: {
+        color: 'white',
         fontWeight: '600',
-        color: '#666',
-    },
-    pageNumberTextActive: {
-        color: '#fff',
     },
 });
