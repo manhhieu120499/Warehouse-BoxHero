@@ -10,14 +10,16 @@ import {
     ScrollView,
     Platform,
     TextInput,
+    TouchableWithoutFeedback,
 } from 'react-native';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { useNavigation } from '@react-navigation/native';
-import { filterBatchMoveLog } from '../service/BatchMoveLog.service';
+import { filterBatchMoveLog } from '../service/batchmovelog.service';
 import { Calendar, Filter, X, ChevronRight, Eye, Check, ChevronLeft } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
+import { convertDateVN } from './common/Common';
 
 export default function HistoryLocation() {
     const navigation = useNavigation();
@@ -124,7 +126,7 @@ export default function HistoryLocation() {
         <View style={styles.card}>
             <View style={styles.cardHeader}>
                 <Text style={styles.batchId}>Lô: {item.batchID}</Text>
-                <Text style={styles.date}>{format(new Date(item.createdAt), 'dd/MM/yyyy HH:mm')}</Text>
+                <Text style={styles.date}>{convertDateVN(item.createdAt)}</Text>
             </View>
             <View style={styles.cardBody}>
                 <Text style={styles.productName}>{item.batch?.product?.productName}</Text>
@@ -351,27 +353,38 @@ export default function HistoryLocation() {
             </Modal>
 
             {/* Detail Modal */}
-            <Modal visible={!!dataDetail} animationType="fade" transparent={true}>
-                <View style={styles.modalContainer}>
-                    <View style={styles.detailModalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Chi tiết chuyển vị trí</Text>
-                            <TouchableOpacity onPress={() => setDataDetail(null)}>
-                                <X size={24} color="#333" />
-                            </TouchableOpacity>
+            <Modal
+                visible={!!dataDetail}
+                animationType="fade"
+                transparent={true}
+                onRequestClose={() => setDataDetail(null)}
+            >
+                <TouchableOpacity
+                    style={[styles.modalContainer, { justifyContent: 'center' }]}
+                    activeOpacity={1}
+                    onPress={() => setDataDetail(null)}
+                >
+                    <TouchableWithoutFeedback>
+                        <View style={styles.detailModalContent}>
+                            <View style={styles.modalHeader}>
+                                <Text style={styles.modalTitle}>Chi tiết chuyển vị trí</Text>
+                                <TouchableOpacity onPress={() => setDataDetail(null)}>
+                                    <X size={24} color="#333" />
+                                </TouchableOpacity>
+                            </View>
+                            <ScrollView style={{ maxHeight: 400 }}>
+                                {dataDetail?.map((detail, index) => (
+                                    <View key={index} style={styles.detailItem}>
+                                        <Text style={styles.detailLocation}>
+                                            Đến: {detail.toBox?.boxName} - {detail.toBox?.floor?.floorName}
+                                        </Text>
+                                        <Text style={styles.detailQuantity}>SL: {detail.quantity}</Text>
+                                    </View>
+                                ))}
+                            </ScrollView>
                         </View>
-                        <ScrollView style={{ maxHeight: 400 }}>
-                            {dataDetail?.map((detail, index) => (
-                                <View key={index} style={styles.detailItem}>
-                                    <Text style={styles.detailLocation}>
-                                        Đến: {detail.toBox?.boxName} - {detail.toBox?.floor?.floorName}
-                                    </Text>
-                                    <Text style={styles.detailQuantity}>SL: {detail.quantity}</Text>
-                                </View>
-                            ))}
-                        </ScrollView>
-                    </View>
-                </View>
+                    </TouchableWithoutFeedback>
+                </TouchableOpacity>
             </Modal>
         </DefaultLayout>
     );

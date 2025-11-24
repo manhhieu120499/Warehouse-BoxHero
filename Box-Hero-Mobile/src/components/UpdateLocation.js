@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Modal from './Modal'; // Use custom Modal
 import parseToken from '../utilities/parseToken';
-import { updateLocationBatch } from '../service/BatchBox.service';
+import { updateLocationBatch } from '../service/batchBox.service';
 import ModalSuggestLocation from './ModalSuggestLocation';
 import { handleCopy } from './common/Common';
 

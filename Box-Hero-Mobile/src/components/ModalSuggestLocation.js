@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import Modal from './Modal';
 import Button from './Button';
-import { suggestBoxes } from '../service/BatchBox.service';
+import { suggestBoxes } from '../service/batchBox.service';
 import { ToastMessage } from './common/ToastMessage';
 import { Info, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { COLORS } from './style/Globalstyle';

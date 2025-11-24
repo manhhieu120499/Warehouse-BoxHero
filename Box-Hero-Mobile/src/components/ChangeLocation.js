@@ -11,7 +11,7 @@ import {
     FlatList,
 } from 'react-native';
 import Modal from './Modal';
-import { changeLocationBatch } from '../service/BatchBox.service';
+import { changeLocationBatch } from '../service/batchBox.service';
 
 const { width, height } = Dimensions.get('window');
 

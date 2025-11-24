@@ -7,6 +7,7 @@ import HistoryLocation from '../components/HistoryLocation';
 import Product from '../screens/Product';
 import Customer from '../screens/Customer';
 import Supplier from '../screens/Supplier';
+import CheckPage from '../screens/CheckPage';
 
 const Stack = createNativeStackNavigator();
 
@@ -26,6 +27,7 @@ export default function Navigation() {
                 <Stack.Screen name="Product" component={Product} />
                 <Stack.Screen name="Customer" component={Customer} />
                 <Stack.Screen name="Supplier" component={Supplier} />
+                <Stack.Screen name="Inventory" component={CheckPage} />
             </Stack.Navigator>
         </NavigationContainer>
     );

@@ -15,7 +15,7 @@ import { Filter, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react-nat
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { convertDateVN } from './common/Common';
-import { filterProductQuantityLog } from '../service/Productquantitylog.service';
+import { filterProductQuantityLog } from '../service/productquantitylog.service';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 
