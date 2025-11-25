@@ -10,8 +10,10 @@ import {
     RefreshControl,
     KeyboardAvoidingView,
     Platform,
+    Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { ChevronLeft, Filter, X, ChevronRight, Plus } from 'lucide-react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { useNavigation } from '@react-navigation/native';
 import { DefaultLayout } from '../layouts';
@@ -40,6 +42,7 @@ export default function Employee() {
     // Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showFilter, setShowFilter] = useState(false);
 
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     // Dropdown data
@@ -103,6 +106,7 @@ export default function Employee() {
                 status: statusFilter,
                 page,
             });
+            setShowFilter(false);
             const formatDataFilter = res.employeeFilter.map((it) => ({
                 id: it.employeeID,
                 name: it.employeeName,
@@ -132,8 +136,44 @@ export default function Employee() {
         setSearchPhone('');
         setStatusFilter('ACTIVE');
 
-        await handleSearch(1);
-        setCurrentPage(1);
+        // Reset search immediately with default values
+        try {
+            const res = await searchEmployee({
+                employeeID: '',
+                phoneNumber: '',
+                status: 'ACTIVE',
+                page: 1,
+            });
+            // ... (rest of the logic is similar to handleSearch but we can just call handleSearch with new values if we updated state, but state update is async)
+            // Better to just call the API directly here or use a useEffect dependency if we want to trigger it.
+            // For simplicity, let's just update state and call handleSearch with explicit values
+            const formatDataFilter = res.employeeFilter.map((it) => ({
+                id: it.employeeID,
+                name: it.employeeName,
+                birthDate: new Date(it.dob).toISOString().split('T')[0],
+                gender: it.gender,
+                phone: it.phoneNumber,
+                startDate: new Date(it.startDate).toISOString().split('T')[0],
+                endDate: new Date(it?.endDate).toISOString().split('T')[0] || '',
+                warehouse: it.warehouseID,
+                status: it.status,
+                roles: it.roles,
+                image: it.image,
+                cccd: it.cccd,
+                address: it.address,
+                username: it.account.email,
+            }));
+            setEmployees(formatDataFilter);
+            setCurrentPage(res?.pagination?.currentPage || 1);
+            setTotalPages(res?.pagination?.totalPages || 1);
+        } catch (err) {
+            console.log('err', err);
+        }
+        setShowFilter(false);
+    };
+
+    const handleApplyFilter = () => {
+        handleSearch(1);
     };
 
     const handleViewEmployee = (employee) => {
@@ -202,56 +242,18 @@ export default function Employee() {
         return roleColors[formatRole[role.roleName]] || '#6b7280';
     };
 
-    const renderPagination = () => {
-        if (totalPages < 1) return null;
-
-        const pages = [];
-        for (let i = 1; i <= totalPages; i++) {
-            pages.push(i);
-        }
-
-        return (
-            <View style={styles.paginationContainer}>
-                <TouchableOpacity
-                    style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]}
-                    onPress={() => setCurrentPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                >
-                    <Ionicons name="chevron-back" size={20} color={currentPage === 1 ? '#ccc' : '#374151'} />
-                </TouchableOpacity>
-
-                <View style={styles.pageNumbersContainer}>
-                    {pages.map((page) => (
-                        <TouchableOpacity
-                            key={page}
-                            style={[styles.pageNumber, currentPage === page && styles.pageNumberActive]}
-                            onPress={() => setCurrentPage(page)}
-                        >
-                            <Text style={[styles.pageNumberText, currentPage === page && styles.pageNumberTextActive]}>
-                                {page}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                <TouchableOpacity
-                    style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
-                    onPress={() => setCurrentPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                >
-                    <Ionicons
-                        name="chevron-forward"
-                        size={20}
-                        color={currentPage === totalPages ? '#ccc' : '#374151'}
-                    />
-                </TouchableOpacity>
-            </View>
-        );
-    };
-
     return (
         <DefaultLayout>
-            <Header title="Nhân viên" leftIcon="arrow-back" handleOnPressLeftIcon={() => navigation.goBack()} />
+            <Header
+                title="Nhân viên"
+                leftIcon="arrow-back"
+                handleOnPressLeftIcon={() => navigation.goBack()}
+                RightComponent={
+                    <TouchableOpacity onPress={() => setShowFilter(true)}>
+                        <Filter size={24} color="white" />
+                    </TouchableOpacity>
+                }
+            />
             <View style={styles.container}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -260,39 +262,168 @@ export default function Employee() {
                 >
                     <ScrollView
                         style={styles.scrollView}
+                        contentContainerStyle={{ paddingBottom: 100 }}
                         showsVerticalScrollIndicator={false}
                         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                     >
-                        {/* Search Filters */}
-                        <View style={styles.filtersContainer}>
-                            <View style={styles.filterRow}>
-                                <View style={styles.filterItem}>
-                                    <Text style={styles.filterLabel}>Mã nhân viên</Text>
+                        {/* Employee List */}
+                        <View style={styles.listHeader}>
+                            <Text style={styles.listTitle}>Danh sách nhân viên</Text>
+                        </View>
+
+                        {refreshing ? (
+                            <View style={styles.loadingContainer}>
+                                <ActivityIndicator size="large" color="#1e40af" />
+                            </View>
+                        ) : filteredEmployees.length === 0 ? (
+                            <View style={styles.emptyState}>
+                                <Ionicons name="people-outline" size={64} color="#ccc" />
+                                <Text style={styles.emptyStateText}>Không có nhân viên nào</Text>
+                            </View>
+                        ) : (
+                            <View style={styles.listContainer}>
+                                {filteredEmployees.map((employee, index) => (
+                                    <View key={employee.id} style={styles.card}>
+                                        <View style={styles.cardHeader}>
+                                            <Text style={styles.cardId}>{employee.id}</Text>
+                                            <View
+                                                style={[
+                                                    styles.statusTag,
+                                                    {
+                                                        backgroundColor:
+                                                            employee.status === 'ACTIVE' ? '#10b981' : '#ef4444',
+                                                    },
+                                                ]}
+                                            >
+                                                <Text style={styles.statusText}>{employeeStatus[employee.status]}</Text>
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.cardBody}>
+                                            <View style={styles.infoRow}>
+                                                <Ionicons name="person-outline" size={16} color="#6b7280" />
+                                                <Text style={styles.infoText}>Họ tên: {employee.name}</Text>
+                                            </View>
+                                            <View style={styles.infoRow}>
+                                                <Ionicons name="call-outline" size={16} color="#6b7280" />
+                                                <Text style={styles.infoText}>SĐT: {employee.phone}</Text>
+                                            </View>
+                                            <View style={styles.infoRow}>
+                                                <Ionicons name="business-outline" size={16} color="#6b7280" />
+                                                <Text style={styles.infoText}>Kho: {employee.warehouse}</Text>
+                                            </View>
+                                            <View style={styles.infoRow}>
+                                                <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                                                <Text style={styles.infoText}>Ngày sinh: {employee.birthDate}</Text>
+                                            </View>
+                                            <View style={styles.infoRow}>
+                                                <Ionicons name="male-female-outline" size={16} color="#6b7280" />
+                                                <Text style={styles.infoText}>
+                                                    Giới tính: {employee.gender == 'male' ? 'Nam' : 'Nữ'}
+                                                </Text>
+                                            </View>
+                                            <View style={styles.infoRow}>
+                                                <Ionicons name="time-outline" size={16} color="#6b7280" />
+                                                <Text style={styles.infoText}>Ngày vào làm: {employee.startDate}</Text>
+                                            </View>
+
+                                            <View style={styles.roleContainer}>
+                                                <Text style={styles.roleLabel}>Vai trò:</Text>
+                                                <View style={styles.roleBadgeContainer}>
+                                                    {employee.roles.map((r, idx) => (
+                                                        <View
+                                                            key={idx}
+                                                            style={[
+                                                                styles.roleBadge,
+                                                                { backgroundColor: getRoleColor(r) },
+                                                            ]}
+                                                        >
+                                                            <Text style={styles.roleText}>
+                                                                {formatRole[r.roleName]}
+                                                            </Text>
+                                                        </View>
+                                                    ))}
+                                                </View>
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.cardFooter}>
+                                            <TouchableOpacity
+                                                style={styles.detailButton}
+                                                onPress={() => handleViewEmployee(employee)}
+                                            >
+                                                <Text style={styles.detailButtonText}>Chỉnh sửa</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                ))}
+                            </View>
+                        )}
+                    </ScrollView>
+                </KeyboardAvoidingView>
+
+                {/* Floating Action Button */}
+                <TouchableOpacity style={styles.fab} onPress={handleAddEmployee}>
+                    <Plus size={24} color="white" />
+                </TouchableOpacity>
+
+                {/* Pagination */}
+                <View style={styles.footer}>
+                    <TouchableOpacity
+                        disabled={currentPage <= 1}
+                        onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        style={[styles.pageBtn, currentPage <= 1 && styles.disabledBtn]}
+                    >
+                        <ChevronLeft size={20} color={currentPage <= 1 ? '#9ca3af' : '#374151'} />
+                    </TouchableOpacity>
+                    <Text style={styles.pageText}>
+                        Trang {currentPage} / {totalPages || 1}
+                    </Text>
+                    <TouchableOpacity
+                        disabled={currentPage >= totalPages}
+                        onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        style={[styles.pageBtn, currentPage >= totalPages && styles.disabledBtn]}
+                    >
+                        <ChevronRight size={20} color={currentPage >= totalPages ? '#9ca3af' : '#374151'} />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            {/* Filter Modal */}
+            <Modal visible={showFilter} animationType="slide" transparent={true}>
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Bộ lọc</Text>
+                            <TouchableOpacity onPress={() => setShowFilter(false)}>
+                                <X size={24} color="#333" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <View style={styles.filterSection}>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Mã nhân viên</Text>
                                     <TextInput
-                                        style={styles.filterInput}
+                                        style={styles.input}
                                         placeholder="Nhập mã nhân viên"
-                                        placeholderTextColor="#9ca3af"
                                         value={searchId}
                                         onChangeText={setSearchId}
                                     />
                                 </View>
 
-                                <View style={styles.filterItem}>
-                                    <Text style={styles.filterLabel}>Số điện thoại</Text>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Số điện thoại</Text>
                                     <TextInput
-                                        style={styles.filterInput}
+                                        style={styles.input}
                                         placeholder="Nhập số điện thoại"
-                                        placeholderTextColor="#9ca3af"
                                         value={searchPhone}
                                         onChangeText={setSearchPhone}
                                         keyboardType="phone-pad"
                                     />
                                 </View>
-                            </View>
 
-                            <View style={styles.filterRow}>
-                                <View style={styles.filterItem}>
-                                    <Text style={styles.filterLabel}>Trạng thái làm việc</Text>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.inputLabel}>Trạng thái làm việc</Text>
                                     <Dropdown
                                         style={styles.dropdown}
                                         placeholderStyle={styles.dropdownPlaceholder}
@@ -316,132 +447,18 @@ export default function Employee() {
                                     />
                                 </View>
                             </View>
-
-                            {/* Action Buttons */}
-                            <View style={styles.actionButtons}>
-                                <TouchableOpacity style={styles.searchButton} onPress={() => handleSearch(currentPage)}>
-                                    <Ionicons name="search" size={18} color="#fff" />
-                                    <Text style={styles.searchButtonText}>Tìm kiếm</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-                                    <Ionicons name="refresh" size={18} color="#374151" />
-                                    <Text style={styles.resetButtonText}>Đặt lại</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Add Employee Button - Full Width */}
-                            <TouchableOpacity style={styles.addEmployeeButton} onPress={handleAddEmployee}>
-                                <Ionicons name="person-add" size={20} color="#fff" />
-                                <Text style={styles.addEmployeeButtonText}>Thêm nhân viên</Text>
+                        </ScrollView>
+                        <View style={styles.modalFooter}>
+                            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+                                <Text style={styles.resetButtonText}>Đặt lại</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.applyButton} onPress={handleApplyFilter}>
+                                <Text style={styles.applyButtonText}>Áp dụng</Text>
                             </TouchableOpacity>
                         </View>
-
-                        {/* Employee List */}
-                        {refreshing ? (
-                            <View style={styles.loadingContainer}>
-                                <ActivityIndicator size="large" color="#1e40af" />
-                            </View>
-                        ) : filteredEmployees.length === 0 ? (
-                            <View style={styles.emptyState}>
-                                <Ionicons name="people-outline" size={64} color="#ccc" />
-                                <Text style={styles.emptyStateText}>Không có nhân viên nào</Text>
-                            </View>
-                        ) : (
-                            <View style={styles.listContainer}>
-                                {filteredEmployees.map((employee, index) => (
-                                    <View key={employee.id} style={styles.employeeCard}>
-                                        <View style={styles.cardHeader}>
-                                            <View style={styles.cardHeaderLeft}>
-                                                <Text style={styles.employeeId}>{employee.id}</Text>
-                                                <Text style={styles.employeeName}>{employee.name}</Text>
-                                            </View>
-                                            <TouchableOpacity
-                                                style={styles.viewButton}
-                                                onPress={() => handleViewEmployee(employee)}
-                                            >
-                                                <Ionicons name="pencil" size={20} color="#fff" />
-                                            </TouchableOpacity>
-                                        </View>
-
-                                        <View style={styles.cardBody}>
-                                            {/* Roles Section */}
-                                            {employee.roles && employee.roles.length > 0 && (
-                                                <View style={styles.rolesSection}>
-                                                    <Text style={styles.rolesLabel}>Vai trò:</Text>
-                                                    <View style={styles.rolesContainer}>
-                                                        {employee.roles.map((role, idx) => (
-                                                            <View
-                                                                key={idx}
-                                                                style={[
-                                                                    styles.roleBadge,
-                                                                    { backgroundColor: getRoleColor(role) },
-                                                                ]}
-                                                            >
-                                                                <Text style={styles.roleText}>
-                                                                    {formatRole[role.roleName]}
-                                                                </Text>
-                                                            </View>
-                                                        ))}
-                                                    </View>
-                                                </View>
-                                            )}
-
-                                            <View style={styles.infoRow}>
-                                                <View style={styles.infoItem}>
-                                                    <Text style={styles.infoLabel}>Ngày sinh</Text>
-                                                    <Text style={styles.infoValue}>{employee.birthDate}</Text>
-                                                </View>
-                                                <View style={styles.infoItem}>
-                                                    <Text style={styles.infoLabel}>Giới tính</Text>
-                                                    <Text style={styles.infoValue}>
-                                                        {employee.gender == 'male' ? 'Nam' : 'Nữ'}
-                                                    </Text>
-                                                </View>
-                                            </View>
-
-                                            <View style={styles.infoRow}>
-                                                <View style={styles.infoItem}>
-                                                    <Text style={styles.infoLabel}>Số điện thoại</Text>
-                                                    <Text style={styles.infoValue}>{employee.phone}</Text>
-                                                </View>
-                                                <View style={styles.infoItem}>
-                                                    <Text style={styles.infoLabel}>Ngày vào làm</Text>
-                                                    <Text style={styles.infoValue}>{employee.startDate}</Text>
-                                                </View>
-                                            </View>
-
-                                            <View style={styles.infoRow}>
-                                                <View style={styles.infoItem}>
-                                                    <Text style={styles.infoLabel}>Mã kho</Text>
-                                                    <Text style={styles.infoValue}>{employee.warehouse}</Text>
-                                                </View>
-                                                <View style={styles.infoItem}>
-                                                    <Text style={styles.infoLabel}>Trạng thái</Text>
-                                                    <View
-                                                        style={[
-                                                            styles.statusBadge,
-                                                            employee.status === 'ACTIVE'
-                                                                ? styles.statusActive
-                                                                : styles.statusInactive,
-                                                        ]}
-                                                    >
-                                                        <Text style={styles.statusText}>
-                                                            {employeeStatus[employee.status]}
-                                                        </Text>
-                                                    </View>
-                                                </View>
-                                            </View>
-                                        </View>
-                                    </View>
-                                ))}
-
-                                {renderPagination()}
-                            </View>
-                        )}
-                    </ScrollView>
-                </KeyboardAvoidingView>
-            </View>
+                    </View>
+                </View>
+            </Modal>
 
             {/* Create Employee Modal */}
             {showCreateModal && (
@@ -604,56 +621,61 @@ const styles = StyleSheet.create({
         color: '#9ca3af',
         marginTop: 12,
     },
-    employeeCard: {
-        backgroundColor: '#fff',
-        borderRadius: 8,
+    card: {
+        backgroundColor: 'white',
+        borderRadius: 12,
+        padding: 16,
         marginBottom: 12,
-        overflow: 'hidden',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
+        shadowRadius: 4,
+        elevation: 3,
     },
     cardHeader: {
-        backgroundColor: '#1f2937',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 10,
+        marginBottom: 12,
     },
-    cardHeaderLeft: {
-        flex: 1,
-    },
-    employeeId: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#fff',
-        marginBottom: 2,
-    },
-    employeeName: {
+    cardId: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#fff',
+        color: '#1f2937',
     },
-    viewButton: {
-        padding: 4,
+    statusTag: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    statusText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: '600',
     },
     cardBody: {
-        padding: 12,
-        gap: 10,
+        marginBottom: 12,
+        gap: 8,
     },
-    rolesSection: {
-        marginBottom: 8,
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
-    rolesLabel: {
-        fontSize: 12,
-        color: '#6b7280',
+    infoText: {
+        fontSize: 14,
+        color: '#4b5563',
+    },
+    roleContainer: {
+        marginTop: 4,
+    },
+    roleLabel: {
+        fontSize: 14,
+        color: '#4b5563',
         marginBottom: 6,
         fontWeight: '500',
     },
-    rolesContainer: {
+    roleBadgeContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: 6,
@@ -664,87 +686,156 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     roleText: {
+        color: 'white',
         fontSize: 11,
         fontWeight: '600',
-        color: '#fff',
     },
-    infoRow: {
+    cardFooter: {
         flexDirection: 'row',
-        gap: 12,
+        justifyContent: 'flex-end',
     },
-    infoItem: {
-        flex: 1,
+    detailButton: {
+        alignItems: 'center',
+        padding: 10,
+        borderRadius: 8,
+        backgroundColor: '#eff6ff',
+        width: '100%',
     },
-    infoLabel: {
-        fontSize: 12,
-        color: '#6b7280',
-        marginBottom: 4,
-    },
-    infoValue: {
-        fontSize: 14,
+    detailButtonText: {
+        color: '#2563eb',
         fontWeight: '600',
-        color: '#1f2937',
     },
-    statusBadge: {
+    listHeader: {
         paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 12,
-        alignSelf: 'flex-start',
+        paddingTop: 16,
+        paddingBottom: 8,
     },
-    statusActive: {
-        backgroundColor: '#dcfce7',
-    },
-    statusInactive: {
-        backgroundColor: '#fee2e2',
-    },
-    statusText: {
-        fontSize: 12,
+    listTitle: {
+        fontSize: 16,
         fontWeight: '600',
-        color: '#1f2937',
+        color: '#333',
     },
-    paginationContainer: {
+    // FAB
+    fab: {
+        position: 'absolute',
+        bottom: 80,
+        right: 20,
+        backgroundColor: '#2563eb',
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    // Pagination
+    footer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 20,
-        marginBottom: 20,
-        paddingVertical: 10,
-        gap: 10,
+        padding: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#e5e7eb',
+        gap: 20,
+        paddingBottom: 20,
     },
-    paginationButton: {
+    pageBtn: {
         padding: 8,
-        borderRadius: 6,
-        minWidth: 36,
-        minHeight: 36,
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderRadius: 8,
+        backgroundColor: '#f3f4f6',
     },
-    paginationButtonDisabled: {
+    disabledBtn: {
         opacity: 0.5,
     },
-    pageNumbersContainer: {
-        flexDirection: 'row',
-        gap: 8,
+    pageText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#374151',
     },
-    pageNumber: {
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+    // Filter Modal
+    modalContainer: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 20,
+        height: '80%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    filterSection: {
+        marginBottom: 20,
+    },
+    inputGroup: {
+        marginBottom: 16,
+    },
+    inputLabel: {
+        fontSize: 14,
+        fontWeight: '500',
+        marginBottom: 6,
+        color: '#555',
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: '#ddd',
         borderRadius: 6,
-        backgroundColor: '#f5f5f5',
-        minWidth: 36,
-        minHeight: 36,
-        justifyContent: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 14,
+        backgroundColor: '#fff',
+    },
+    modalFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 'auto',
+        paddingTop: 20,
+        marginBottom: 15,
+    },
+    resetButton: {
+        padding: 15,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        flex: 1,
+        marginRight: 10,
+        alignItems: 'center',
+        backgroundColor: 'white',
+    },
+    resetButtonText: {
+        color: '#666',
+        fontWeight: '600',
+    },
+    applyButton: {
+        backgroundColor: '#2563eb',
+        padding: 15,
+        borderRadius: 10,
+        flex: 1,
+        marginLeft: 10,
         alignItems: 'center',
     },
-    pageNumberActive: {
-        backgroundColor: '#60a5fa',
-    },
-    pageNumberText: {
-        fontSize: 14,
+    applyButtonText: {
+        color: 'white',
         fontWeight: '600',
-        color: '#666',
-    },
-    pageNumberTextActive: {
-        color: '#fff',
     },
 });
