@@ -11,6 +11,12 @@ import Employee from '../screens/Employee';
 import ProposalRelease from '../screens/ProposalRelease';
 import CreateProposalRelease from '../screens/CreateProposalRelease';
 import CheckPage from '../screens/CheckPage';
+import ProposalPurchase from '../screens/ProposalPurchase';
+import CreateProposalPurchase from '../screens/CreateProposalPurchase';
+import CreateImport from '../screens/CreateImport';
+import CreateImportDetail from '../screens/CreateImportDetail';
+import CreateMissingImportDetail from '../screens/CreateMissingImportDetail';
+import MissingImport from '../screens/MissingImport';
 
 const Stack = createNativeStackNavigator();
 
@@ -34,6 +40,12 @@ export default function Navigation() {
                 <Stack.Screen name="ExportRequest" component={ProposalRelease} />
                 <Stack.Screen name="CreateExportRequest" component={CreateProposalRelease} />
                 <Stack.Screen name="Inventory" component={CheckPage} />
+                <Stack.Screen name="ImportRequest" component={ProposalPurchase} />
+                <Stack.Screen name="CreateImportRequest" component={CreateProposalPurchase} />
+                <Stack.Screen name="CreateImport" component={CreateImport} />
+                <Stack.Screen name="CreateImportDetail" component={CreateImportDetail} />
+                <Stack.Screen name="CreateMissingImportDetail" component={CreateMissingImportDetail} />
+                <Stack.Screen name="MissingImport" component={MissingImport} />
             </Stack.Navigator>
         </NavigationContainer>
     );

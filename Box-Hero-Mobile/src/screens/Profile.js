@@ -277,8 +277,9 @@ const Profile = () => {
                             <View style={styles.col}>
                                 <FormGroup
                                     label="Ngày vào làm"
-                                    value={employeeData.statusWork}
+                                    value={employeeData.startDate}
                                     icon={<Briefcase size={18} color="#6B7280" />}
+                                    typeDate={true}
                                 />
                             </View>
                             <View style={styles.col}>

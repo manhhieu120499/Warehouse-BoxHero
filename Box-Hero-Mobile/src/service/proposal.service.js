@@ -40,10 +40,11 @@ export const fetchProposal = async (type = 'warehouse', id, status = 'COMPLETED'
 export const fetchProposalMissingOrderPurchase = async () => {
     try {
         const token = await parseToken('tokenUser');
+        const warehouse = await parseToken('warehouse');
 
         const res = await request.get('/proposal/get-proposal-missing', {
             params: {
-                warehouseID: token.warehouseID,
+                warehouseID: warehouse.warehouseID,
             },
             headers: {
                 token: `Bearer ${token.accessToken}`,
@@ -66,28 +67,32 @@ export const fetchProposalMissingOrderPurchase = async () => {
 export const fetchFilterProposal = async (params) => {
     try {
         const token = await parseToken('tokenUser');
+        const warehouse = await parseToken('warehouse');
 
         const res = await request.post(
             '/proposal/filter-proposal',
             {
                 ...params,
-                warehouseID: token.warehouseID,
+                warehouseID: warehouse?.warehouseID,
+                employeeIDCreate: params?.employeeName,
             },
             {
                 headers: {
                     token: `Bearer ${token.accessToken}`,
                     employeeid: token.employeeID,
-                    warehouseid: warehouse.warehouseID,
+                    warehouseid: warehouse?.warehouseID,
                 },
             },
         );
         return res.data;
     } catch (err) {
-        Alert.alert(
-            'Lỗi',
-            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
-        );
         console.log(err);
+        const message = err.response?.data?.message
+            ? Array.isArray(err.response.data.message)
+                ? err.response.data.message[0]
+                : err.response.data.message
+            : err.message;
+        Alert.alert('Lỗi', message);
 
         return err;
     }
@@ -235,6 +240,74 @@ export const getAllOrderReleaseProposalCanApply = async () => {
             Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
         );
 
+        return err;
+    }
+};
+
+export const createProposal = async (data) => {
+    try {
+        const tokenUser = await parseToken('tokenUser');
+        const warehouse = await parseToken('warehouse');
+
+        const res = await request.post('/proposal/create-proposal', data, {
+            headers: {
+                token: `Bearer ${tokenUser.accessToken}`,
+                employeeID: tokenUser.employeeID,
+                warehouseID: warehouse.warehouseID,
+            },
+        });
+        return res;
+    } catch (err) {
+        console.log(err);
+        throw new Error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
+    }
+};
+
+export const updateStatusProposal = async (data) => {
+    try {
+        const tokenUser = await parseToken('tokenUser');
+        const warehouse = await parseToken('warehouse');
+
+        const res = await request.post('/proposal/update-status-proposal', data, {
+            headers: {
+                token: `Bearer ${tokenUser.accessToken}`,
+                employeeID: tokenUser.employeeID,
+                warehouseID: warehouse.warehouseID,
+            },
+        });
+        if (res && res.data.status === 'OK') {
+            Alert.alert('Thông báo', 'Cập nhật trạng thái phiếu đề xuất nhập thành công');
+        }
+        return res.data;
+    } catch (err) {
+        console.log(err);
+        Alert.alert(
+            'Lỗi',
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
+        return err;
+    }
+};
+
+export const getProposalDetail = async (proposalID) => {
+    try {
+        const tokenUser = await parseToken('tokenUser');
+
+        const res = await request.get(`/proposal/get-proposal-detail/${proposalID}`, {
+            headers: {
+                token: `Bearer ${tokenUser.accessToken}`,
+                employeeid: tokenUser.employeeID,
+            },
+        });
+        return res.data;
+    } catch (err) {
+        console.log(err);
+        Alert.alert(
+            'Lỗi',
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
         return err;
     }
 };

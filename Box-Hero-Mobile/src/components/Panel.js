@@ -12,6 +12,7 @@ import {
     Users,
     ScrollText,
     ArrowRightLeft,
+    FileWarning,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -62,10 +63,16 @@ export default function Panel() {
             path: 'CreateExport',
         },
         {
-            label: 'Tạo phiếu nhập',
+            label: 'Phiếu nhập hàng',
             icon: (size, color) => <ClipboardPlus size={size} color={color} />,
             color: '#22c55e', // Green - Create Import
             path: 'CreateImport',
+        },
+        {
+            label: 'Phiếu nhập thiếu',
+            icon: (size, color) => <FileWarning size={size} color={color} />,
+            color: '#f97316', // Orange - Missing Import
+            path: 'MissingImport',
         },
         {
             label: 'Kiểm kê kho',

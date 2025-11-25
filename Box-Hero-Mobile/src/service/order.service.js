@@ -1,6 +1,7 @@
 import { Alert } from 'react-native';
 import request from '../config/axiosConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import parseToken from '../utilities/parseToken';
 
 export const validatePayloadCreateReceipt = (payload) => {
     if (!payload.proposalID) {
@@ -84,10 +85,9 @@ export const saveReceipt = async (payload) => {
 };
 
 export const fetchOrderMissing = async (warehouseID) => {
-    console.log(warehouseID);
     try {
         const userJSON = await AsyncStorage.getItem('tokenUser');
-        const { employeeID, warehouseID, accessToken } = JSON.parse(userJSON);
+        const { employeeID, accessToken } = JSON.parse(userJSON);
 
         const res = await request.get(`/order-purchase-missing/filter`, {
             headers: {
@@ -142,17 +142,14 @@ export const fetchOrderMissingById = async (orderMissingID) => {
 export const filterOrderMissing = async (params) => {
     try {
         const userJSON = await AsyncStorage.getItem('tokenUser');
-        const { employeeID, warehouseID, accessToken } = JSON.parse(userJSON);
+        const { employeeID, accessToken } = JSON.parse(userJSON);
 
         const res = await request.get(`/order-purchase-missing/filter`, {
             headers: {
                 token: `Bearer ${accessToken}`,
                 employeeID: employeeID,
-                warehouseID: warehouseID,
             },
             params: {
-                warehouseID: warehouseID,
-                employeeID: employeeID,
                 ...params,
             },
         });
@@ -199,7 +196,9 @@ export const fetchOrderPurchase = async (page = 1) => {
 export const filterOrderPurchase = async (filter) => {
     try {
         const userJSON = await AsyncStorage.getItem('tokenUser');
-        const { employeeID, warehouseID, accessToken } = JSON.parse(userJSON);
+        const { employeeID, accessToken } = JSON.parse(userJSON);
+
+        const warehouseID = await parseToken('warehouse').warehouseID;
 
         const res = await request.get(`/order-purchase/filter-order-purchase`, {
             headers: {
@@ -208,6 +207,7 @@ export const filterOrderPurchase = async (filter) => {
                 warehouseID: warehouseID,
             },
             params: {
+                warehouseID: warehouseID,
                 ...filter,
             },
         });
