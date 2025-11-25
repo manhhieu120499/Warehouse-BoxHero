@@ -276,7 +276,7 @@ export default function CreateProposalPurchase() {
                         <Text style={styles.label}>Ghi chú</Text>
                         <TextInput
                             style={[styles.input, styles.textArea, isDetailMode && styles.readOnly]}
-                            value={reason}
+                            value={reason || 'Không có ghi chú'}
                             onChangeText={setReason}
                             multiline
                             numberOfLines={3}

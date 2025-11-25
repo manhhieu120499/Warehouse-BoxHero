@@ -18,6 +18,8 @@ import { getAllShelfOfWarehouse } from '../service/shelf.service';
 import BoxDetail from '../components/BoxDetail';
 import UpdateLocation from '../components/UpdateLocation';
 import ChangeLocation from '../components/ChangeLocation';
+import { DefaultLayout } from '../layouts';
+import Header from '../layouts/Header';
 
 const { width } = Dimensions.get('window');
 const GAP = 12;
@@ -168,18 +170,9 @@ const BatchPage = () => {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <DefaultLayout>
+            <Header title="Quản lý kệ hàng" />
             <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-
-            {/* App Bar */}
-            <View style={styles.appBar}>
-                <View>
-                    <Text style={styles.appTitle}>Quản lý kệ hàng</Text>
-                </View>
-                <TouchableOpacity style={styles.refreshBtn} onPress={fetchData}>
-                    <RotateCcw size={20} color="#475569" />
-                </TouchableOpacity>
-            </View>
 
             <FlatList
                 data={shelvesData}
@@ -220,7 +213,7 @@ const BatchPage = () => {
                 shelvesData={shelvesData}
                 fetchData={fetchData}
             />
-        </SafeAreaView>
+        </DefaultLayout>
     );
 };
 

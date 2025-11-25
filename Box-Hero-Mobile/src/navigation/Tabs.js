@@ -1,8 +1,8 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Home from '../screens/Home';
-import { Entypo, Feather, FontAwesome5 } from '@expo/vector-icons';
-import Notification from '../screens/Notification';
+import { Entypo, Feather, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
+import ChatAssistant from '../screens/ChatAssistant';
 import Profile from '../screens/Profile';
 import { TouchableOpacity } from 'react-native';
 import { View } from 'react-native';
@@ -56,8 +56,8 @@ const screenOptions = ({ route }) => ({
             Shelf: {
                 icon: <FontAwesome5 solid name="box" color={focused ? '#096aec' : 'gray'} size={20} />,
             },
-            Notification: {
-                icon: <FontAwesome5 solid name="bell" color={focused ? '#096aec' : 'gray'} size={20} />,
+            ChatAssistant: {
+                icon: <MaterialCommunityIcons name="robot-happy" color={focused ? '#096aec' : 'gray'} size={24} />,
             },
             Profile: {
                 icon: <FontAwesome5 solid name="user-alt" color={focused ? '#096aec' : 'gray'} size={20} />,
@@ -91,10 +91,10 @@ export default function Tabs() {
                 }}
             />
             <Tab.Screen
-                name="Notification"
-                component={Notification}
+                name="ChatAssistant"
+                component={ChatAssistant}
                 options={{
-                    tabBarLabel: 'Thông báo',
+                    tabBarLabel: 'Trợ lí AI',
                     tabBarLabelStyle: {
                         fontSize: 12,
                     },

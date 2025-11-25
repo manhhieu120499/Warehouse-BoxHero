@@ -17,7 +17,7 @@ import { Search, RotateCcw } from 'lucide-react-native';
 import Button from './Button';
 import Modal from './Modal';
 import parseToken from '../utilities/parseToken';
-import { authIsAdmin, convertDateVN } from './common/Common';
+import { authIsAdmin, convertDateVN } from '../common';
 import { getBatchesWithoutLocation } from '../service/batch.service';
 import { getBoxDetails } from '../service/box.service';
 

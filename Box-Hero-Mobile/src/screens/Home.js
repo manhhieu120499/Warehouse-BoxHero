@@ -47,7 +47,7 @@ const style = StyleSheet.create({
 export default function Home() {
     return (
         <DefaultLayout>
-            <Header nameScreen="Home" leftIcon={'menu'} handleOnPressLeftIcon={() => setIsOpenModal(true)} />
+            <Header nameScreen="Home" />
             <ScrollView
                 style={{
                     flex: 1,
