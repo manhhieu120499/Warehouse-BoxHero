@@ -73,6 +73,8 @@ class OrderPurchaseService {
             const queryEmployee = {};
             const filterOptions = {};
             const date = {};
+
+            console.log(code);
             if (code) {
                 filterOptions.orderPurchaseID = code;
             }
@@ -123,7 +125,10 @@ class OrderPurchaseService {
                     limit: LIMIT_PAGE,
                     offset: (page - 1) * LIMIT_PAGE,
                 });
-                const total = await db.OrderPurchase.count({ where: { ...filterOptions, ...date } });
+                const total = await db.OrderPurchase.count({
+                    where: { ...filterOptions, ...date },
+                    include: [{ model: Employee, as: 'employee', where: queryEmployee }],
+                });
                 const totalPages = Math.ceil(total / LIMIT_PAGE);
 
                 resolve({
