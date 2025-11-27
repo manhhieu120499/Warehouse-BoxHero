@@ -228,6 +228,7 @@ class OrderReleaseService {
     async getAllOrderRelease(warehouseID, page = 1) {
         return new Promise(async (resolve, reject) => {
             try {
+                const currentPage = page || 1;
                 const warehouse = await Warehouse.findOne({ where: { warehouseID } });
                 if (!warehouse)
                     return reject({
@@ -282,9 +283,9 @@ class OrderReleaseService {
                             ],
                         },
                     ],
+                    limit: LIMIT_PAGE,
+                    offset: (page - 1) * LIMIT_PAGE,
                     order: [['createdAt', 'DESC']],
-                    // limit: LIMIT_PAGE,
-                    // offset: (page - 1) * LIMIT_PAGE,
                 });
                 const totalRecord = await OrderRelease.count({ where: { warehouseID } });
                 const totalPages = Math.ceil(totalRecord / LIMIT_PAGE);
@@ -293,7 +294,7 @@ class OrderReleaseService {
                     statusHttp: HTTP_OK,
                     data: orderReleases,
                     pagination: {
-                        currentPage: page,
+                        currentPage,
                         totalPages,
                     },
                     message: 'Lấy danh sách đơn xuất kho thành công',
@@ -310,6 +311,7 @@ class OrderReleaseService {
     }
     async filterOrderRelease(data) {
         return new Promise(async (resolve, reject) => {
+            const currentPage = data?.page || 1;
             let whereOption = {};
             if (data.orderReleaseID) whereOption.orderReleaseID = data.orderReleaseID;
             if (data.createdAt) {
@@ -337,6 +339,7 @@ class OrderReleaseService {
                         message: 'Kho không tồn tại',
                     });
                 const { count, rows: orderReleases } = await OrderRelease.findAndCountAll({
+                    distinct: true,
                     where: { ...whereOption },
                     include: [
                         {
@@ -389,15 +392,18 @@ class OrderReleaseService {
                             ],
                         },
                     ],
+                    limit: LIMIT_PAGE,
+                    offset: (currentPage - 1) * LIMIT_PAGE,
                     order: [['createdAt', 'DESC']],
                 });
+
                 const totalPages = Math.ceil(count / LIMIT_PAGE);
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     data: orderReleases,
                     pagination: {
-                        currentPage: data?.page || 1,
+                        currentPage,
                         totalPages,
                     },
                     message: 'Lấy danh sách đơn xuất kho thành công',
