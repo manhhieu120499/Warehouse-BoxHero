@@ -21,7 +21,8 @@ import parseToken from '../utilities/parseToken';
 import { useSelector } from 'react-redux';
 import { Dropdown } from 'react-native-element-dropdown';
 import { getAllCustomer } from '../service/customer.service';
-import { createOrderReleaseProposal } from '../service/proposal.service';
+import { createOrderReleaseProposal, updateStatusOrderReleaseProposal } from '../service/proposal.service';
+import { authIsAdmin } from '../common';
 
 export default function CreateProposalRelease({ route }) {
     const navigation = useNavigation();
@@ -34,12 +35,19 @@ export default function CreateProposalRelease({ route }) {
     // Form State
     const [proposalCode, setProposalCode] = useState('');
     const [createdDate, setCreatedDate] = useState(new Date().toLocaleDateString('en-US')); // MM/DD/YYYY format as in image
-    const warehouse = useSelector((state) => state.warehouseReducer.warehouse); // Mock data
-    const creator = useSelector((state) => state.employeeReducer.employee); // Mock data
+    const [warehouse, setWarehouse] = useState(''); // Mock data
+    const creator = useSelector((state) => state.AuthSlice.user); // Mock data
     const [customerCode, setCustomerCode] = useState('');
     const [customerName, setCustomerName] = useState('');
     const [note, setNote] = useState('');
     const [customerList, setCustomerList] = useState([]);
+
+    useEffect(() => {
+        (async function getWarehouse() {
+            const warehouse = await parseToken('warehouse');
+            setWarehouse(warehouse);
+        })();
+    }, []);
 
     useEffect(() => {
         const fetchCustomers = async () => {
@@ -151,6 +159,23 @@ export default function CreateProposalRelease({ route }) {
         } catch (err) {
             console.log(err);
             return;
+        }
+    };
+
+    const handleApproveProposal = async (proposalID, status) => {
+        try {
+            const res = await updateStatusOrderReleaseProposal({
+                orderReleaseProposalID: proposalID,
+                employeeIDApproval: creator.employeeID,
+                status: status,
+            });
+            if (res && res.data.status === 'OK') {
+                Alert.alert('Thông báo', status === 'COMPLETED' ? 'Đã phê duyệt phiếu' : 'Đã từ chối phiếu');
+                navigation.goBack();
+            }
+        } catch (error) {
+            console.error('Error approving proposal:', error);
+            Alert.alert('Lỗi', 'Có lỗi xảy ra khi cập nhật trạng thái');
         }
     };
 
@@ -323,7 +348,7 @@ export default function CreateProposalRelease({ route }) {
     return (
         <DefaultLayout>
             <Header
-                title={isViewMode ? 'Chi tiết phiếu đề xuất' : 'Phiếu đề xuất xuất kho'}
+                title={isViewMode ? 'Chi tiết phiếu đề xuất xuất' : 'Phiếu đề xuất xuất kho'}
                 leftIcon="arrow-back"
                 handleOnPressLeftIcon={() => navigation.goBack()}
             />
@@ -353,7 +378,8 @@ export default function CreateProposalRelease({ route }) {
             </KeyboardAvoidingView>
 
             {/* Bottom Actions */}
-            {!isViewMode && (
+            {/* Bottom Actions */}
+            {!isViewMode ? (
                 <View style={styles.bottomActions}>
                     <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
                         <Text style={styles.resetButtonText}>Làm mới</Text>
@@ -362,6 +388,24 @@ export default function CreateProposalRelease({ route }) {
                         <Text style={styles.submitButtonText}>Gửi phê duyệt</Text>
                     </TouchableOpacity>
                 </View>
+            ) : (
+                proposalData?.status === 'PENDING' &&
+                authIsAdmin(creator) && (
+                    <View style={styles.bottomActions}>
+                        <TouchableOpacity
+                            style={styles.rejectButton}
+                            onPress={() => handleApproveProposal(proposalData.orderReleaseProposalID, 'REFUSE')}
+                        >
+                            <Text style={styles.rejectButtonText}>Từ chối</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.approveButton}
+                            onPress={() => handleApproveProposal(proposalData.orderReleaseProposalID, 'COMPLETED')}
+                        >
+                            <Text style={styles.approveButtonText}>Phê duyệt</Text>
+                        </TouchableOpacity>
+                    </View>
+                )
             )}
         </DefaultLayout>
     );
@@ -611,5 +655,31 @@ const styles = StyleSheet.create({
     inputSearchStyle: {
         height: 40,
         fontSize: 14,
+    },
+    approveButton: {
+        flex: 1,
+        backgroundColor: '#10b981',
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginLeft: 8,
+    },
+    approveButtonText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 16,
+    },
+    rejectButton: {
+        flex: 1,
+        backgroundColor: '#ef4444',
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginRight: 8,
+    },
+    rejectButtonText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 16,
     },
 });

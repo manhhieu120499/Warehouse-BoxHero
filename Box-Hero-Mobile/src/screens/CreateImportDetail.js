@@ -367,13 +367,21 @@ export default function CreateImportDetail() {
             </KeyboardAvoidingView>
             {Platform.OS === 'android' && showDatePicker && (
                 <DateTimePicker
-                    value={
-                        currentProductIndex !== null
-                            ? productList[currentProductIndex][
-                                  datePickerMode === 'manufacture' ? 'manufactureDate' : 'expiryDate'
-                              ]
-                            : new Date()
-                    }
+                    value={(() => {
+                        if (currentProductIndex === null || !productList[currentProductIndex]) return new Date();
+                        const item = productList[currentProductIndex];
+                        let dateValue = new Date(
+                            datePickerMode === 'manufacture' ? item.manufactureDate : item.expiryDate,
+                        );
+
+                        // Ensure dateValue is valid
+                        if (isNaN(dateValue.getTime())) dateValue = new Date();
+
+                        const props = getDatePickerProps();
+                        if (props.minimumDate && dateValue < props.minimumDate) dateValue = props.minimumDate;
+                        if (props.maximumDate && dateValue > props.maximumDate) dateValue = props.maximumDate;
+                        return dateValue;
+                    })()}
                     mode="date"
                     display="default"
                     onChange={onDateChange}
@@ -385,13 +393,24 @@ export default function CreateImportDetail() {
                     <View style={styles.iosModalContainer}>
                         <View style={styles.iosModalContent}>
                             <DateTimePicker
-                                value={
-                                    currentProductIndex !== null
-                                        ? productList[currentProductIndex][
-                                              datePickerMode === 'manufacture' ? 'manufactureDate' : 'expiryDate'
-                                          ]
-                                        : new Date()
-                                }
+                                value={(() => {
+                                    if (currentProductIndex === null || !productList[currentProductIndex])
+                                        return new Date();
+                                    const item = productList[currentProductIndex];
+                                    let dateValue = new Date(
+                                        datePickerMode === 'manufacture' ? item.manufactureDate : item.expiryDate,
+                                    );
+
+                                    // Ensure dateValue is valid
+                                    if (isNaN(dateValue.getTime())) dateValue = new Date();
+
+                                    const props = getDatePickerProps();
+                                    if (props.minimumDate && dateValue < props.minimumDate)
+                                        dateValue = props.minimumDate;
+                                    if (props.maximumDate && dateValue > props.maximumDate)
+                                        dateValue = props.maximumDate;
+                                    return dateValue;
+                                })()}
                                 mode="date"
                                 display="inline"
                                 onChange={(event, selectedDate) => {

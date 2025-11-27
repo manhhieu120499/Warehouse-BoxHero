@@ -34,7 +34,7 @@ export const getBoxesByBatchID = async (batchID) => {
     try {
         const token = await parseToken('tokenUser');
         const warehouse = await parseToken('warehouse');
-        const res = await request.get(`/api/batch-box/get-all-box-by-batch-id`, {
+        const res = await request.get(`/batch-box/get-all-box-by-batch-id`, {
             headers: {
                 token: `Bearer ${token.accessToken}`,
                 employeeID: token.employeeID,

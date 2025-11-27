@@ -20,7 +20,7 @@ import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { getAllOrderReleaseProposal, updateStatusOrderReleaseProposal } from '../service/proposal.service';
 import { formatStatusProposal } from '../constants';
-import { authIsAdmin } from '../components/common/Common';
+import { authIsAdmin } from '../common';
 import { useSelector } from 'react-redux';
 
 export default function ProposalRelease() {
@@ -38,7 +38,8 @@ export default function ProposalRelease() {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [filterStatus, setFilterStatus] = useState('PENDING');
 
-    const currentUser = useSelector((state) => state.employeeReducer.employee);
+    const currentUser = useSelector((state) => state.AuthSlice.user);
+    console.log(currentUser);
 
     const statusData = [
         { label: 'Tất cả', value: null },
@@ -160,25 +161,14 @@ export default function ProposalRelease() {
             </View>
 
             <View style={styles.cardFooter}>
-                <View style={styles.actionButtons}>
-                    {item.status === 'PENDING' && authIsAdmin(currentUser) && (
-                        <>
-                            <TouchableOpacity
-                                style={styles.rejectButton}
-                                onPress={() => handleApproveProposal(item.orderReleaseProposalID, 'REFUSE')}
-                            >
-                                <Text style={styles.rejectButtonText}>Từ chối</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.approveButton}
-                                onPress={() => handleApproveProposal(item.orderReleaseProposalID, 'COMPLETED')}
-                            >
-                                <Text style={styles.approveButtonText}>Phê duyệt</Text>
-                            </TouchableOpacity>
-                        </>
-                    )}
-                </View>
-                <Text style={styles.detailLink}>Chi tiết &gt;</Text>
+                <TouchableOpacity
+                    style={styles.detailButton}
+                    onPress={() => {
+                        navigation.navigate('CreateExportRequest', { proposalData: item });
+                    }}
+                >
+                    <Text style={styles.detailButtonText}>Xem chi tiết</Text>
+                </TouchableOpacity>
             </View>
         </TouchableOpacity>
     );
@@ -606,39 +596,17 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '600',
     },
-    cardFooter: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    detailButton: {
+        backgroundColor: '#eff6ff',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
         alignItems: 'center',
-        marginTop: 12,
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
+        width: '100%',
     },
-    actionButtons: {
-        flexDirection: 'row',
-        gap: 8,
-    },
-    approveButton: {
-        backgroundColor: '#10b981',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 6,
-    },
-    approveButtonText: {
-        color: '#fff',
-        fontSize: 12,
+    detailButtonText: {
+        color: '#2563eb',
         fontWeight: '600',
-    },
-    rejectButton: {
-        backgroundColor: '#ef4444',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 6,
-    },
-    rejectButtonText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: '600',
+        fontSize: 14,
     },
 });

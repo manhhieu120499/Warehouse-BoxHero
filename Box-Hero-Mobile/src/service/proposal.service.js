@@ -180,9 +180,6 @@ export const updateStatusOrderReleaseProposal = async (data) => {
                 warehouseID: warehouse.warehouseID,
             },
         });
-        if (res && res.data.status === 'OK') {
-            Alert.alert('Thông báo', 'Cập nhật trạng thái phiếu đề xuất xuất thành công');
-        }
         return res;
     } catch (err) {
         console.log(err);

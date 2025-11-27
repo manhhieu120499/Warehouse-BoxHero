@@ -33,11 +33,11 @@ export const getBatchesWithoutLocation = async (warehouseID) => {
 
 export const countBatchesWithoutLocation = async () => {
     try {
-        const token = parseToken('tokenUser');
-        const warehouse = parseToken('warehouse');
+        const token = await parseToken('tokenUser');
+        const warehouse = await parseToken('warehouse');
         const warehouseID = warehouse.warehouseID;
 
-        const res = await request.get(`/api/batch/count-batches-without-location`, {
+        const res = await request.get(`/batch/count-batches-without-location`, {
             headers: {
                 token: `Bearer ${token.accessToken}`,
                 employeeID: token.employeeID,
@@ -63,9 +63,9 @@ export const countBatchesWithoutLocation = async () => {
 
 export const getAllBatchWithProductID = async (productID) => {
     try {
-        const warehouse = parseToken('warehouse');
-        const token = parseToken('tokenUser');
-        const res = await request.get(`/api/batch/all-batch-by-product`, {
+        const warehouse = await parseToken('warehouse');
+        const token = await parseToken('tokenUser');
+        const res = await request.get(`/batch/all-batch-by-product`, {
             params: {
                 productID: productID,
                 warehouseID: warehouse.warehouseID,
@@ -92,8 +92,8 @@ export const getAllBatchWithProductID = async (productID) => {
 
 export const getBoxContainProduct = async (warehouseID, productID) => {
     try {
-        const token = parseToken('tokenUser');
-        const res = await request.get(`/api/batch/boxes-containing-product`, {
+        const token = await parseToken('tokenUser');
+        const res = await request.get(`/batch/boxes-containing-product`, {
             headers: {
                 token: `Bearer ${token.accessToken}`,
                 employeeID: token.employeeID,
@@ -119,8 +119,8 @@ export const getBoxContainProduct = async (warehouseID, productID) => {
 
 export const getBoxContainBatch = async (warehouseID, batchID) => {
     try {
-        const token = parseToken('tokenUser');
-        const res = await request.get(`/api/batch/boxes-containing-batch`, {
+        const token = await parseToken('tokenUser');
+        const res = await request.get(`/batch/boxes-containing-batch`, {
             headers: {
                 token: `Bearer ${token.accessToken}`,
                 employeeID: token.employeeID,
@@ -141,6 +141,35 @@ export const getBoxContainBatch = async (warehouseID, batchID) => {
                 : err.response.data.message,
         });
 
+        return err;
+    }
+};
+
+export const suggestBatchProductForExport = async (productID, priority) => {
+    try {
+        const token = await parseToken('tokenUser');
+        const warehouse = await parseToken('warehouse');
+        const res = await request.get(`/batch/suggest-batch-export`, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+                warehouseID: warehouse.warehouseID,
+            },
+            params: {
+                productID: productID,
+                priority: priority,
+                warehouseID: warehouse.warehouseID,
+            },
+        });
+        return res?.data?.data || [];
+    } catch (err) {
+        console.log('suggestBatchProductForExport failed', err);
+        ToastMessage({
+            status: 'error',
+            message: Array.isArray(err.response.data.message)
+                ? err.response.data.message[0]
+                : err.response.data.message,
+        });
         return err;
     }
 };

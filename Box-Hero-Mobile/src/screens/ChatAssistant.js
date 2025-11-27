@@ -23,7 +23,6 @@ const ChatAssistant = () => {
     const [messages, setMessages] = useState([]);
     const [sessionId, setSessionId] = useState(null);
     const [inputText, setInputText] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     const flatListRef = useRef(null);
 
     useEffect(() => {
@@ -49,7 +48,6 @@ const ChatAssistant = () => {
         const userMsg = { from: 'user', type: 'text', text: textToSend };
         setMessages((prev) => [...prev, userMsg]);
         setInputText('');
-        setIsLoading(true);
 
         try {
             const res = await chatWithBot({ message: textToSend, sessionId });
@@ -59,8 +57,6 @@ const ChatAssistant = () => {
         } catch (error) {
             console.error('Error sending message:', error);
             // Optionally add an error message to the chat
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -113,12 +109,6 @@ const ChatAssistant = () => {
                 onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
                 onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
             />
-
-            {isLoading && (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color="#096aec" />
-                </View>
-            )}
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

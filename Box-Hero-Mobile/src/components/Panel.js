@@ -57,7 +57,7 @@ export default function Panel() {
             path: 'ExportRequest',
         },
         {
-            label: 'Tạo phiếu xuất',
+            label: 'Phiếu xuất hàng',
             icon: (size, color) => <ClipboardMinus size={size} color={color} />,
             color: '#ef4444', // Red - Create Export
             path: 'CreateExport',

@@ -66,16 +66,16 @@ export default function Product() {
     }, [currentPage]);
 
     const fetchProducts = async () => {
-        setLoading(true);
+        //setLoading(true);
         // TODO: Replace with actual API call
         try {
             const res = await fetchProduct(currentPage);
             setProducts(res?.products || []);
             setTotalPages(res?.pagination?.totalPages || 1);
-            setLoading(false);
+            //setLoading(false);
         } catch (err) {
             console.log(err);
-            setLoading(false);
+            //setLoading(false);
         }
     };
 

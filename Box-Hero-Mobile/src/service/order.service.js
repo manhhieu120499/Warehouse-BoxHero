@@ -269,19 +269,20 @@ export const saveOrderRelease = async (payload) => {
 export const filterOrderRelease = async (params) => {
     try {
         const userJSON = await AsyncStorage.getItem('tokenUser');
-        const { employeeID, warehouseID, accessToken } = JSON.parse(userJSON);
+        const { employeeID, accessToken } = JSON.parse(userJSON);
+        const warehouse = await parseToken('warehouse');
 
         const res = await request.post(
             '/order-release/filter-order-release',
             {
                 ...params,
-                warehouseID: warehouseID,
+                warehouseID: warehouse.warehouseID,
             },
             {
                 headers: {
                     token: `Bearer ${accessToken}`,
-                    employeeID: employeeID,
-                    warehouseID: warehouseID,
+                    employeeid: employeeID,
+                    warehouseid: warehouse.warehouseID,
                 },
             },
         );

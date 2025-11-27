@@ -45,8 +45,8 @@ export default function Dashboard() {
                 const res = await getStaticPercentUseWarehouse();
                 // Cấu trúc dữ liệu PieChart của gifted-charts: key, value, color, text (cho legend)
                 setWarehouseUsageData([
-                    { value: res.percentUsed.percent, color: '#FF7043', text: 'Đã dùng' },
-                    { value: res.totalRemain.percent, color: '#4CAF50', text: 'Còn trống' },
+                    { value: Number(res.percentUsed.percent.toFixed(2)), color: '#FF7043', text: 'Đã dùng' },
+                    { value: Number(res.totalRemain.percent.toFixed(2)), color: '#4CAF50', text: 'Còn trống' },
                 ]);
             } catch (err) {
                 console.log(err);
@@ -85,20 +85,46 @@ export default function Dashboard() {
             }
 
             // Xử lý dữ liệu Nhập/Xuất (cho Grouped Bar Chart)
-            if (resImportExport?.data?.status === 'OK') {
-                // Cấu trúc BarChart (Grouped): [{ stacks: [...] }]
-                console.log('bar 2', resImportExport.data.data);
-                setImportExportData(
-                    resImportExport.data.data.map((item, index) => ({
-                        stacks: [
-                            { value: Number.parseInt(item.import || '0'), color: '#4CAF50' }, // Nhập
-                            { value: Number.parseInt(item.export || '0'), color: '#FF7043' }, // Xuất
-                        ],
-                        // Label cho trục X (Tháng/Năm)
-                        label: timeInventoryImportExportAndInventory === 'MONTH' ? `T${item.date}` : `${item.date}`,
-                    })),
-                );
-            }
+            // if (resImportExport?.data?.status === 'OK') {
+            //     // Cấu trúc BarChart (Grouped): [{ stacks: [...] }]
+            //     console.log('bar 2', resImportExport.data.data);
+            //     setImportExportData(
+            //         resImportExport.data.data.map((item, index) => ({
+            //             stacks: [
+            //                 { value: Number.parseInt(item.import || '0'), color: '#4CAF50' }, // Nhập
+            //                 { value: Number.parseInt(item.export || '0'), color: '#FF7043' }, // Xuất
+            //             ],
+            //             // Label cho trục X (Tháng/Năm)
+            //             label: timeInventoryImportExportAndInventory === 'MONTH' ? `T${item.date}` : `${item.date}`,
+            //         })),
+            //     );
+            // }
+
+            // FAKE DATA
+            const fakeDataMonth = [
+                { date: 1, import: 350, export: 200 },
+                { date: 2, import: 280, export: 310 },
+                { date: 3, import: 450, export: 400 },
+                { date: 4, import: 320, export: 250 },
+                { date: 5, import: 500, export: 480 },
+                { date: 6, import: 410, export: 350 },
+                { date: 7, import: 380, export: 420 },
+                { date: 8, import: 560, export: 300 },
+                { date: 9, import: 420, export: 490 },
+                { date: 10, import: 320, export: 380 },
+                { date: 11, import: 590, export: 550 },
+                { date: 12, import: 400, export: 450 },
+            ];
+
+            setImportExportData(
+                fakeDataMonth.map((item) => ({
+                    stacks: [
+                        { value: item.import, color: '#4CAF50' }, // Nhập
+                        { value: item.export, color: '#FF7043' }, // Xuất
+                    ],
+                    label: `T${item.date}`,
+                })),
+            );
 
             setLoading(false);
         }

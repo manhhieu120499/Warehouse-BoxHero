@@ -267,6 +267,7 @@ export default function CreateEmployee({ visible, onClose, onSubmit, mode = 'cre
             }
         }
         if (status !== 'INACTIVE' && action != 'update') {
+            console.log('Vào check');
             if (new Date(startDate) < Date.now()) {
                 Alert.alert('Thông báo', 'Ngày vào làm phải sau ngày hôm nay');
                 return false;
@@ -303,7 +304,7 @@ export default function CreateEmployee({ visible, onClose, onSubmit, mode = 'cre
             confirmPassword: password,
             cccd,
         };
-        if (!validateEmployeeData(employeeData)) return;
+        if (!validateEmployeeData(employeeData, mode)) return;
         const { password, ...dataUpdate } = employeeData;
         onSubmit(mode === 'update' ? dataUpdate : employeeData);
     };
@@ -644,6 +645,7 @@ export default function CreateEmployee({ visible, onClose, onSubmit, mode = 'cre
                                         <TouchableOpacity
                                             style={styles.dateInput}
                                             onPress={() => setShowEndDatePicker((prev) => !prev)}
+                                            disabled={status === 'ACTIVE'}
                                         >
                                             <Text style={styles.dateText}>{formatDate(endDate)}</Text>
                                             <Ionicons name="calendar-outline" size={20} color="#6b7280" />
