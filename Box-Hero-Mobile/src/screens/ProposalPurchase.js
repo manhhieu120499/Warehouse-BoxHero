@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -14,7 +14,7 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Dropdown } from 'react-native-element-dropdown';
+
 import { Filter, Plus, ChevronLeft, ChevronRight, Calendar } from 'lucide-react-native';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
@@ -35,8 +35,7 @@ export default function ProposalPurchase() {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [filterStatus, setFilterStatus] = useState('PENDING');
 
-    const statusData = [
-        { label: 'Tất cả', value: 'ALL' },
+    const statusTabs = [
         { label: 'Chờ phê duyệt', value: 'PENDING' },
         { label: 'Đã phê duyệt', value: 'COMPLETED' },
         { label: 'Từ chối', value: 'REFUSE' },
@@ -66,9 +65,8 @@ export default function ProposalPurchase() {
                     queryFilters.createdAt = `${year}-${month}-${day}`;
                 }
 
-                console.log('filters', queryFilters);
-
                 const res = await fetchFilterProposal(queryFilters);
+
                 if (res && res.proposals) {
                     setProposals(res.proposals);
                     setTotalPages(res.pagination?.totalPages || 1);
@@ -83,9 +81,15 @@ export default function ProposalPurchase() {
         [filterCode, filterCreator, filterDate, filterStatus],
     );
 
+    const fetchProposalsRef = useRef(fetchProposals);
+
+    useEffect(() => {
+        fetchProposalsRef.current = fetchProposals;
+    }, [fetchProposals]);
+
     useFocusEffect(
         useCallback(() => {
-            fetchProposals(1);
+            fetchProposalsRef.current(1);
         }, []),
     );
 
@@ -181,6 +185,24 @@ export default function ProposalPurchase() {
                     </TouchableOpacity>
                 }
             />
+
+            {/* Status Tabs */}
+            <View style={styles.tabContainer}>
+                {statusTabs.map((tab) => (
+                    <TouchableOpacity
+                        key={tab.value}
+                        style={[styles.tabItem, filterStatus === tab.value && styles.activeTabItem]}
+                        onPress={() => {
+                            setFilterStatus(tab.value);
+                            fetchProposals(1, { status: tab.value });
+                        }}
+                    >
+                        <Text style={[styles.tabText, filterStatus === tab.value && styles.activeTabText]}>
+                            {tab.label}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
 
             <View style={styles.container}>
                 {/* List */}
@@ -312,25 +334,9 @@ export default function ProposalPurchase() {
                                 <Text style={styles.label}>Người tạo</Text>
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="Nhập tên người tạo"
+                                    placeholder="Nhập mã người tạo"
                                     value={filterCreator}
                                     onChangeText={setFilterCreator}
-                                />
-                            </View>
-
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Trạng thái</Text>
-                                <Dropdown
-                                    style={styles.dropdown}
-                                    placeholderStyle={styles.placeholderStyle}
-                                    selectedTextStyle={styles.selectedTextStyle}
-                                    data={statusData}
-                                    maxHeight={300}
-                                    labelField="label"
-                                    valueField="value"
-                                    placeholder="Chọn trạng thái"
-                                    value={filterStatus}
-                                    onChange={(item) => setFilterStatus(item.value)}
                                 />
                             </View>
                         </ScrollView>
@@ -572,20 +578,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
-    dropdown: {
-        borderWidth: 1,
-        borderColor: '#d1d5db',
-        borderRadius: 8,
-        padding: 12,
-    },
-    placeholderStyle: {
-        fontSize: 14,
-        color: '#9ca3af',
-    },
-    selectedTextStyle: {
-        fontSize: 14,
-        color: '#1f2937',
-    },
+
     modalFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -615,5 +608,31 @@ const styles = StyleSheet.create({
     searchButtonText: {
         color: '#fff',
         fontWeight: '600',
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+    },
+    tabItem: {
+        marginRight: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 20,
+        backgroundColor: '#f3f4f6',
+    },
+    activeTabItem: {
+        backgroundColor: '#2563eb',
+    },
+    tabText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#4b5563',
+    },
+    activeTabText: {
+        color: '#fff',
     },
 });

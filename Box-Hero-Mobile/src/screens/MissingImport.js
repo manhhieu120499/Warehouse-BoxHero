@@ -35,6 +35,12 @@ const statusColors = {
     REFUSE: '#EF4444',
 };
 
+const statusTabs = [
+    { label: 'Đang xử lý', value: 'PENDING' },
+    { label: 'Đã giải quyết', value: 'RESOLVED' },
+    { label: 'Đã hủy', value: 'CANCELED' },
+];
+
 export default function MissingImport() {
     const navigation = useNavigation();
     const [listOrderPurchase, setListOrderPurchase] = useState([]);
@@ -75,20 +81,18 @@ export default function MissingImport() {
             if (appliedFilter.status) filterParam.status = appliedFilter.status;
             if (appliedFilter.employeeName) filterParam.employeeName = appliedFilter.employeeName;
 
-            console.log(filterParam);
-
             const res = await filterOrderMissing({
                 page: currentPage,
                 warehouseID: warehouse.warehouseID,
                 ...filterParam,
             });
-            console.log(res.data);
+
             if (res?.data?.status === 'OK') {
                 setListOrderPurchase(res.data.data || []);
                 setTotalPages(res.data.pagination?.totalPages || 0);
             }
         } catch (error) {
-            console.log('Error fetching order missing:', error);
+            console.error('Error fetching order missing:', error);
         }
     };
 
@@ -159,6 +163,25 @@ export default function MissingImport() {
                     </TouchableOpacity>
                 }
             />
+
+            {/* Status Tabs */}
+            <View style={styles.tabContainer}>
+                {statusTabs.map((tab) => (
+                    <TouchableOpacity
+                        key={tab.value}
+                        style={[styles.tabItem, appliedFilter.status === tab.value && styles.activeTabItem]}
+                        onPress={() => {
+                            setFilterOrder((prev) => ({ ...prev, status: tab.value }));
+                            setAppliedFilter((prev) => ({ ...prev, status: tab.value }));
+                            setPage(1);
+                        }}
+                    >
+                        <Text style={[styles.tabText, appliedFilter.status === tab.value && styles.activeTabText]}>
+                            {tab.label}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
 
             <View style={styles.container}>
                 <FlatList
@@ -283,35 +306,6 @@ export default function MissingImport() {
                                         </View>
                                     </Modal>
                                 )}
-                            </View>
-                            <View style={styles.filterSection}>
-                                <Text style={styles.filterLabel}>Trạng thái</Text>
-                                <View style={styles.statusFilterContainer}>
-                                    {Object.keys(formatStatusOrderPurchase).map((status) => (
-                                        <TouchableOpacity
-                                            key={status}
-                                            style={[
-                                                styles.statusFilterItem,
-                                                filterOrder.status === status && styles.statusFilterItemSelected,
-                                            ]}
-                                            onPress={() =>
-                                                setFilterOrder({
-                                                    ...filterOrder,
-                                                    status: filterOrder.status === status ? '' : status,
-                                                })
-                                            }
-                                        >
-                                            <Text
-                                                style={[
-                                                    styles.statusFilterText,
-                                                    filterOrder.status === status && styles.statusFilterTextSelected,
-                                                ]}
-                                            >
-                                                {formatStatusOrderPurchase[status]}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
                             </View>
                         </ScrollView>
                         <View style={styles.modalFooter}>
@@ -561,29 +555,30 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
-    statusFilterContainer: {
+    tabContainer: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
+        backgroundColor: '#fff',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
     },
-    statusFilterItem: {
-        paddingHorizontal: 12,
+    tabItem: {
+        marginRight: 16,
         paddingVertical: 8,
+        paddingHorizontal: 12,
         borderRadius: 20,
-        backgroundColor: '#F3F4F6',
-        borderWidth: 1,
-        borderColor: 'transparent',
+        backgroundColor: '#f3f4f6',
     },
-    statusFilterItemSelected: {
-        backgroundColor: '#EFF6FF',
-        borderColor: '#2563EB',
+    activeTabItem: {
+        backgroundColor: '#2563eb',
     },
-    statusFilterText: {
-        fontSize: 13,
-        color: '#4B5563',
+    tabText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#4b5563',
     },
-    statusFilterTextSelected: {
-        color: '#2563EB',
-        fontWeight: '600',
+    activeTabText: {
+        color: '#fff',
     },
 });
