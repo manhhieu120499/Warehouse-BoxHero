@@ -13,6 +13,7 @@ const Customer = db.Customer;
 const OrderReleaseProposalDetail = db.OrderReleaseProposalDetail;
 const OrderReleaseProposal = db.OrderReleaseProposal;
 const OrderRelease = db.OrderRelease;
+const BaseUnitProduct = db.BaseUnitProduct;
 
 dotenv.config();
 
@@ -583,6 +584,13 @@ class ProposalService {
                                         model: Product,
                                         as: 'product',
                                         attributes: ['image'],
+                                        include: [
+                                            {
+                                                model: BaseUnitProduct,
+                                                as: 'baseUnitProducts',
+                                                attributes: ['baseUnitName'],
+                                            },
+                                        ],
                                     },
                                 ],
                             },
@@ -629,7 +637,20 @@ class ProposalService {
                         {
                             model: OrderReleaseProposalDetail,
                             as: 'orderReleaseProposalDetails',
-                            include: [{ model: Product, as: 'product', attributes: ['productID', 'productName'] }],
+                            include: [
+                                {
+                                    model: Product,
+                                    as: 'product',
+                                    attributes: ['productID', 'productName'],
+                                    include: [
+                                        {
+                                            model: BaseUnitProduct,
+                                            as: 'baseUnitProducts',
+                                            attributes: ['baseUnitName'],
+                                        },
+                                    ],
+                                },
+                            ],
                         },
                         {
                             model: Customer,

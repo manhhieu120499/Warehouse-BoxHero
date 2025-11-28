@@ -24,6 +24,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 allowNull: true,
             },
+            amountRequiredExport: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+            },
         },
         {
             tableName: 'order_release_proposal_details',

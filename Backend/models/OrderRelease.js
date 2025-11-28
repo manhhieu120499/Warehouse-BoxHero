@@ -27,6 +27,15 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 allowNull: false,
             },
+            status: {
+                type: Sequelize.ENUM('PENDING', 'COMPLETED', 'REFUSE'),
+                allowNull: false,
+                defaultValue: 'PENDING',
+            },
+            qrCode: {
+                type: Sequelize.STRING,
+                allowNull: false,
+            },
         },
         {
             tableName: 'order_release',

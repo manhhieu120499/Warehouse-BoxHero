@@ -361,7 +361,10 @@ class ProductService {
     async getProductCanExport(data) {
         return new Promise(async (resolve, reject) => {
             try {
-                const productExist = await Product.findOne({ where: { productID: data } });
+                const productExist = await Product.findOne({
+                    where: { productID: data },
+                    include: [{ model: BaseUnitProduct, as: 'baseUnitProducts', attributes: ['baseUnitName'] }],
+                });
 
                 if (!productExist)
                     reject({
@@ -370,7 +373,12 @@ class ProductService {
                         message: `Sản phẩm có mã ${data} không tồn tại`,
                     });
 
-                const productCanExport = await Product.findOne({ where: { productID: data, amount: { [Op.gt]: 0 } } });
+                const productCanExport = await Product.findOne({
+                    where: {
+                        productID: data,
+                        amount: { [Op.gt]: 0 },
+                    },
+                });
 
                 // check có lô hàng trong kho
                 // const checkProductBatch = await Batch.findAll({
