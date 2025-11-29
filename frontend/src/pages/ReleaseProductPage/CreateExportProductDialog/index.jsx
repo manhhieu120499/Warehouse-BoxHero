@@ -6,10 +6,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { clearAllBatchProductList } from '../../../lib/redux/batchProduct/BatchProduct';
 import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';
-import { saveOrderRelease } from '../../../services/order.service';
+import { checkOrderReleaseID, saveOrderRelease } from '../../../services/order.service';
 import ExportInfoSheet from './ExportInfoSheet';
 import ExportProduct from './ExportProduct';
 import parseToken from '../../../utils/parseToken';
+import { getTotalValidAmountByProductAndUnit } from '../../../services/unit.service';
 
 const cx = classNames.bind(styles);
 
@@ -34,119 +35,81 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
     });
     const contentSliceRef = useRef(null);
     const [productListSelected, setProductListSelected] = useState([]); // danh sách sản phẩm được chọn để export
+    const [showMethodSelection, setShowMethodSelection] = useState(false);
+    const [insufficientProducts, setInsufficientProducts] = useState([]);
+    const [showInsufficientModal, setShowInsufficientModal] = useState(false);
 
     const dispatch = useDispatch();
 
-    const validate = (payload) => {
-        if (!payload.orderReleaseID) {
+    const validate = async (payload) => {
+        console.log(payload);
+
+        if (!payload.receiptCode) {
             toast.error('Vui lòng tạo mã phiếu xuất kho', styleMessage);
+            return false;
+        }
+        if (!/^PX-/.test(payload.receiptCode)) {
+            toast.error('Mã phiếu xuất kho phải bắt đầu bằng PX-', styleMessage);
             return false;
         }
         if (!payload.customerID) {
             toast.error('Vui lòng nhập mã khách hàng', styleMessage);
             return false;
         }
-        if (Object.keys(batchOfProducts).length === 0) {
-            toast.error('Vui lòng chọn lô hàng cho sản phẩm', styleMessage);
-            return false;
-        }
+        const res = await checkOrderReleaseID(payload.receiptCode);
 
-        const boxQuantityInvalid = payload.orderReleaseDetails.some((detail) => {
-            const batchBoxes = detail.batchBoxes || [];
-            if (batchBoxes.length === 0) return true;
-            const valid = batchBoxes.every((box) => box.quantityExported > 0);
-            return !valid;
-        });
-
-        if (boxQuantityInvalid) {
-            toast.error('Số lượng xuất trong ô phải lớn hơn 0', styleMessage);
+        if (res?.exists) {
+            toast.error(res?.message, styleMessage);
             return false;
         }
         return true;
     };
 
-    const handleSave = async () => {
-        const checkProductHasBatch = [];
-        let isFlag = {
-            productIDMissing: [],
-            valid: false,
-        };
-        const orderReleaseDetails = Object.keys(batchOfProducts)
-            .map((productID) => {
-                if (batchOfProducts[productID].length !== 0) checkProductHasBatch.push(productID);
-                // lấy danh sách các batches
-                const batchList = (batchOfProducts[productID] || []).map((batch) => ({
-                    batchID: batch.batchID,
-                    quantityExported: batch.quantity,
-                    productID: productID,
-                    unitID: batch.unitID,
-                }));
+    const handleChooseBatch = async () => {
+        if (!(await validate(formData))) return;
+        const items = productListSelected.map((item) => ({
+            productID: item.productID,
+            unitID: item.unit.unitID,
+        }));
 
-                // format response orderReleaseDetails
-                const resp = batchList.map((batch) => {
-                    // lấy danh sách các box của từng batch
-                    const boxes = (batchBoxOfProducts[`${productID}-${batch.batchID}`] || []).map((box) => {
-                        return { boxID: box.boxID, quantityExported: box.quantityExported };
+        const res = await getTotalValidAmountByProductAndUnit(items);
+        let insufficientList = [];
+
+        if (res.data?.status === 'OK') {
+            res.data.data.forEach((item) => {
+                const product = productListSelected.find(
+                    (p) => p.productID === item.productID && p.unit.unitID === item.unitID,
+                );
+                if (product && item.totalValidAmount < product.amountRequiredExport) {
+                    insufficientList.push({
+                        productID: product.productID,
+                        productName: product.productName,
+                        required: product.amountRequiredExport,
+                        available: item.totalValidAmount,
+                        unit: product.unit.unitName,
                     });
-                    return {
-                        ...batch,
-                        batchBoxes: [...boxes],
-                    };
-                });
-
-                return resp;
-            })
-            .flatMap((item) => item); // flatten mảng 2 chiều về 1 chiều
-
-        for (let i = 0; i < productListSelected.length; i++) {
-            if (checkProductHasBatch.includes(productListSelected[i].productID)) continue;
-            else {
-                isFlag = {
-                    productIDMissing: [...isFlag.productIDMissing, productListSelected[i].productID],
-                    valid: true,
-                };
-                break;
-            }
-        }
-        if (isFlag.valid) {
-            const messageError = isFlag.productIDMissing.map((it) => it).join(',');
-            toast.error(`Vui lòng chọn lô hàng cho sản phẩm có mã ${messageError}`, styleMessage);
-            return;
+                }
+            });
         }
 
-        let reqData = {
-            orderReleaseID: formData.receiptCode,
-            customerID: formData.customerID,
-            employeeID: token.employeeID,
-            warehouseID: warehouse.warehouseID,
-            note: formData.note,
-            orderReleaseProposalID: formData.orderReleaseProposalID,
-            orderReleaseDetails: orderReleaseDetails || [],
-        };
-
-        console.log('req', reqData);
-
-        if (!validate(reqData)) return;
-
-        try {
-            const resp = await saveOrderRelease(reqData);
-            if (resp.status === 200) {
-                toast.success('Lưu phiếu xuất kho thành công', styleMessage);
-                dispatch(clearAllBatchProductList());
-                // Implement save logic here
-                onClose();
-            }
-        } catch (err) {
-            console.log('err', err);
-            toast.error(err.message, styleMessage);
-            return;
-        } finally {
-            fetchData();
+        if (insufficientList.length > 0) {
+            setInsufficientProducts(insufficientList);
+            setShowInsufficientModal(true);
+        } else {
+            setShowMethodSelection(true);
         }
     };
 
+    const handleSelectMethod = (method) => {
+        console.log('Selected method:', method);
+        setShowMethodSelection(false);
+        // TODO: Implement logic for each method
+
+        console.log('formData', formData);
+        console.log('productListSelected', productListSelected);
+    };
+
     const handleCloseModal = () => {
-        dispatch(clearAllBatchProductList());
         onClose();
     };
 
@@ -154,12 +117,8 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
         setFormData((prev) => ({
             ...prev,
             receiptCode: '',
-            customerID: '',
-            customerName: '',
             note: '',
         }));
-        setProductListSelected([]);
-        dispatch(clearAllBatchProductList());
     };
 
     // init form data
@@ -181,42 +140,120 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
             (proposalRelease?.orderReleaseProposalDetails || []).map((item) => ({
                 productID: item.productID,
                 productName: item.productName,
+                unit: item.unit,
+                amountRequiredExport: item.amountRequiredExport,
             })),
         );
     }, [proposalRelease]);
 
     return (
-        <Modal isOpenInfo={isOpen} onClose={handleCloseModal} showButtonClose={false}>
-            <div className={cx('dialog-content-release')}>
-                <header className={cx('dialog-header')}>
-                    <h2 className={cx('dialog-title')}>Phiếu xuất kho</h2>
-                    <div className={cx('header-action')}>
-                        {/* <Button outline medium rounded className={cx('btn-reset')} onClick={handleResetForm}>
-                            Làm mới
-                        </Button> */}
-                        <Button success medium rounded className={cx('btn-submit')} onClick={handleSave}>
-                            Lưu phiếu
+        <>
+            <Modal isOpenInfo={isOpen} onClose={handleCloseModal} showButtonClose={false}>
+                <div className={cx('dialog-content-release')}>
+                    <header className={cx('dialog-header')}>
+                        <h1 className={cx('dialog-title')}>Phiếu xuất kho</h1>
+                        <div className={cx('header-action')}>
+                            <Button outline borderRadiusMedium className={cx('btn-reset')} onClick={handleResetForm}>
+                                <span>Làm mới</span>
+                            </Button>
+                            <Button success borderRadiusMedium className={cx('btn-submit')} onClick={handleChooseBatch}>
+                                Chọn lô xuất
+                            </Button>
+                        </div>
+                    </header>
+
+                    <main className={cx('content')}>
+                        <div ref={contentSliceRef} className={cx('slice-content')}>
+                            <ExportInfoSheet
+                                formData={formData}
+                                setFormData={setFormData}
+                                className={cx('content-normal-info')}
+                            />
+
+                            <ExportProduct
+                                className={cx('table-product-release')}
+                                productListResult={productListSelected}
+                                setProductListResult={setProductListSelected}
+                            />
+                        </div>
+                    </main>
+                </div>
+            </Modal>
+
+            {/* Modal chọn phương thức xuất */}
+            <Modal
+                isOpenInfo={showMethodSelection}
+                onClose={() => setShowMethodSelection(false)}
+                showButtonClose={false}
+            >
+                <div className={cx('selection-dialog')}>
+                    <h3 className={cx('selection-title')}>Chọn phương thức xuất kho</h3>
+                    <div className={cx('selection-options')}>
+                        <Button
+                            primary
+                            borderRadiusMedium
+                            className={cx('btn-option')}
+                            onClick={() => handleSelectMethod('FEFO')}
+                        >
+                            Xuất theo FEFO (Hết hạn trước xuất trước)
+                        </Button>
+                        <Button
+                            primary
+                            borderRadiusMedium
+                            className={cx('btn-option')}
+                            onClick={() => handleSelectMethod('FIFO')}
+                        >
+                            Xuất theo FIFO (Nhập trước xuất trước)
+                        </Button>
+                        <Button
+                            outline
+                            borderRadiusMedium
+                            className={cx('btn-option')}
+                            onClick={() => handleSelectMethod('MANUAL')}
+                        >
+                            Tự chọn lô
                         </Button>
                     </div>
-                </header>
+                </div>
+            </Modal>
 
-                <main className={cx('content')}>
-                    <div ref={contentSliceRef} className={cx('slice-content')}>
-                        <ExportInfoSheet
-                            formData={formData}
-                            setFormData={setFormData}
-                            className={cx('content-normal-info')}
-                        />
-
-                        <ExportProduct
-                            className={cx('table-product-release')}
-                            productListResult={productListSelected}
-                            setProductListResult={setProductListSelected}
-                        />
+            {/* Modal thông báo không đủ số lượng */}
+            <Modal
+                isOpenInfo={showInsufficientModal}
+                onClose={() => setShowInsufficientModal(false)}
+                showButtonClose={true}
+            >
+                <div className={cx('insufficient-dialog')}>
+                    <h3 className={cx('insufficient-title')}>Sản phẩm không đủ số lượng</h3>
+                    <div className={cx('table-container')}>
+                        <table className={cx('insufficient-table')}>
+                            <thead>
+                                <tr>
+                                    <th>Mã sản phẩm</th>
+                                    <th>Sản phẩm</th>
+                                    <th className={cx('text-center')}>Yêu cầu</th>
+                                    <th className={cx('text-center')}>Hiện có</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {insufficientProducts.map((item, index) => (
+                                    <tr key={index}>
+                                        <td>{item.productID}</td>
+                                        <td>{item.productName}</td>
+                                        <td className={cx('text-center', 'font-bold')}>
+                                            {item.required} {item.unit}
+                                        </td>
+                                        <td className={cx('text-center', 'font-bold', 'text-danger')}>
+                                            {item.available} {item.unit}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                </main>
-            </div>
-        </Modal>
+                </div>
+            </Modal>
+        </>
     );
 };
 

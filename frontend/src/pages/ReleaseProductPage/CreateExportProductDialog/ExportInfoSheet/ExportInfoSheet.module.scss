@@ -1,106 +1,79 @@
-.content-normal-info {
-    box-sizing: border-box;
-    padding: 0px 10px;
-    margin: 10px 0;
-    min-width: 100%;
-    border-radius: 10px;
-    background-color: white;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    //box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-
-    .content-header {
-        font-size: 1.4rem;
-        font-weight: 600;
-    }
-}
-
 .info-sheet {
     background: #fff;
     border-radius: 14px;
+    padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    padding: 8px 10px; // giảm padding cha
-    margin-bottom: 10px;
-}
-
-.content-header {
-    font-size: 1.35rem; // tăng size
-    font-weight: 700;
-    color: #222;
-    margin-bottom: 18px;
-}
-
-.row {
-    display: grid;
-    gap: 14px; // giảm gap
-    margin-bottom: 12px; // tăng khoảng cách giữa các row
-}
-
-// .row-3 {
-//     grid-template-columns: repeat(4, 1fr);
-// }
-
-.row-4 {
-    grid-template-columns: repeat(4, 1fr);
-}
-
-.row-1 {
-    grid-template-columns: 1fr;
-}
-
-.form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-}
+    gap: 16px;
 
-.form-group label {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #222;
-    margin-bottom: 2px;
-}
-
-.form-group input,
-.form-group textarea {
-    padding: 10px 14px;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    font-size: 1.15rem;
-    color: #222;
-    outline: none;
-    transition: border-color 0.15s;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-    border-color: #2563eb;
-    background: #fff;
-}
-
-.input-generate-code {
-    display: flex;
-    gap: 8px; // giảm gap
-    align-items: center;
-}
-
-.full-width {
-    grid-column: 1 / -1;
-}
-
-.form-group textarea {
-    min-height: 60px;
-    resize: vertical;
-}
-
-/* Responsive */
-@media (max-width: 900px) {
-    .info-sheet {
-        padding: 4px 2px;
+    .content-header {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #111827;
+        margin: 0;
     }
 
-    // .row-3,
-    .row-4 {
-        grid-template-columns: 1fr;
-        gap: 8px;
+    .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .grid4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        label {
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        input,
+        select,
+        textarea {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            font-size: 1.2rem;
+            outline: none;
+            transition: 0.2s;
+            width: 100%;
+
+            &:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            }
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        .field-control {
+            width: 100%;
+            display: flex;
+            column-gap: 10px;
+
+            input {
+                flex: 1;
+            }
+        }
+    }
+
+    .colSpan3 {
+        grid-column: span 3;
+    }
+
+    .colSpan4 {
+        grid-column: span 4;
     }
 }

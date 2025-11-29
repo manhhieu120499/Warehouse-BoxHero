@@ -1,31 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ExportProduct.module.scss';
-import { styleMessage } from '../../../../constants';
-import { fetchProductById } from '../../../../services/product.service';
-import toast from 'react-hot-toast';
-import { useDispatch } from 'react-redux';
-import { removeBatchProductList } from '../../../../lib/redux/batchProduct/BatchProduct';
-import InputBase from '../../../../components/InputBase';
-import { Button } from '../../../../components';
-import { Trash2 } from 'lucide-react';
-import BatchDialog from '../../BatchDialog';
-import ModalBatchProductDetail from '../../ModalBatchProductDetail';
 const cx = classNames.bind(styles);
 
 // danh sách sản phẩm được chọn để export
-const ExportProduct = ({ productListResult, className, setProductListResult }) => {
+const ExportProduct = ({ productListResult, className }) => {
     const [productList, setProductList] = useState(productListResult || []);
-    const [isOpenBatchDialog, setIsOpenBatchDialog] = useState(false);
-    const [productSelectedToChooseBatch, setProductSelectedToChooseBatch] = useState(null);
-    const [isOpenModalBatchDetailBeChoose, setIsOpenModalBatchDetailBeChoose] = useState(false);
-    const dispatch = useDispatch();
-
-    const clearProduct = (productID) => {
-        setProductList((prev) => prev.filter((item) => item.productID !== productID));
-        setProductListResult((prev) => prev.filter((item) => item.productID !== productID));
-        dispatch(removeBatchProductList({ key: productID }));
-    };
 
     useEffect(() => {
         setProductList(productListResult || []);
@@ -33,57 +13,33 @@ const ExportProduct = ({ productListResult, className, setProductListResult }) =
 
     return (
         <>
-            <section className={cx('', className)}>
-                <p className={cx('table-header')}>Danh sách sản phẩm xuất kho</p>
-                <div className={cx('table-container')}>
-                    <table>
+            <section className={cx('table-product-release', className)}>
+                <h2 className={cx('table-header')}>Danh sách sản phẩm xuất kho</h2>
+                <div className={cx('tableWrap')}>
+                    <table className={cx('table')}>
                         <thead>
                             <tr>
-                                <th>STT</th>
-                                <th>Mã sản phẩm</th>
-                                <th>Tên sản phẩm</th>
-                                <th>Chọn lô</th>
-                                <th>Chi tiết lô hàng xuất</th>
+                                <th className={cx('stt')}>STT</th>
+                                <th className={cx('productID')}>Mã sản phẩm</th>
+                                <th className={cx('productName')}>Tên sản phẩm</th>
+                                <th className={cx('action')}>Đơn vị xuất</th>
+                                <th className={cx('action')}>Số lượng xuất</th>
                             </tr>
                         </thead>
                         <tbody>
                             {productList?.length > 0 ? (
                                 productList.map((item, index) => (
                                     <tr key={index}>
-                                        <td>{index + 1}</td>
-                                        <td>{item.productID}</td>
-                                        <td>{item.productName}</td>
-                                        <td>
-                                            <Button
-                                                success
-                                                medium
-                                                rounded
-                                                onClick={() => {
-                                                    setProductSelectedToChooseBatch(item);
-                                                    setIsOpenBatchDialog(true);
-                                                }}
-                                            >
-                                                <span>Chọn lô xuất</span>
-                                            </Button>
-                                        </td>
-                                        <td>
-                                            <Button
-                                                primary
-                                                medium
-                                                rounded
-                                                onClick={() => {
-                                                    setProductSelectedToChooseBatch(item);
-                                                    setIsOpenModalBatchDetailBeChoose(true);
-                                                }}
-                                            >
-                                                <span>Xem chi tiết</span>
-                                            </Button>
-                                        </td>
+                                        <td className={cx('stt')}>{index + 1}</td>
+                                        <td className={cx('productID')}>{item.productID}</td>
+                                        <td className={cx('productName')}>{item.productName}</td>
+                                        <td className={cx('action')}>{item.unit?.unitName}</td>
+                                        <td className={cx('number')}>{item.amountRequiredExport}</td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={5} style={{ textAlign: 'center' }}>
+                                    <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
                                         Không có sản phẩm nào
                                     </td>
                                 </tr>
@@ -92,7 +48,7 @@ const ExportProduct = ({ productListResult, className, setProductListResult }) =
                     </table>
                 </div>
             </section>
-            {isOpenBatchDialog && (
+            {/* {isOpenBatchDialog && (
                 <BatchDialog
                     isOpen={isOpenBatchDialog}
                     onClose={() => setIsOpenBatchDialog(false)}
@@ -108,7 +64,7 @@ const ExportProduct = ({ productListResult, className, setProductListResult }) =
                     onClose={() => setIsOpenModalBatchDetailBeChoose(false)}
                     productID={productSelectedToChooseBatch?.productID || ''}
                 />
-            )}
+            )} */}
         </>
     );
 };

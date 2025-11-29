@@ -11,6 +11,7 @@ import { searchCustomer } from '../../../services/customer.service';
 import { createOrderReleaseProposal, updateStatusOrderReleaseProposal } from '../../../services/proposal.service';
 import globalStyles from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import { authIsAdmin } from '../../../common';
+import { getUnitsByProduct } from '../../../services/unit.service';
 
 const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyles);
@@ -32,6 +33,10 @@ const ModalCreateApproveRelease = ({
     const [proposalListItem, setProposalListItem] = useState(
         initialData ? initialData.orderReleaseProposalDetails : [],
     );
+
+    console.log('initialData', initialData);
+
+    const [unitList, setUnitList] = useState([]);
     const totals = useMemo(() => {
         if (productListExported.length === 0) return { unique: 0, totalQty: 0 };
         return { unique: 0, totalQty: 0 };
@@ -57,6 +62,7 @@ const ModalCreateApproveRelease = ({
             customerName: '',
             note: '',
         });
+        setProductListExported([]);
     };
 
     const handleSearchProduct = async (productID) => {
@@ -72,26 +78,28 @@ const ModalCreateApproveRelease = ({
         } else {
             try {
                 const res = await getProductCanExportById(productID, warehouse.warehouseID);
-                console.log('res', res);
+                const resUnitProduct = await getUnitsByProduct(productID);
+
                 if (res.data.status != 'OK') setProductListExported([]);
-                else {
-                    if (productListExported.length) {
-                        const checkItemExist = productListExported.findIndex(
-                            (it) => it.sku === res.data.product.productID,
-                        );
-
-                        if (checkItemExist !== -1) {
-                            toast.error('Sản phẩm đã được thêm vào danh sách', styleMessage);
-                            return;
-                        }
-                    }
-
-                    const newItem = emptyItem();
-                    newItem.sku = res.data.product.productID || '';
-                    newItem.name = res.data.product.productName || '';
-                    const formatProduct = [...productListExported, newItem];
-                    setProductListExported(formatProduct);
+                if (resUnitProduct.data.status === 'OK' && resUnitProduct.data.length === 0) {
+                    toast.error('Sản phẩm hiện đang hết hàng', styleMessage);
+                    return;
                 }
+                const newItem = emptyItem();
+                newItem.sku = res.data.product.productID || '';
+                newItem.name = res.data.product.productName || '';
+
+                if (!unitList.find((u) => u.productID === productID)) {
+                    setUnitList((prev) => [
+                        ...prev,
+                        {
+                            productID: res.data.product.productID,
+                            unitList: resUnitProduct.data.data,
+                        },
+                    ]);
+                }
+                const formatProduct = [...productListExported, newItem];
+                setProductListExported(formatProduct);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -148,6 +156,32 @@ const ModalCreateApproveRelease = ({
                             />
                         </td>
                         <td>
+                            {typeDetail ? (
+                                <input value={it.unit?.unitName} readOnly className={cxGlb('readOnly')} />
+                            ) : (
+                                <select value={it.unit} onChange={(e) => updateCell(idx, 'unit', e.target.value)}>
+                                    <option value="">-- Chọn đơn vị --</option>
+                                    {unitList
+                                        .find((u) => u.productID === it.sku)
+                                        ?.unitList.map((unit, idx) => (
+                                            <option key={idx} value={unit.unitID}>
+                                                {unit.unitName}
+                                            </option>
+                                        ))}
+                                </select>
+                            )}
+                        </td>
+                        <td>
+                            <input
+                                value={it.amountRequiredExport}
+                                onChange={(e) => updateCell(idx, 'amountRequiredExport', e.target.value)}
+                                readOnly={typeDetail}
+                                min={1}
+                                type="number"
+                                placeholder="Số lượng xuất"
+                            />
+                        </td>
+                        <td>
                             <input
                                 value={typeDetail ? it.note || 'Không có ghi chú' : it.note || ''}
                                 onChange={(e) => updateCell(idx, 'note', e.target.value)}
@@ -182,6 +216,44 @@ const ModalCreateApproveRelease = ({
             toast.error('Vui lòng thêm sản phẩm vào danh sách đề xuất xuất kho', styleMessage);
             return;
         }
+
+        // Validate unit
+        const missingUnitItems = productListExported.filter((item) => !item.unit);
+        if (missingUnitItems.length > 0) {
+            const names = missingUnitItems.map((i) => i.name).join(', ');
+            toast.error(`Vui lòng chọn đơn vị tính cho các sản phẩm: ${names}`, styleMessage);
+            return;
+        }
+
+        // Validate quantity
+        const invalidQtyItems = productListExported.filter((item) => {
+            const qty = Number(item.amountRequiredExport);
+            return !Number.isInteger(qty) || qty <= 0;
+        });
+        if (invalidQtyItems.length > 0) {
+            const names = invalidQtyItems.map((i) => i.name).join(', ');
+            toast.error(`Số lượng xuất của sản phẩm: ${names} không hợp lệ`, styleMessage);
+            return;
+        }
+
+        // Validate duplicate
+        const seen = new Set();
+        const duplicates = [];
+        productListExported.forEach((item) => {
+            const key = `${item.sku}-${item.unit}`;
+            if (seen.has(key)) {
+                duplicates.push(item);
+            } else {
+                seen.add(key);
+            }
+        });
+
+        if (duplicates.length > 0) {
+            const names = duplicates.map((i) => i.name).join(', ');
+            toast.error(`Các sản phẩm sau bị trùng đơn vị tính: ${names}`, styleMessage);
+            return;
+        }
+
         try {
             const formatData = {
                 orderReleaseProposalID: form.receiptCode,
@@ -192,7 +264,10 @@ const ModalCreateApproveRelease = ({
                 orderReleaseProposalDetails: productListExported.map((it) => ({
                     productID: it.sku,
                     productName: it.name,
+                    unitID: it.unit,
+                    quantity: it.amountRequiredExport,
                     note: it.note,
+                    amountRequiredExport: it.amountRequiredExport,
                 })),
                 status: 'PENDING',
             };
@@ -205,7 +280,6 @@ const ModalCreateApproveRelease = ({
                 refetchData();
             }
         } catch (err) {
-            toast.error(err, styleMessage);
             return;
         }
     };
@@ -417,6 +491,8 @@ const ModalCreateApproveRelease = ({
                                         <th className={cx('stt')}>STT</th>
                                         <th className={cx('productID')}>Mã SP</th>
                                         <th className={cx('productName')}>Tên SP</th>
+                                        <th className={cx('unitName')}>Đơn vị xuất</th>
+                                        <th className={cx('amount')}>Số lượng xuất</th>
                                         <th className={cx('note')}>Ghi chú</th>
                                         <th></th>
                                     </tr>

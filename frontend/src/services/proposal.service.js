@@ -107,10 +107,13 @@ export const createOrderReleaseProposal = async (data) => {
         });
         return res;
     } catch (err) {
-        console.log(err);
-        throw new Error(
+        toast.error(
             Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
         );
+        console.log(err);
+
+        return err;
     }
 };
 

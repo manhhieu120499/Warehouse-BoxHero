@@ -289,3 +289,25 @@ export const filterOrderRelease = async (params) => {
         throw new Error(err.response.data);
     }
 };
+
+export const checkOrderReleaseID = async (orderReleaseID) => {
+    try {
+        const token = parseToken('tokenUser');
+        const res = await request.get(`/api/order-release/check-order-release-id/${orderReleaseID}`, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
+                warehouseID: token.warehouseID,
+            },
+        });
+        return res.data;
+    } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
+    }
+};

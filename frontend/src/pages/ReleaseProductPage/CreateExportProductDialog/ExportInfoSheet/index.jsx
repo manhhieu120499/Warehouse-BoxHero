@@ -12,111 +12,88 @@ const ExportInfoSheet = ({ formData, setFormData, className }) => {
     console.log('form', formData);
     return (
         <section className={cx('info-sheet', className)}>
-            <p className={cx('content-header')}>Thông tin chung</p>
-            {/* Row 1: 3 phần tử */}
-            <div className={cx('row', 'row-4')}>
-                <div className={cx('form-group')}>
+            <h2 className={cx('content-header')}>Thông tin chung</h2>
+            <div className={cx('grid4')}>
+                <div className={cx('field')}>
                     <label>Mã phiếu</label>
-                    <div className={cx('input-generate-code')}>
-                        <input type="text" placeholder="Tạo mã phiếu" value={formData.receiptCode || ''} />
+                    <div className={cx('field-control')}>
+                        <input
+                            type="text"
+                            placeholder="Nhập mã phiếu"
+                            value={formData.receiptCode || ''}
+                            onChange={(e) => {
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    receiptCode: e.target.value,
+                                }));
+                            }}
+                        />
                         <Button
                             primary
                             small
-                            rounded
+                            borderRadiusMedium
                             onClick={() => {
                                 setFormData((prev) => ({
                                     ...prev,
                                     receiptCode: `${generateCode('PX-')}`,
                                 }));
                             }}
-                            style={{ padding: '8px 10px' }}
                         >
-                            <span style={{ fontSize: '13px' }}>Tạo mã phiếu</span>
+                            <span>Tạo mã phiếu</span>
                         </Button>
                     </div>
                 </div>
-                <div className={cx('form-group')}>
+                <div className={cx('field')}>
                     <label>Ngày lập</label>
                     <input
                         type="date"
-                        placeholder="Ngày tạo phiếu"
                         readOnly
                         value={new Date().toISOString().split('T')[0]}
                         className={cxGlb('readOnly')}
                     />
                 </div>
-                <div className={cx('form-group')}>
+                <div className={cx('field')}>
                     <label>Kho</label>
-                    <input
-                        type="text"
-                        placeholder="Tên kho"
-                        readOnly
-                        value={formData.warehouse || ''}
-                        className={cxGlb('readOnly')}
-                    />
+                    <input type="text" readOnly value={formData.warehouse || ''} className={cxGlb('readOnly')} />
                 </div>
-                <div className={cx('form-group')}>
-                    <label>Tên người phê duyệt</label>
-                    <input
-                        type="text"
-                        placeholder="Tên người lập phiếu"
-                        value={formData?.approver || 'null'}
-                        className={cxGlb('readOnly')}
-                    />
+                <div className={cx('field')}>
+                    <label>Người duyệt</label>
+                    <input type="text" value={formData?.approver || ''} readOnly className={cxGlb('readOnly')} />
                 </div>
             </div>
-            {/* Row 2: 4 phần tử */}
-            <div className={cx('row', 'row-4')}>
-                <div className={cx('form-group')}>
-                    <label>Tên người lập phiếu</label>
-                    <input
-                        type="text"
-                        placeholder="Tên người lập phiếu"
-                        value={formData.createdBy}
-                        className={cxGlb('readOnly')}
-                    />
+
+            <div className={cx('grid4')}>
+                <div className={cx('field')}>
+                    <label>Người lập phiếu</label>
+                    <input type="text" value={formData.createdBy} readOnly className={cxGlb('readOnly')} />
                 </div>
-                <div className={cx('form-group')}>
+                <div className={cx('field')}>
                     <label>Mã khách hàng</label>
-                    <input
-                        type="text"
-                        placeholder="Nhập mã khách hàng"
-                        value={formData.customerID}
-                        readOnly
-                        className={cxGlb('readOnly')}
-                    />
+                    <input type="text" value={formData.customerID} readOnly className={cxGlb('readOnly')} />
                 </div>
-                <div className={cx('form-group')}>
+                <div className={cx('field')}>
                     <label>Tên khách hàng</label>
-                    <input
-                        type="text"
-                        placeholder="Tên khách hàng"
-                        value={formData.customerName || ''}
-                        readOnly
-                        className={cxGlb('readOnly')}
-                    />
+                    <input type="text" value={formData.customerName || ''} readOnly className={cxGlb('readOnly')} />
                 </div>
-                <div className={cx('form-group')}>
-                    <label>Mã phiếu đề xuất xuất</label>
+                <div className={cx('field')}>
+                    <label>Mã phiếu đề xuất</label>
                     <input
                         type="text"
-                        placeholder="Mã phiếu đề xuất xuất"
                         value={formData.orderReleaseProposalID || ''}
                         readOnly
                         className={cxGlb('readOnly')}
                     />
                 </div>
             </div>
-            {/* Row 3: 1 phần tử full width */}
-            <div className={cx('row', 'row-1')}>
-                <div className={cx('form-group', 'full-width')}>
-                    <label>Ghi chú</label>
-                    <textarea
-                        placeholder="Nhập ghi chú"
-                        value={formData.note}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, note: e.target.value }))}
-                    />
-                </div>
+
+            <div className={cx('field', 'colSpan4')}>
+                <label>Ghi chú</label>
+                <textarea
+                    rows={3}
+                    placeholder="Nhập ghi chú..."
+                    value={formData.note}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, note: e.target.value }))}
+                />
             </div>
         </section>
     );

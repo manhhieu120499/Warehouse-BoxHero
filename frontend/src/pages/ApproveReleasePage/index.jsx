@@ -162,7 +162,6 @@ const ApproveReleasePage = () => {
     const handleOpenDetailOrderReleaseProposal = async (orderReleaseProposalID) => {
         try {
             const res = await getOrderReleaseProposal(orderReleaseProposalID);
-            console.log(res);
             setProposalDetail(res);
         } catch (err) {
             console.log(err);
