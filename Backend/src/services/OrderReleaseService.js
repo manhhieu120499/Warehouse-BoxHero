@@ -144,24 +144,27 @@ class OrderReleaseService {
                         );
 
                         // update lại số lượng còn lại cùa lô hàng (batch)
-                        const updateRemainBatch = await Batch.increment(
+                        const updateBatch = await Batch.increment(
                             {
-                                remainAmount: -boxDetail.quantityExported,
+                                validAmount: -boxDetail.quantityExported,
+                                pendingOutAmount: boxDetail.quantityExported,
                             },
                             { where: { batchID: element.batchID }, transaction },
                         );
 
                         // update lại số lượng
-                        const updateQuantityBatchBox = await BatchBox.update(
+                        const updateBatchBox = await BatchBox.update(
                             {
-                                quantity: batchBox.quantity - boxDetail.quantityExported,
+                                validQuantity: batchBox.validQuantity - boxDetail.quantityExported,
+                                pendingOutQuantity: batchBox.pendingOutQuantity + boxDetail.quantityExported,
                             },
                             {
                                 where: { boxID: boxDetail.boxID, batchID: element.batchID },
                                 transaction,
                             },
                         );
-                        // update remainingAcreage of box
+                        // update remainingAcreage of box - REMOVED (items still in box)
+                        /*
                         const updateRemainingAcreageBox = await Box.update(
                             {
                                 remainingAcreage:
@@ -170,6 +173,7 @@ class OrderReleaseService {
                             },
                             { where: { boxID: boxDetail.boxID }, transaction },
                         );
+                        */
                         listResponseBoxDetails.push(resp);
                     }
                     listResponseOrderReleaseDetails.push({
@@ -179,7 +183,8 @@ class OrderReleaseService {
                         boxDetails: listResponseBoxDetails,
                     });
 
-                    // update số lượng của sản phẩm
+                    // update số lượng của sản phẩm - REMOVED (items still in warehouse)
+                    /*
                     const updateAmountProduct = await Product.update(
                         {
                             amount:
@@ -190,8 +195,10 @@ class OrderReleaseService {
                             transaction,
                         },
                     );
+                    */
 
-                    // update product quantity log
+                    // update product quantity log - REMOVED (will be added on completion)
+                    /*
                     await ProductQuantityLog.create(
                         {
                             actionType: 'RELEASE',
@@ -205,6 +212,7 @@ class OrderReleaseService {
                         },
                         { transaction },
                     );
+                    */
                 }
 
                 await transaction.commit();
@@ -414,6 +422,144 @@ class OrderReleaseService {
                     status: 'ERROR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
                     message: err.message,
+                });
+            }
+        });
+    }
+    checkOrderReleaseID(orderReleaseID) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const orderRelease = await OrderRelease.findOne({
+                    where: { orderReleaseID },
+                });
+                if (orderRelease) {
+                    resolve({
+                        status: 'OK',
+                        statusHttp: HTTP_OK,
+                        message: 'Mã phiếu xuất kho đã tồn tại',
+                        exists: true,
+                    });
+                } else {
+                    resolve({
+                        status: 'OK',
+                        statusHttp: HTTP_OK,
+                        message: 'Mã phiếu xuất kho chưa tồn tại',
+                        exists: false,
+                    });
+                }
+            } catch (err) {
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
+
+    async getSuggestExport(type, items) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                if (!items || !Array.isArray(items) || items.length === 0) {
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Danh sách sản phẩm không hợp lệ',
+                    });
+                }
+
+                const suggestions = [];
+
+                for (const item of items) {
+                    const { productID, unitID, quantity } = item;
+                    let remainingQuantity = Number(quantity);
+                    const itemSuggestion = {
+                        productID,
+                        unitID,
+                        quantityRequired: Number(quantity),
+                        batches: [],
+                    };
+
+                    // 1. Get batches with validAmount > 0, sorted based on type
+                    let orderOption = [['expiryDate', 'ASC']]; // Default FEFO
+                    if (type === 'FIFO') {
+                        orderOption = [['createdAt', 'ASC']];
+                    }
+
+                    const batches = await Batch.findAll({
+                        where: {
+                            productID,
+                            unitID,
+                            status: 'AVAILABLE',
+                            validAmount: { [Op.gt]: 0 },
+                        },
+                        order: orderOption,
+                    });
+
+                    for (const batch of batches) {
+                        if (remainingQuantity <= 0) break;
+
+                        // Get boxes for this batch
+                        let batchBoxes = await BatchBox.findAll({
+                            where: {
+                                batchID: batch.batchID,
+                                validQuantity: { [Op.gt]: 0 },
+                            },
+                        });
+
+                        // Sort boxes: BX1 -> BX100
+                        batchBoxes.sort((a, b) => {
+                            const numA = parseInt(a.boxID.replace(/\D/g, '')) || 0;
+                            const numB = parseInt(b.boxID.replace(/\D/g, '')) || 0;
+                            return numA - numB;
+                        });
+
+                        const batchSuggestion = {
+                            batchID: batch.batchID,
+                            expiryDate: batch.expiryDate,
+                            createdAt: batch.createdAt,
+                            boxes: [],
+                            quantityExport: 0,
+                        };
+
+                        let quantityFromBatch = 0;
+
+                        for (const box of batchBoxes) {
+                            if (remainingQuantity <= 0) break;
+
+                            let takeAmount = Math.min(remainingQuantity, box.validQuantity);
+
+                            if (takeAmount > 0) {
+                                batchSuggestion.boxes.push({
+                                    boxID: box.boxID,
+                                    quantity: takeAmount,
+                                });
+
+                                remainingQuantity -= takeAmount;
+                                quantityFromBatch += takeAmount;
+                            }
+                        }
+
+                        if (quantityFromBatch > 0) {
+                            batchSuggestion.quantityExport = quantityFromBatch;
+                            itemSuggestion.batches.push(batchSuggestion);
+                        }
+                    }
+                    suggestions.push(itemSuggestion);
+                }
+
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Gợi ý xuất hàng thành công',
+                    data: suggestions,
+                });
+            } catch (err) {
+                console.error(err);
+                reject({
+                    status: 'ERROR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err.message || err,
                 });
             }
         });

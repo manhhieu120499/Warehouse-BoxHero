@@ -15,6 +15,16 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: false,
                 defaultValue: 0,
             },
+            validQuantity: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+            },
+            pendingOutQuantity: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+            },
         },
         {
             tableName: 'batch_boxes',

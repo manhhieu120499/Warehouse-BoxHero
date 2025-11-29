@@ -29,6 +29,26 @@ class OrderReleaseController {
             return res.status(err.statusHttp || 500).json(err.message);
         }
     }
+    async checkOrderReleaseID(req, res) {
+        try {
+            const { orderReleaseID } = req.params;
+            const { statusHttp, ...response } = await OrderReleaseService.checkOrderReleaseID(orderReleaseID);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            console.error(err);
+            return res.status(err.statusHttp || 500).json(err.message);
+        }
+    }
+    async getSuggestExport(req, res) {
+        try {
+            const { type, items } = req.body;
+            const { statusHttp, ...response } = await OrderReleaseService.getSuggestExport(type, items);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            console.error(err);
+            return res.status(err.statusHttp || 500).json(err.message);
+        }
+    }
 }
 
 module.exports = new OrderReleaseController();

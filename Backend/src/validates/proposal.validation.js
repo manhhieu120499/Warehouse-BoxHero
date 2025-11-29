@@ -174,6 +174,18 @@ const checkCreateOrderReleaseProposal = [
         .bail()
         .isString()
         .withMessage('Tên sản phẩm không hợp lệ'),
+    body('orderReleaseProposalDetails.*.unitID')
+        .notEmpty()
+        .withMessage('Mã đơn vị xuất là bắt buộc')
+        .bail()
+        .isString()
+        .withMessage('Mã đơn vị xuất không hợp lệ'),
+    body('orderReleaseProposalDetails.*.amountRequiredExport')
+        .notEmpty()
+        .withMessage('Số lượng xuất là bắt buộc')
+        .bail()
+        .isInt({ min: 1 })
+        .withMessage('Số lượng xuất phải là số nguyên tối thiểu là 1'),
 ];
 
 const checkStatusOrderReleaseProposal = [

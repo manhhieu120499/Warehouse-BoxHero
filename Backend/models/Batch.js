@@ -43,6 +43,21 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: false,
                 defaultValue: 'AVAILABLE',
             },
+            validAmount: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+            },
+            pendingOutAmount: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+            },
+            tempAmount: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                defaultValue: 0,
+            },
         },
         {
             tableName: 'batches',

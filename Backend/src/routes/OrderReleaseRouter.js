@@ -11,5 +11,7 @@ router.get('/', (req, res) => {
 router.post('/create', authUser, checkCreateOrderRelease, validate, OrderReleaseController.createOrderRelease);
 router.get('/get-all-order-release', authUser, OrderReleaseController.getAllOrderRelease);
 router.post('/filter-order-release', authUser, OrderReleaseController.filterOrderRelease);
+router.get('/check-order-release-id/:orderReleaseID', authUser, OrderReleaseController.checkOrderReleaseID);
+router.post('/suggest-export', authUser, OrderReleaseController.getSuggestExport);
 
 module.exports = router;

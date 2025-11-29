@@ -20,6 +20,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 allowNull: false,
             },
+            unitID: {
+                type: Sequelize.STRING,
+                allowNull: false,
+            },
             note: {
                 type: Sequelize.STRING,
                 allowNull: true,
@@ -43,6 +47,7 @@ module.exports = (sequelize, Sequelize) => {
             as: 'orderReleaseProposal',
         });
         OrderReleaseProposalDetail.belongsTo(models.Product, { foreignKey: 'productID', as: 'product' });
+        OrderReleaseProposalDetail.belongsTo(models.Unit, { foreignKey: 'unitID', as: 'unit' });
     };
     return OrderReleaseProposalDetail;
 };

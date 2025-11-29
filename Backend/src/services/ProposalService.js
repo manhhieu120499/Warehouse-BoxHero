@@ -650,6 +650,11 @@ class ProposalService {
                                         },
                                     ],
                                 },
+                                {
+                                    model: Unit,
+                                    as: 'unit',
+                                    attributes: ['unitName'],
+                                },
                             ],
                         },
                         {
@@ -814,7 +819,14 @@ class ProposalService {
                         {
                             model: OrderReleaseProposalDetail,
                             as: 'orderReleaseProposalDetails',
-                            attributes: ['productID', 'productName', 'note'],
+                            include: [
+                                {
+                                    model: Unit,
+                                    as: 'unit',
+                                    attributes: ['unitID', 'unitName'],
+                                },
+                            ],
+                            attributes: ['productID', 'productName', 'amountRequiredExport', 'note'],
                         },
                     ],
                     order: [['createdAt', 'DESC']],
