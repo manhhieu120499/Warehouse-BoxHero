@@ -26,6 +26,7 @@ const BatchMoveLogRouter = require('./BatchMoveLogRouter');
 const ReportRouter = require('./ReportRouter');
 const BaseUnitProductRouter = require('./BaseUnitProductRouter');
 const DialogFlowCXRouter = require('./DialogFlowCX');
+const BoxRouter = require('./BoxRouter');
 
 const router = (app) => {
     app.use('/api/account', AccountRouter);
@@ -56,6 +57,7 @@ const router = (app) => {
     app.use('/api/report', ReportRouter);
     app.use('/api/base-unit-product', BaseUnitProductRouter);
     app.use('/api/dialog-flow-cx', DialogFlowCXRouter);
+    app.use('/api/box', BoxRouter);
 };
 
 module.exports = router;

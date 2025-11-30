@@ -10,6 +10,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 allowNull: false,
             },
+            qr: {
+                type: Sequelize.TEXT('long'),
+                allowNull: true,
+            },
             width: {
                 type: Sequelize.DOUBLE,
                 allowNull: false,

@@ -36,7 +36,7 @@ const checkCreateOrderRelease = [
         .bail()
         .isNumeric()
         .withMessage('Số lượng xuất kho phải là một số'),
-    body('orderReleaseDetails.*.batchBoxes')
+    body('orderReleaseDetails.*.orderReleaseBatchBoxDetails')
         .isArray()
         .withMessage('Chi tiết ô chứa lô hàng phải là một mảng')
         .bail()
@@ -46,13 +46,13 @@ const checkCreateOrderRelease = [
             }
             return true;
         }),
-    body('orderReleaseDetails.*.batchBoxes.*.boxID')
+    body('orderReleaseDetails.*.orderReleaseBatchBoxDetails.*.boxID')
         .notEmpty()
         .withMessage('Mã ô chứa lô hàng là bắt buộc')
         .bail()
         .isString()
         .withMessage('Mã ô chứa lô hàng không hợp lệ'),
-    body('orderReleaseDetails.*.batchBoxes.*.quantityExported')
+    body('orderReleaseDetails.*.orderReleaseBatchBoxDetails.*.quantityExported')
         .notEmpty()
         .withMessage('Số lượng xuất kho là bắt buộc')
         .bail()

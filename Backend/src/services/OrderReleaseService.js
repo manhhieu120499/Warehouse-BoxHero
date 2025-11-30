@@ -19,6 +19,7 @@ const Employee = db.Employee;
 const BaseUnitProduct = db.BaseUnitProduct;
 const OrderReleaseProposal = db.OrderReleaseProposal;
 const { Op, fn, col, where } = require('sequelize');
+const { generateQRURL } = require('../common');
 
 const LIMIT_PAGE = 5;
 
@@ -38,12 +39,31 @@ class OrderReleaseService {
                     orderReleaseProposalID,
                 } = data;
 
-                // check customer
-                const customer = await Customer.findOne({ where: { customerID } });
-                const orderRelease = await OrderRelease.findOne({ where: { orderReleaseID } });
-                const orderReleaseProposal = await OrderReleaseProposal.findOne({ where: { orderReleaseProposalID } });
+                // Check existence of related entities
+                const [customer, existingOrderRelease, orderReleaseProposal] = await Promise.all([
+                    Customer.findOne({ where: { customerID }, transaction }),
+                    OrderRelease.findOne({ where: { orderReleaseID }, transaction }),
+                    OrderReleaseProposal.findOne({ where: { orderReleaseProposalID }, transaction }),
+                ]);
 
+                if (!customer) {
+                    await transaction.rollback();
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Khách hàng không tồn tại',
+                    });
+                }
+                if (existingOrderRelease) {
+                    await transaction.rollback();
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Hóa đơn xuất kho đã tồn tại',
+                    });
+                }
                 if (!orderReleaseProposal) {
+                    await transaction.rollback();
                     return reject({
                         status: 'ERROR',
                         statusHttp: HTTP_BAD_REQUEST,
@@ -51,30 +71,10 @@ class OrderReleaseService {
                     });
                 }
 
-                if (orderRelease) {
-                    return reject({
-                        status: 'ERROR',
-                        statusHttp: HTTP_BAD_REQUEST,
-                        message: 'Hóa đơn xuất kho đã tồn tại',
-                    });
-                }
+                // Generate QR Code
+                const qrCode = await generateQRURL(orderReleaseID);
 
-                if (!customer) {
-                    return reject({
-                        status: 'ERROR',
-                        statusHttp: HTTP_BAD_REQUEST,
-                        message: 'Khách hàng không tồn tại',
-                    });
-                }
-
-                if (Array.isArray(orderReleaseDetails) && orderReleaseDetails.length === 0) {
-                    return reject({
-                        status: 'ERROR',
-                        statusHttp: HTTP_BAD_REQUEST,
-                        message: 'Chi tiết đơn xuất kho không được để trống',
-                    });
-                }
-                // Create the main order release record
+                // Create OrderRelease
                 const newOrderRelease = await OrderRelease.create(
                     {
                         orderReleaseID,
@@ -83,143 +83,121 @@ class OrderReleaseService {
                         warehouseID,
                         note,
                         orderReleaseProposalID,
+                        status: 'PENDING_PICK',
+                        qrCode,
                     },
                     { transaction },
                 );
 
                 const listResponseOrderReleaseDetails = [];
+
                 for (const element of orderReleaseDetails) {
-                    const batch = await Batch.findOne({ where: { batchID: element.batchID } });
-                    const product = await Product.findOne({ where: { productID: element.productID } });
-                    const unit = await Unit.findOne({ where: { unitID: element.unitID } });
+                    const { batchID, quantityExported, orderReleaseBatchBoxDetails } = element;
 
-                    if (!product) {
-                        return reject({
-                            status: 'ERROR',
-                            statusHttp: HTTP_BAD_REQUEST,
-                            message: `Sản phẩm không tồn tại ${element.productID}`,
-                        });
-                    }
-
+                    // Validate Batch
+                    const batch = await Batch.findOne({ where: { batchID }, transaction });
                     if (!batch) {
+                        await transaction.rollback();
                         return reject({
                             status: 'ERROR',
                             statusHttp: HTTP_BAD_REQUEST,
-                            message: `Lô hàng không tồn tại ${element.batchID}`,
+                            message: `Lô hàng không tồn tại: ${batchID}`,
                         });
                     }
 
+                    // Create OrderReleaseDetail
                     const respOrderReleaseDetail = await OrderReleaseDetail.create(
                         {
                             orderReleaseID: newOrderRelease.orderReleaseID,
-                            batchID: element.batchID,
-                            quantityExported: element.quantityExported,
+                            batchID,
+                            quantityExported,
                         },
                         { transaction },
                     );
 
                     const listResponseBoxDetails = [];
-                    for (const boxDetail of element.batchBoxes) {
-                        const box = await Box.findOne({ where: { boxID: boxDetail.boxID } });
-                        const batchBox = await BatchBox.findOne({
-                            where: { boxID: boxDetail.boxID, batchID: element.batchID },
-                        });
 
-                        if (!box) {
-                            return reject({
-                                status: 'ERROR',
-                                statusHttp: HTTP_BAD_REQUEST,
-                                message: `Ô chứa lô hàng không tồn tại ${boxDetail.boxID}`,
-                            });
-                        }
+                    if (orderReleaseBatchBoxDetails && Array.isArray(orderReleaseBatchBoxDetails)) {
+                        for (const boxDetail of orderReleaseBatchBoxDetails) {
+                            const { boxID, quantityExported: boxQuantity } = boxDetail;
 
-                        const resp = await OrderReleaseBatchBoxDetail.create(
-                            {
-                                orderReleaseDetailID: respOrderReleaseDetail.orderReleaseDetailID,
-                                batchID: element.batchID,
-                                boxID: boxDetail.boxID,
-                                quantityExported: boxDetail.quantityExported,
-                            },
-                            { transaction },
-                        );
-
-                        // update lại số lượng còn lại cùa lô hàng (batch)
-                        const updateBatch = await Batch.increment(
-                            {
-                                validAmount: -boxDetail.quantityExported,
-                                pendingOutAmount: boxDetail.quantityExported,
-                            },
-                            { where: { batchID: element.batchID }, transaction },
-                        );
-
-                        // update lại số lượng
-                        const updateBatchBox = await BatchBox.update(
-                            {
-                                validQuantity: batchBox.validQuantity - boxDetail.quantityExported,
-                                pendingOutQuantity: batchBox.pendingOutQuantity + boxDetail.quantityExported,
-                            },
-                            {
-                                where: { boxID: boxDetail.boxID, batchID: element.batchID },
+                            // Validate BatchBox
+                            const batchBox = await BatchBox.findOne({
+                                where: { boxID, batchID },
                                 transaction,
-                            },
-                        );
-                        // update remainingAcreage of box - REMOVED (items still in box)
-                        /*
-                        const updateRemainingAcreageBox = await Box.update(
-                            {
-                                remainingAcreage:
-                                    box.remainingAcreage +
-                                    boxDetail.quantityExported * unit.width * unit.length * unit.height,
-                            },
-                            { where: { boxID: boxDetail.boxID }, transaction },
-                        );
-                        */
-                        listResponseBoxDetails.push(resp);
+                            });
+
+                            if (!batchBox) {
+                                await transaction.rollback();
+                                return reject({
+                                    status: 'ERROR',
+                                    statusHttp: HTTP_BAD_REQUEST,
+                                    message: `Không tìm thấy lô hàng ${batchID} trong box ${boxID}`,
+                                });
+                            }
+
+                            // Check sufficient quantity
+                            if (batchBox.validQuantity < boxQuantity) {
+                                await transaction.rollback();
+                                return reject({
+                                    status: 'ERROR',
+                                    statusHttp: HTTP_BAD_REQUEST,
+                                    message: `Số lượng trong box ${boxID} không đủ (Có: ${batchBox.validQuantity}, Yêu cầu: ${boxQuantity})`,
+                                });
+                            }
+
+                            // Create OrderReleaseBatchBoxDetail
+                            const respBoxDetail = await OrderReleaseBatchBoxDetail.create(
+                                {
+                                    orderReleaseDetailID: respOrderReleaseDetail.orderReleaseDetailID,
+                                    batchID,
+                                    boxID,
+                                    quantityExported: boxQuantity,
+                                },
+                                { transaction },
+                            );
+
+                            // Update BatchBox: validQuantity (-), pendingOutQuantity (+)
+                            await BatchBox.increment(
+                                {
+                                    validQuantity: -boxQuantity,
+                                    pendingOutQuantity: boxQuantity,
+                                },
+                                { where: { boxID, batchID }, transaction },
+                            );
+
+                            // Update Batch: validAmount (-), pendingOutAmount (+)
+                            await Batch.increment(
+                                {
+                                    validAmount: -boxQuantity,
+                                    pendingOutAmount: boxQuantity,
+                                },
+                                { where: { batchID }, transaction },
+                            );
+
+                            listResponseBoxDetails.push(respBoxDetail);
+                        }
                     }
+
                     listResponseOrderReleaseDetails.push({
                         orderReleaseDetailID: respOrderReleaseDetail.orderReleaseDetailID,
-                        batchID: element.batchID,
-                        quantityExported: element.quantityExported,
+                        batchID,
+                        quantityExported,
                         boxDetails: listResponseBoxDetails,
                     });
-
-                    // update số lượng của sản phẩm - REMOVED (items still in warehouse)
-                    /*
-                    const updateAmountProduct = await Product.update(
-                        {
-                            amount:
-                                product.amount - Number.parseInt(element.quantityExported) * unit.conversionQuantity,
-                        },
-                        {
-                            where: { productID: element.productID },
-                            transaction,
-                        },
-                    );
-                    */
-
-                    // update product quantity log - REMOVED (will be added on completion)
-                    /*
-                    await ProductQuantityLog.create(
-                        {
-                            actionType: 'RELEASE',
-                            quantityChange: Number.parseInt(element.quantityExported) * unit.conversionQuantity,
-                            previousAmount: product.amount,
-                            newAmount:
-                                product.amount - Number.parseInt(element.quantityExported) * unit.conversionQuantity,
-                            referenceID: orderReleaseID,
-                            note: `Xuất kho từ đơn ${orderReleaseID}`,
-                            productID: product.productID,
-                        },
-                        { transaction },
-                    );
-                    */
                 }
+
+                // Update OrderReleaseProposal status to COMPLETED
+                await OrderReleaseProposal.update(
+                    { status: 'COMPLETED' },
+                    { where: { orderReleaseProposalID }, transaction },
+                );
 
                 await transaction.commit();
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
-                    data: { ...newOrderRelease, orderReleaseDetails: listResponseOrderReleaseDetails },
+                    data: { ...newOrderRelease.toJSON(), orderReleaseDetails: listResponseOrderReleaseDetails },
                     message: 'Tạo đơn xuất kho thành công',
                 });
             } catch (error) {
@@ -322,6 +300,7 @@ class OrderReleaseService {
             const currentPage = data?.page || 1;
             let whereOption = {};
             if (data.orderReleaseID) whereOption.orderReleaseID = data.orderReleaseID;
+            if (data.status) whereOption.status = data.status;
             if (data.createdAt) {
                 whereOption = {
                     ...whereOption,
@@ -332,20 +311,6 @@ class OrderReleaseService {
                 };
             }
             try {
-                if (!data.warehouseID) {
-                    return reject({
-                        status: 'ERROR',
-                        statusHttp: HTTP_BAD_REQUEST,
-                        message: 'Vui lòng đính kèm mã kho',
-                    });
-                }
-                const warehouse = await Warehouse.findOne({ where: { warehouseID: data.warehouseID } });
-                if (!warehouse)
-                    return reject({
-                        status: 'ERROR',
-                        statusHttp: HTTP_BAD_REQUEST,
-                        message: 'Kho không tồn tại',
-                    });
                 const { count, rows: orderReleases } = await OrderRelease.findAndCountAll({
                     distinct: true,
                     where: { ...whereOption },
@@ -355,7 +320,7 @@ class OrderReleaseService {
                             as: 'employees',
                             attributes: ['employeeID', 'employeeName'],
                             where: {
-                                ...(data.createdBy ? { employeeName: { [Op.like]: `%${data.createdBy}%` } } : {}),
+                                ...(data.employeeName ? { employeeName: { [Op.like]: `%${data.employeeName}%` } } : {}),
                             },
                         },
                         {
@@ -473,9 +438,11 @@ class OrderReleaseService {
                 for (const item of items) {
                     const { productID, unitID, quantity } = item;
                     let remainingQuantity = Number(quantity);
+                    const unit = await Unit.findOne({ where: { unitID } });
                     const itemSuggestion = {
                         productID,
                         unitID,
+                        unitName: unit ? unit.unitName : '',
                         quantityRequired: Number(quantity),
                         batches: [],
                     };
