@@ -8,19 +8,21 @@ module.exports = (sequelize, Sequelize) => {
             },
             manufactureDate: {
                 type: Sequelize.DATE,
-                allowNull: false,
+                allowNull: true,
             },
             expiryDate: {
                 type: Sequelize.DATE,
-                allowNull: false,
+                allowNull: true,
             },
             importAmount: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
+                defaultValue: 0,
             },
             remainAmount: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
+                defaultValue: 0,
             },
             productID: {
                 type: Sequelize.STRING,
@@ -28,7 +30,7 @@ module.exports = (sequelize, Sequelize) => {
             },
             supplierID: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: true,
             },
             unitID: {
                 type: Sequelize.INTEGER,
@@ -39,9 +41,13 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: false,
             },
             status: {
-                type: Sequelize.ENUM('ERROR', 'AVAILABLE', 'EXPIRED'),
+                type: Sequelize.ENUM('ERROR', 'AVAILABLE', 'EXPIRED', 'WAITING_IMPORT'),
                 allowNull: false,
-                defaultValue: 'AVAILABLE',
+                defaultValue: 'WAITING_IMPORT',
+            },
+            qrCode: {
+                type: Sequelize.TEXT,
+                allowNull: true,
             },
         },
         {
@@ -55,7 +61,6 @@ module.exports = (sequelize, Sequelize) => {
         Batch.belongsTo(models.Supplier, { foreignKey: 'supplierID', as: 'supplier' });
         Batch.belongsTo(models.Unit, { foreignKey: 'unitID', as: 'unit' });
         Batch.belongsTo(models.Warehouse, { foreignKey: 'warehouseID', as: 'warehouse' });
-
         // Quan hệ với Box
         Batch.belongsToMany(models.Box, {
             through: 'batch_boxes',
@@ -63,6 +68,8 @@ module.exports = (sequelize, Sequelize) => {
             otherKey: 'boxID',
             as: 'boxes',
         });
+        Batch.hasOne(models.ProposalDetail, { foreignKey: 'batchID', as: 'proposalDetail' });
+        Batch.hasOne(models.OrderPurchaseMissingDetail, { foreignKey: 'batchID', as: 'orderPurchaseMissingDetail' });
     };
 
     return Batch;
