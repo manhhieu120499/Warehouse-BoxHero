@@ -28,7 +28,22 @@ export default function OrderReleaseProduct() {
     const [showFilter, setShowFilter] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    console.log(listOrderRelease);
+    const [filterStatus, setFilterStatus] = useState('PENDING_PICK');
+
+    const statusTabs = [
+        {
+            name: 'Đang chờ lấy hàng',
+            value: 'PENDING_PICK',
+        },
+        {
+            name: 'Đã hoàn thành',
+            value: 'COMPLETED',
+        },
+        {
+            name: 'Từ chối',
+            value: 'REFUSE',
+        },
+    ];
 
     // Filters
     const [filter, setFilter] = useState({
@@ -50,6 +65,7 @@ export default function OrderReleaseProduct() {
                 orderReleaseID: filter.orderReleaseID,
                 createBy: filter.employeeName,
                 createdAt: filter.createdAt ? format(filter.createdAt, 'yyyy-MM-dd') : null,
+                status: filterStatus,
             };
 
             const res = await filterOrderRelease(params);
@@ -57,16 +73,19 @@ export default function OrderReleaseProduct() {
             if (res && res.status === 'OK') {
                 setListOrderRelease(res.data);
                 setTotalPages(res.pagination?.totalPages || 1);
+            } else {
+                setListOrderRelease([]);
             }
         } catch (error) {
             console.log('Error fetching order releases:', error);
+            setListOrderRelease([]);
         }
     };
 
     useFocusEffect(
         useCallback(() => {
             fetchData(page);
-        }, [page]),
+        }, [page, filterStatus]),
     );
 
     const handleApplyFilter = () => {
@@ -84,6 +103,7 @@ export default function OrderReleaseProduct() {
             receiverName: '',
         };
         setFilter(resetFilter);
+        setFilterStatus('PENDING_PICK');
         setPage(1);
         setShowFilter(false);
 
@@ -92,6 +112,7 @@ export default function OrderReleaseProduct() {
                 page: 1,
                 limit: 10,
                 ...resetFilter,
+                status: 'PENDING_PICK',
             };
             const res = await filterOrderRelease(params);
             if (res && res.status === 'OK') {
@@ -103,35 +124,48 @@ export default function OrderReleaseProduct() {
         }
     };
 
-    const renderItem = ({ item }) => (
-        <View style={styles.card}>
-            <View style={styles.cardHeader}>
-                <Text style={styles.cardId}>{item.orderReleaseID}</Text>
-                <View style={styles.statusTag}>
-                    <Text style={styles.statusText}>Đã xuất kho</Text>
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'COMPLETED':
+                return { bg: '#d1fae5', text: '#059669', label: 'Đã hoàn thành' };
+            case 'PENDING_PICK':
+                return { bg: '#fef3c7', text: '#d97706', label: 'Đang chờ lấy hàng' };
+            case 'REFUSE':
+                return { bg: '#fee2e2', text: '#dc2626', label: 'Từ chối' };
+            default:
+                return { bg: '#f3f4f6', text: '#374151', label: status };
+        }
+    };
+
+    const renderItem = ({ item }) => {
+        const statusStyle = getStatusColor(item.status);
+        return (
+            <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                    <Text style={styles.cardId}>{item.orderReleaseID}</Text>
+                    <View style={[styles.statusTag, { backgroundColor: statusStyle.bg }]}>
+                        <Text style={[styles.statusText, { color: statusStyle.text }]}>{statusStyle.label}</Text>
+                    </View>
                 </View>
+                <View style={styles.cardBody}>
+                    <Text style={styles.infoText}>
+                        Ngày lập: {item.createdAt ? format(new Date(item.createdAt), 'yyyy-MM-dd') : 'N/A'}
+                    </Text>
+                    <Text style={styles.infoText}>Người tạo: {item.employee?.employeeName || item.employeeID}</Text>
+                    <Text style={styles.infoText}>Người nhận: {item.customers?.customerName || 'N/A'}</Text>
+                </View>
+                <TouchableOpacity
+                    style={styles.detailButton}
+                    onPress={() => {
+                        setIsOpen(true);
+                        setOrderSelected(item);
+                    }}
+                >
+                    <Text style={styles.detailButtonText}>Xem chi tiết</Text>
+                </TouchableOpacity>
             </View>
-            <View style={styles.cardBody}>
-                <Text style={styles.infoText}>
-                    Ngày lập: {item.createdAt ? format(new Date(item.createdAt), 'yyyy-MM-dd') : 'N/A'}
-                </Text>
-                <Text style={styles.infoText}>Người tạo: {item.employee?.employeeName || item.employeeID}</Text>
-                <Text style={styles.infoText}>Người nhận: {item.customers?.customerName || 'N/A'}</Text>
-            </View>
-            <TouchableOpacity
-                style={styles.detailButton}
-                onPress={() => {
-                    // Navigate to detail screen if exists, or show modal
-                    // navigation.navigate('OrderReleaseDetail', { id: item.orderReleaseID });
-                    setIsOpen(true);
-                    setOrderSelected(item);
-                    console.log('View detail', item.orderReleaseID);
-                }}
-            >
-                <Text style={styles.detailButtonText}>Xem chi tiết</Text>
-            </TouchableOpacity>
-        </View>
-    );
+        );
+    };
 
     return (
         <DefaultLayout>
@@ -145,6 +179,27 @@ export default function OrderReleaseProduct() {
                     </TouchableOpacity>
                 }
             />
+
+            {/* Status Tabs */}
+            <View style={styles.tabContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {statusTabs.map((tab) => (
+                        <TouchableOpacity
+                            key={tab.value}
+                            style={[styles.tabItem, filterStatus === tab.value && styles.activeTabItem]}
+                            onPress={() => {
+                                setFilterStatus(tab.value);
+                                setPage(1);
+                            }}
+                        >
+                            <Text style={[styles.tabText, filterStatus === tab.value && styles.activeTabText]}>
+                                {tab.name}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
+
             <View style={styles.container}>
                 {loading ? (
                     <View style={styles.center}>
@@ -313,6 +368,33 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f3f4f6',
     },
+    // Tab Styles
+    tabContainer: {
+        backgroundColor: '#fff',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+    },
+    tabItem: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        backgroundColor: '#f3f4f6',
+        marginRight: 12,
+    },
+    activeTabItem: {
+        backgroundColor: '#2563eb',
+    },
+    tabText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#4b5563',
+    },
+    activeTabText: {
+        color: '#fff',
+        fontWeight: '600',
+    },
     listContent: {
         padding: 16,
         paddingBottom: 80,
@@ -355,10 +437,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
-        backgroundColor: '#059669', // Default gray
     },
     statusText: {
-        color: 'white',
         fontSize: 12,
         fontWeight: '600',
     },

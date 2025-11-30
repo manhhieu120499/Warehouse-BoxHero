@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { X, Eye } from 'lucide-react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { X, Package, Layers, Calendar, Box } from 'lucide-react-native';
 import parseToken from '../../../utilities/parseToken';
 import { format } from 'date-fns';
-import BatchExportOfProduct from './BatchExportOfProduct';
 
-const OrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem }) => {
+const OrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem, onConfirm, onRefuse }) => {
     const [orderDetail, setOrderDetail] = useState([]);
     const [warehouse, setWarehouse] = useState(null);
-    const [selectedProduct, setSelectedProduct] = useState(null);
-    const [showBatchModal, setShowBatchModal] = useState(false);
 
     useEffect(() => {
         const getWarehouse = async () => {
@@ -20,245 +17,486 @@ const OrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem }) => {
     }, []);
 
     useEffect(() => {
-        if (!orderReleaseItem) return;
+        if (!orderReleaseItem || !orderReleaseItem.orderReleaseDetails) return;
         const groupDetail = [];
 
-        if (orderReleaseItem.orderReleaseDetails) {
-            const formatOrderReleaseData = orderReleaseItem.orderReleaseDetails.map((item) => {
-                const uom = item.batch?.unit?.conversionQuantity || 1;
-                const totalQuantityExport =
-                    item.orderReleaseBatchBoxDetails?.reduce(
-                        (acc, cur) => acc + Number(cur.quantityExported) * Number(uom),
-                        0,
-                    ) || 0;
-                return {
-                    productID: item.batch?.product?.productID,
-                    productName: item.batch?.product?.productName,
-                    unitName: item.batch?.product?.baseUnitProducts?.baseUnitName,
-                    quantityExported: totalQuantityExport,
+        orderReleaseItem.orderReleaseDetails.forEach((item) => {
+            const product = item.batch.product;
+            const unitName = item.batch.unit.unitName;
+            const existProduct = groupDetail.find(
+                (prod) => prod.productID === product.productID && prod.unitName === unitName,
+            );
+            if (existProduct) {
+                existProduct.quantityExported += item.quantityExported;
+                existProduct.batchOfProductExported.push(item);
+            } else {
+                groupDetail.push({
+                    productID: product.productID,
+                    productName: product.productName,
+                    unitName: unitName,
+                    quantityExported: item.quantityExported,
                     batchOfProductExported: [item],
-                };
-            });
+                });
+            }
+        });
 
-            formatOrderReleaseData.forEach((item) => {
-                const existProduct = groupDetail.find((prod) => prod.productID === item.productID);
-                if (existProduct) {
-                    existProduct.quantityExported += item.quantityExported;
-                    existProduct.batchOfProductExported.push(item.batchOfProductExported[0]);
-                } else {
-                    groupDetail.push({ ...item });
-                }
-            });
-        }
         setOrderDetail(groupDetail);
     }, [orderReleaseItem]);
 
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        return format(new Date(dateString), 'dd/MM/yyyy');
+    };
+
     return (
-        <Modal visible={isOpen} animationType="slide" transparent={true} onRequestClose={onClose}>
-            <View style={styles.modalContainer}>
+        <Modal visible={isOpen} animationType="fade" transparent={true} onRequestClose={onClose}>
+            <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
+                    {/* Header */}
                     <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Chi tiết phiếu xuất kho</Text>
-                        <TouchableOpacity onPress={onClose}>
-                            <X size={24} color="#333" />
+                        <Text style={styles.modalTitle}>Chi tiết phiếu xuất</Text>
+                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                            <X size={20} color="#4B5563" />
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-                        {/* General Info */}
+                    <ScrollView
+                        style={styles.body}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.scrollContent}
+                    >
+                        {/* General Info Card */}
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Thông tin chung</Text>
-
-                            <View style={styles.infoRow}>
-                                <Text style={styles.label}>Mã phiếu:</Text>
-                                <Text style={styles.value}>{orderReleaseItem?.orderReleaseID}</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.label}>Ngày lập:</Text>
-                                <Text style={styles.value}>
-                                    {orderReleaseItem?.createdAt
-                                        ? format(new Date(orderReleaseItem.createdAt), 'dd/MM/yyyy')
-                                        : ''}
-                                </Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.label}>Kho:</Text>
-                                <Text style={styles.value}>{warehouse?.warehouseName}</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.label}>Người lập:</Text>
-                                <Text style={styles.value}>{orderReleaseItem?.employees?.employeeName}</Text>
-                            </View>
-                            <View style={styles.infoRow}>
-                                <Text style={styles.label}>Khách hàng:</Text>
-                                <Text style={styles.value}>
-                                    {orderReleaseItem?.customers?.customerName} (
-                                    {orderReleaseItem?.customers?.customerID})
-                                </Text>
+                            <View style={styles.infoCard}>
+                                <View style={styles.infoRow}>
+                                    <View style={styles.infoItem}>
+                                        <Text style={styles.label}>Mã phiếu</Text>
+                                        <Text style={styles.valueText}>
+                                            {orderReleaseItem?.orderReleaseID || '---'}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.infoItem}>
+                                        <Text style={styles.label}>Ngày lập</Text>
+                                        <Text style={styles.valueText}>
+                                            {orderReleaseItem?.createdAt
+                                                ? format(new Date(orderReleaseItem.createdAt), 'dd/MM/yyyy')
+                                                : '---'}
+                                        </Text>
+                                    </View>
+                                </View>
+                                <View style={styles.divider} />
+                                <View style={styles.infoRow}>
+                                    <View style={styles.infoItem}>
+                                        <Text style={styles.label}>Kho</Text>
+                                        <Text style={styles.valueText}>{warehouse?.warehouseName || '---'}</Text>
+                                    </View>
+                                    <View style={styles.infoItem}>
+                                        <Text style={styles.label}>Người lập</Text>
+                                        <Text style={styles.valueText}>
+                                            {orderReleaseItem?.employees?.employeeName || '---'}
+                                        </Text>
+                                    </View>
+                                </View>
+                                <View style={styles.divider} />
+                                <View style={styles.infoRow}>
+                                    <View style={styles.infoItemFull}>
+                                        <Text style={styles.label}>Khách hàng</Text>
+                                        <Text style={styles.valueText}>
+                                            {orderReleaseItem?.customers?.customerName}{' '}
+                                            <Text style={styles.subValue}>
+                                                ({orderReleaseItem?.customers?.customerID})
+                                            </Text>
+                                        </Text>
+                                    </View>
+                                </View>
                             </View>
                         </View>
 
                         {/* Product List */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Chi tiết xuất kho</Text>
-                            {orderDetail.map((item, index) => (
+                            <Text style={styles.sectionTitle}>Danh sách sản phẩm</Text>
+                            {orderDetail.map((product, index) => (
                                 <View key={index} style={styles.productCard}>
+                                    {/* Product Header */}
                                     <View style={styles.productHeader}>
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={styles.productName}>{item.productName}</Text>
-                                            <Text style={styles.productCode}>{item.productID}</Text>
+                                        <View style={styles.productIcon}>
+                                            <Package size={20} color="#fff" />
                                         </View>
-                                        <TouchableOpacity
-                                            style={styles.detailBtn}
-                                            onPress={() => {
-                                                setSelectedProduct(item);
-                                                setShowBatchModal(true);
-                                            }}
-                                        >
-                                            <Eye size={20} color="#2563eb" />
-                                        </TouchableOpacity>
+                                        <View style={styles.productInfo}>
+                                            <Text style={styles.productName}>{product.productName}</Text>
+                                            <Text style={styles.productId}>{product.productID}</Text>
+                                        </View>
+                                        <View style={styles.totalBadge}>
+                                            <Text style={styles.totalLabel}>Tổng xuất</Text>
+                                            <Text style={styles.totalValue}>
+                                                {product.quantityExported}{' '}
+                                                <Text style={styles.unitText}>{product.unitName}</Text>
+                                            </Text>
+                                        </View>
                                     </View>
 
-                                    <View style={styles.productBody}>
-                                        <View style={styles.productRow}>
-                                            <Text style={styles.productLabel}>Đơn vị tính:</Text>
-                                            <Text style={styles.productValue}>{item.unitName}</Text>
+                                    {/* Batch List */}
+                                    <View style={styles.batchContainer}>
+                                        <View style={styles.tableHeader}>
+                                            <Text style={[styles.headerText, { flex: 3 }]}>LÔ / HSD</Text>
+                                            <Text style={[styles.headerText, { flex: 4 }]}>CHI TIẾT HỘP</Text>
+                                            <Text style={[styles.headerText, { flex: 1.5, textAlign: 'right' }]}>
+                                                SL
+                                            </Text>
                                         </View>
-                                        <View style={styles.productRow}>
-                                            <Text style={styles.productLabel}>Số lượng xuất:</Text>
-                                            <Text style={styles.productValueHighlight}>{item.quantityExported}</Text>
-                                        </View>
+
+                                        {product.batchOfProductExported.map((batchDetail, bIndex) => (
+                                            <View key={bIndex} style={styles.batchRow}>
+                                                {/* Batch Info */}
+                                                <View style={{ flex: 3, paddingRight: 8 }}>
+                                                    <View style={styles.batchIdTag}>
+                                                        <Layers size={12} color="#4B5563" />
+                                                        <Text style={styles.batchIdText}>
+                                                            {batchDetail.batch.batchID}
+                                                        </Text>
+                                                    </View>
+                                                    <View style={styles.expiryRow}>
+                                                        <Calendar size={12} color="#9CA3AF" />
+                                                        <Text style={styles.expiryText}>
+                                                            {formatDate(batchDetail.batch.expiryDate)}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+
+                                                {/* Box Details */}
+                                                <View style={{ flex: 4 }}>
+                                                    {batchDetail.orderReleaseBatchBoxDetails &&
+                                                    batchDetail.orderReleaseBatchBoxDetails.length > 0 ? (
+                                                        <View style={styles.boxList}>
+                                                            {batchDetail.orderReleaseBatchBoxDetails.map(
+                                                                (box, boxIndex) => (
+                                                                    <View key={boxIndex} style={styles.boxTag}>
+                                                                        <Box size={10} color="#4B5563" />
+                                                                        <Text style={styles.boxText}>{box.boxID}</Text>
+                                                                        <View style={styles.boxQtyBadge}>
+                                                                            <Text style={styles.boxQtyText}>
+                                                                                x{box.quantityExported}
+                                                                            </Text>
+                                                                        </View>
+                                                                    </View>
+                                                                ),
+                                                            )}
+                                                        </View>
+                                                    ) : (
+                                                        <Text style={styles.noBoxText}>Không có hộp</Text>
+                                                    )}
+                                                </View>
+
+                                                {/* Quantity */}
+                                                <View
+                                                    style={{
+                                                        flex: 1.5,
+                                                        alignItems: 'flex-end',
+                                                        justifyContent: 'center',
+                                                    }}
+                                                >
+                                                    <Text style={styles.rowQty}>{batchDetail.quantityExported}</Text>
+                                                </View>
+                                            </View>
+                                        ))}
                                     </View>
                                 </View>
                             ))}
                         </View>
                     </ScrollView>
+
+                    {/* Footer Actions */}
+                    {orderReleaseItem?.status === 'PENDING_PICK' && (
+                        <View style={styles.footer}>
+                            <TouchableOpacity style={[styles.actionButton, styles.refuseButton]} onPress={onRefuse}>
+                                <Text style={styles.refuseText}>Từ chối</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.actionButton, styles.confirmButton]} onPress={onConfirm}>
+                                <Text style={styles.confirmText}>Xuất hàng</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
                 </View>
             </View>
-
-            {/* Batch Detail Modal */}
-            {selectedProduct && (
-                <BatchExportOfProduct
-                    item={selectedProduct}
-                    isOpen={showBatchModal}
-                    onClose={() => {
-                        setShowBatchModal(false);
-                        setSelectedProduct(null);
-                    }}
-                />
-            )}
         </Modal>
     );
 };
 
 const styles = StyleSheet.create({
-    modalContainer: {
+    modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(0,0,0,0.6)',
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: 'white',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        height: '90%',
-        padding: 20,
+        backgroundColor: '#F3F4F6',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        height: '92%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
     },
     modalHeader: {
+        backgroundColor: '#fff',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
     },
     modalTitle: {
         fontSize: 18,
-        fontWeight: 'bold',
-        color: '#1f2937',
+        fontWeight: '700',
+        color: '#111827',
+    },
+    closeButton: {
+        padding: 8,
+        backgroundColor: '#F3F4F6',
+        borderRadius: 20,
     },
     body: {
         flex: 1,
+    },
+    scrollContent: {
+        padding: 16,
+        paddingBottom: 20,
     },
     section: {
         marginBottom: 24,
     },
     sectionTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#374151',
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#6B7280',
         marginBottom: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
-        paddingBottom: 8,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    // Info Card
+    infoCard: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
     },
     infoRow: {
         flexDirection: 'row',
-        marginBottom: 8,
+        justifyContent: 'space-between',
+    },
+    infoItem: {
+        width: '48%',
+    },
+    infoItemFull: {
+        width: '100%',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#F3F4F6',
+        marginVertical: 12,
     },
     label: {
-        width: 100,
-        color: '#6b7280',
-        fontSize: 14,
-    },
-    value: {
-        flex: 1,
-        color: '#1f2937',
-        fontSize: 14,
+        fontSize: 12,
+        color: '#9CA3AF',
+        marginBottom: 4,
         fontWeight: '500',
+    },
+    valueText: {
+        fontSize: 14,
+        color: '#1F2937',
+        fontWeight: '600',
+    },
+    subValue: {
+        color: '#6B7280',
+        fontWeight: '400',
     },
     // Product Card
     productCard: {
-        backgroundColor: '#f9fafb',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+        elevation: 3,
+        overflow: 'hidden',
     },
     productHeader: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 12,
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
-        paddingBottom: 8,
+        borderBottomColor: '#F3F4F6',
+    },
+    productIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 10,
+        backgroundColor: '#4F46E5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    productInfo: {
+        flex: 1,
     },
     productName: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#1f2937',
-        marginBottom: 4,
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#111827',
+        marginBottom: 2,
     },
-    productCode: {
-        fontSize: 14,
-        color: '#6b7280',
+    productId: {
+        fontSize: 12,
+        color: '#6B7280',
+        fontFamily: 'monospace',
     },
-    detailBtn: {
-        padding: 8,
-        backgroundColor: '#eff6ff',
+    totalBadge: {
+        alignItems: 'flex-end',
+        backgroundColor: '#EFF6FF',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
         borderRadius: 8,
     },
-    productBody: {
-        gap: 8,
+    totalLabel: {
+        fontSize: 10,
+        color: '#3B82F6',
+        fontWeight: '600',
+        marginBottom: 2,
     },
-    productRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    productLabel: {
+    totalValue: {
         fontSize: 14,
-        color: '#6b7280',
+        fontWeight: '800',
+        color: '#1D4ED8',
     },
-    productValue: {
-        fontSize: 14,
-        color: '#374151',
+    unitText: {
+        fontSize: 11,
         fontWeight: '500',
     },
-    productValueHighlight: {
+    // Batch Table
+    batchContainer: {
+        padding: 16,
+    },
+    tableHeader: {
+        flexDirection: 'row',
+        marginBottom: 12,
+        paddingHorizontal: 4,
+    },
+    headerText: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#9CA3AF',
+    },
+    batchRow: {
+        flexDirection: 'row',
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#F3F4F6',
+    },
+    batchIdTag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        marginBottom: 4,
+    },
+    batchIdText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#374151',
+    },
+    expiryRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    expiryText: {
+        fontSize: 11,
+        color: '#6B7280',
+    },
+    boxList: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+    },
+    boxTag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F9FAFB',
+        paddingLeft: 6,
+        paddingRight: 8,
+        paddingVertical: 4,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        gap: 4,
+    },
+    boxText: {
+        fontSize: 11,
+        color: '#4B5563',
+        fontWeight: '500',
+    },
+    boxQtyBadge: {
+        backgroundColor: '#E5E7EB',
+        paddingHorizontal: 5,
+        paddingVertical: 1,
+        borderRadius: 10,
+    },
+    boxQtyText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#374151',
+    },
+    noBoxText: {
+        fontSize: 12,
+        color: '#9CA3AF',
+        fontStyle: 'italic',
+        marginTop: 4,
+    },
+    rowQty: {
         fontSize: 14,
-        color: '#2563eb',
-        fontWeight: 'bold',
+        fontWeight: '700',
+        color: '#111827',
+    },
+    // Footer Styles
+    footer: {
+        flexDirection: 'row',
+        padding: 16,
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
+        gap: 12,
+    },
+    actionButton: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    refuseButton: {
+        backgroundColor: '#ef4444',
+    },
+    confirmButton: {
+        backgroundColor: '#10b981',
+    },
+    refuseText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    confirmText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
 

@@ -40,6 +40,7 @@ export default function CreateImportDetail() {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [datePickerMode, setDatePickerMode] = useState('manufacture'); // 'manufacture' or 'expiry'
     const [currentProductIndex, setCurrentProductIndex] = useState(null);
+    const [tempDate, setTempDate] = useState(new Date());
 
     useEffect(() => {
         const loadWarehouse = async () => {
@@ -66,39 +67,14 @@ export default function CreateImportDetail() {
                 realAmount: detail.quantity.toString(),
                 errorAmount: 0,
                 batchID: '',
-                manufactureDate: new Date(),
-                expiryDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+                manufactureDate: new Date(new Date().setDate(new Date().getDate() - 1)),
+                expiryDate: new Date(new Date().setDate(new Date().getDate() + 2)),
                 supplierID: '',
                 reasonError: '',
             }));
             setProductList(products);
         }
     }, [proposal]);
-
-    const getDatePickerProps = () => {
-        if (currentProductIndex === null) return {};
-        const item = productList[currentProductIndex];
-        const props = {};
-
-        if (datePickerMode === 'manufacture') {
-            const today = new Date();
-            const expiryDate = new Date(item.expiryDate);
-            const maxNsxByExpiry = new Date(expiryDate);
-            maxNsxByExpiry.setDate(maxNsxByExpiry.getDate() - 1);
-
-            props.maximumDate = today < maxNsxByExpiry ? today : maxNsxByExpiry;
-        } else {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            const manufactureDate = new Date(item.manufactureDate);
-            const minHsdByNsx = new Date(manufactureDate);
-            minHsdByNsx.setDate(minHsdByNsx.getDate() + 1);
-
-            props.minimumDate = today > minHsdByNsx ? today : minHsdByNsx;
-        }
-        return props;
-    };
 
     const handleGenerateCode = () => {
         setOrderInfo({ ...orderInfo, code: generateCode('PNK-') });
@@ -126,14 +102,50 @@ export default function CreateImportDetail() {
     const openDatePicker = (index, mode) => {
         setCurrentProductIndex(index);
         setDatePickerMode(mode);
+        const item = productList[index];
+        setTempDate(mode === 'manufacture' ? new Date(item.manufactureDate) : new Date(item.expiryDate));
         setShowDatePicker(true);
+    };
+
+    const validateAndSave = (date) => {
+        const item = productList[currentProductIndex];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dateToCheck = new Date(date);
+        dateToCheck.setHours(0, 0, 0, 0);
+
+        if (datePickerMode === 'manufacture') {
+            if (dateToCheck >= today) {
+                Alert.alert('Lỗi', 'NSX phải nhỏ hơn ngày hiện tại');
+                return false;
+            }
+            const expiryDate = new Date(item.expiryDate);
+            expiryDate.setHours(0, 0, 0, 0);
+            if (dateToCheck >= expiryDate) {
+                Alert.alert('Lỗi', 'NSX phải nhỏ hơn HSD');
+                return false;
+            }
+            updateProduct(currentProductIndex, 'manufactureDate', date);
+        } else {
+            if (dateToCheck <= today) {
+                Alert.alert('Lỗi', 'HSD phải lớn hơn ngày hiện tại');
+                return false;
+            }
+            const manufactureDate = new Date(item.manufactureDate);
+            manufactureDate.setHours(0, 0, 0, 0);
+            if (dateToCheck <= manufactureDate) {
+                Alert.alert('Lỗi', 'HSD phải lớn hơn NSX');
+                return false;
+            }
+            updateProduct(currentProductIndex, 'expiryDate', date);
+        }
+        return true;
     };
 
     const onDateChange = (event, selectedDate) => {
         setShowDatePicker(false);
         if (selectedDate && currentProductIndex !== null) {
-            const field = datePickerMode === 'manufacture' ? 'manufactureDate' : 'expiryDate';
-            updateProduct(currentProductIndex, field, selectedDate);
+            validateAndSave(selectedDate);
         }
     };
 
@@ -366,64 +378,29 @@ export default function CreateImportDetail() {
                 </ScrollView>
             </KeyboardAvoidingView>
             {Platform.OS === 'android' && showDatePicker && (
-                <DateTimePicker
-                    value={(() => {
-                        if (currentProductIndex === null || !productList[currentProductIndex]) return new Date();
-                        const item = productList[currentProductIndex];
-                        let dateValue = new Date(
-                            datePickerMode === 'manufacture' ? item.manufactureDate : item.expiryDate,
-                        );
-
-                        // Ensure dateValue is valid
-                        if (isNaN(dateValue.getTime())) dateValue = new Date();
-
-                        const props = getDatePickerProps();
-                        if (props.minimumDate && dateValue < props.minimumDate) dateValue = props.minimumDate;
-                        if (props.maximumDate && dateValue > props.maximumDate) dateValue = props.maximumDate;
-                        return dateValue;
-                    })()}
-                    mode="date"
-                    display="default"
-                    onChange={onDateChange}
-                    {...getDatePickerProps()}
-                />
+                <DateTimePicker value={tempDate} mode="date" display="default" onChange={onDateChange} />
             )}
             {Platform.OS === 'ios' && showDatePicker && (
                 <Modal transparent={true} animationType="fade">
                     <View style={styles.iosModalContainer}>
                         <View style={styles.iosModalContent}>
                             <DateTimePicker
-                                value={(() => {
-                                    if (currentProductIndex === null || !productList[currentProductIndex])
-                                        return new Date();
-                                    const item = productList[currentProductIndex];
-                                    let dateValue = new Date(
-                                        datePickerMode === 'manufacture' ? item.manufactureDate : item.expiryDate,
-                                    );
-
-                                    // Ensure dateValue is valid
-                                    if (isNaN(dateValue.getTime())) dateValue = new Date();
-
-                                    const props = getDatePickerProps();
-                                    if (props.minimumDate && dateValue < props.minimumDate)
-                                        dateValue = props.minimumDate;
-                                    if (props.maximumDate && dateValue > props.maximumDate)
-                                        dateValue = props.maximumDate;
-                                    return dateValue;
-                                })()}
+                                value={tempDate}
                                 mode="date"
                                 display="inline"
                                 onChange={(event, selectedDate) => {
-                                    if (selectedDate && currentProductIndex !== null) {
-                                        const field =
-                                            datePickerMode === 'manufacture' ? 'manufactureDate' : 'expiryDate';
-                                        updateProduct(currentProductIndex, field, selectedDate);
-                                    }
+                                    if (selectedDate) setTempDate(selectedDate);
                                 }}
                                 style={{ height: 300, width: '100%' }}
-                                {...getDatePickerProps()}
                             />
-                            <TouchableOpacity style={styles.iosConfirmButton} onPress={() => setShowDatePicker(false)}>
+                            <TouchableOpacity
+                                style={styles.iosConfirmButton}
+                                onPress={() => {
+                                    if (validateAndSave(tempDate)) {
+                                        setShowDatePicker(false);
+                                    }
+                                }}
+                            >
                                 <Text style={styles.iosConfirmText}>Xong</Text>
                             </TouchableOpacity>
                         </View>
