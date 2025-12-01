@@ -391,6 +391,82 @@ class OrderReleaseService {
             }
         });
     }
+    async getOrderReleaseById(orderReleaseID) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const orderRelease = await OrderRelease.findOne({
+                    where: { orderReleaseID },
+                    include: [
+                        {
+                            model: Employee,
+                            as: 'employees',
+                            attributes: ['employeeID', 'employeeName'],
+                        },
+                        {
+                            model: Customer,
+                            as: 'customers',
+                            attributes: ['customerID', 'customerName'],
+                        },
+                        {
+                            model: OrderReleaseDetail,
+                            as: 'orderReleaseDetails',
+                            include: [
+                                {
+                                    model: OrderReleaseBatchBoxDetail,
+                                    as: 'orderReleaseBatchBoxDetails',
+                                },
+                                {
+                                    model: Batch,
+                                    as: 'batch',
+                                    include: [
+                                        {
+                                            model: Product,
+                                            as: 'product',
+                                            attributes: ['productID', 'productName'],
+                                            include: [
+                                                {
+                                                    model: BaseUnitProduct,
+                                                    as: 'baseUnitProducts',
+                                                    attributes: ['baseUnitProductID', 'baseUnitName'],
+                                                },
+                                            ],
+                                        },
+                                        {
+                                            model: Unit,
+                                            as: 'unit',
+                                            attributes: ['unitName', 'conversionQuantity'],
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                });
+
+                if (!orderRelease) {
+                    return resolve({
+                        status: 'ERROR',
+                        statusHttp: HTTP_OK,
+                        message: 'Phiếu xuất kho không tồn tại',
+                    });
+                }
+
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    data: orderRelease,
+                    message: 'Lấy thông tin phiếu xuất kho thành công',
+                });
+            } catch (err) {
+                console.error('Lấy thông tin phiếu xuất kho lỗi:', err);
+                reject({
+                    status: 'ERROR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err.message,
+                });
+            }
+        });
+    }
     checkOrderReleaseID(orderReleaseID) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -527,6 +603,238 @@ class OrderReleaseService {
                     status: 'ERROR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
                     message: err.message || err,
+                });
+            }
+        });
+    }
+
+    generateQRForOrderReleases() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const orderReleases = await OrderRelease.findAll();
+                const updates = orderReleases.map(async (orderRelease) => {
+                    const qrCode = await generateQRURL(orderRelease.orderReleaseID);
+                    orderRelease.qrCode = qrCode;
+                    return orderRelease.save();
+                });
+
+                await Promise.all(updates);
+
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Generated QR codes for all order releases successfully',
+                    data: orderReleases,
+                });
+            } catch (e) {
+                console.log(e);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: 'Error generating QR codes for order releases',
+                    error: e,
+                });
+            }
+        });
+    }
+
+    async completeOrderRelease(orderReleaseID) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                // 1. Find OrderRelease
+                const orderRelease = await OrderRelease.findOne({
+                    where: { orderReleaseID },
+                    include: [
+                        {
+                            model: OrderReleaseDetail,
+                            as: 'orderReleaseDetails',
+                            include: [
+                                {
+                                    model: OrderReleaseBatchBoxDetail,
+                                    as: 'orderReleaseBatchBoxDetails',
+                                },
+                            ],
+                        },
+                    ],
+                    transaction,
+                });
+
+                if (!orderRelease) {
+                    await transaction.rollback();
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Phiếu xuất kho không tồn tại',
+                    });
+                }
+
+                if (orderRelease.status !== 'PENDING_PICK') {
+                    await transaction.rollback();
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Phiếu xuất kho không ở trạng thái chờ xuất',
+                    });
+                }
+
+                // 2. Process Details
+                for (const detail of orderRelease.orderReleaseDetails) {
+                    for (const boxDetail of detail.orderReleaseBatchBoxDetails) {
+                        const { batchID, boxID, quantityExported } = boxDetail;
+
+                        // Get Batch and Unit info for acreage calculation and product update
+                        const batch = await Batch.findOne({
+                            where: { batchID },
+                            include: [
+                                { model: Unit, as: 'unit' },
+                                { model: Product, as: 'product' },
+                            ],
+                            transaction,
+                        });
+
+                        if (!batch) {
+                            return reject({
+                                status: 'ERROR',
+                                statusHttp: HTTP_BAD_REQUEST,
+                                message: 'Lô hàng không tồn tại',
+                            });
+                        }
+
+                        // Update BatchBox
+                        await BatchBox.increment(
+                            {
+                                quantity: -quantityExported,
+                                pendingOutQuantity: -quantityExported,
+                            },
+                            { where: { batchID, boxID }, transaction },
+                        );
+
+                        // Update Batch
+                        await Batch.increment(
+                            {
+                                remainAmount: -quantityExported,
+                                pendingOutAmount: -quantityExported,
+                            },
+                            { where: { batchID }, transaction },
+                        );
+
+                        // Update Box Acreage
+                        const acreageReleased =
+                            quantityExported * batch.unit.length * batch.unit.width * batch.unit.height;
+                        await Box.increment({ remainingAcreage: acreageReleased }, { where: { boxID }, transaction });
+
+                        // Update Product Amount (Convert to base unit)
+                        const quantityInBaseUnit = quantityExported * batch.unit.conversionQuantity;
+                        await Product.increment(
+                            { amount: -quantityInBaseUnit },
+                            { where: { productID: batch.productID }, transaction },
+                        );
+                    }
+                }
+
+                // 3. Update OrderRelease Status
+                await OrderRelease.update({ status: 'COMPLETED' }, { where: { orderReleaseID }, transaction });
+
+                await transaction.commit();
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Hoàn thành phiếu xuất kho thành công',
+                });
+            } catch (err) {
+                await transaction.rollback();
+                console.error('Hoàn thành phiếu xuất kho lỗi:', err);
+                reject({
+                    status: 'ERROR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err.message,
+                });
+            }
+        });
+    }
+
+    async refuseOrderRelease(orderReleaseID) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                // 1. Find OrderRelease
+                const orderRelease = await OrderRelease.findOne({
+                    where: { orderReleaseID },
+                    include: [
+                        {
+                            model: OrderReleaseDetail,
+                            as: 'orderReleaseDetails',
+                            include: [
+                                {
+                                    model: OrderReleaseBatchBoxDetail,
+                                    as: 'orderReleaseBatchBoxDetails',
+                                },
+                            ],
+                        },
+                    ],
+                    transaction,
+                });
+
+                if (!orderRelease) {
+                    await transaction.rollback();
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Phiếu xuất kho không tồn tại',
+                    });
+                }
+
+                if (orderRelease.status !== 'PENDING_PICK') {
+                    await transaction.rollback();
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Phiếu xuất kho không ở trạng thái chờ xuất',
+                    });
+                }
+
+                // 2. Process Details to revert reservations
+                for (const detail of orderRelease.orderReleaseDetails) {
+                    for (const boxDetail of detail.orderReleaseBatchBoxDetails) {
+                        const { batchID, boxID, quantityExported } = boxDetail;
+
+                        // Revert BatchBox: validQuantity (+), pendingOutQuantity (-)
+                        await BatchBox.increment(
+                            {
+                                validQuantity: quantityExported,
+                                pendingOutQuantity: -quantityExported,
+                            },
+                            { where: { batchID, boxID }, transaction },
+                        );
+
+                        // Revert Batch: validAmount (+), pendingOutAmount (-)
+                        await Batch.increment(
+                            {
+                                validAmount: quantityExported,
+                                pendingOutAmount: -quantityExported,
+                            },
+                            { where: { batchID }, transaction },
+                        );
+                    }
+                }
+
+                // 3. Update OrderRelease Status
+                await OrderRelease.update({ status: 'REFUSE' }, { where: { orderReleaseID }, transaction });
+
+                await transaction.commit();
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Từ chối phiếu xuất kho thành công',
+                });
+            } catch (err) {
+                await transaction.rollback();
+                console.error('Từ chối phiếu xuất kho lỗi:', err);
+                reject({
+                    status: 'ERROR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err.message,
                 });
             }
         });

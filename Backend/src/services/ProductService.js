@@ -31,6 +31,7 @@ class ProductService {
                         {
                             model: Batch,
                             as: 'batches',
+                            where: { remainAmount: { [Op.gt]: 0 } },
                         },
                         {
                             model: BaseUnitProduct,

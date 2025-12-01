@@ -49,6 +49,45 @@ class OrderReleaseController {
             return res.status(err.statusHttp || 500).json(err.message);
         }
     }
+    async getOrderReleaseById(req, res) {
+        try {
+            const { orderReleaseID } = req.params;
+            const { statusHttp, ...response } = await OrderReleaseService.getOrderReleaseById(orderReleaseID);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            console.error(err);
+            return res.status(err.statusHttp || 500).json(err.message);
+        }
+    }
+    async generateQR(req, res) {
+        try {
+            const { statusHttp, ...response } = await OrderReleaseService.generateQRForOrderReleases();
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            console.error(err);
+            return res.status(err.statusHttp || 500).json(err.message);
+        }
+    }
+    async completeOrderRelease(req, res) {
+        try {
+            const { orderReleaseID } = req.body;
+            const { statusHttp, ...response } = await OrderReleaseService.completeOrderRelease(orderReleaseID);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            console.error(err);
+            return res.status(err.statusHttp || 500).json(err.message);
+        }
+    }
+    async refuseOrderRelease(req, res) {
+        try {
+            const { orderReleaseID } = req.body;
+            const { statusHttp, ...response } = await OrderReleaseService.refuseOrderRelease(orderReleaseID);
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            console.error(err);
+            return res.status(err.statusHttp || 500).json(err.message);
+        }
+    }
 }
 
 module.exports = new OrderReleaseController();

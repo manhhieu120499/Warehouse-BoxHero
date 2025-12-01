@@ -447,7 +447,7 @@ class BatchBoxService {
                 const listBatchMoveLog = [];
                 for (const loc of oldLocations) {
                     let totalQuantityChange = 0;
-                    const { batchID, quantity } = loc;
+                    const { batchID, quantity, validQuantity } = loc;
                     const batch = await Batch.findOne({
                         where: { batchID },
                         include: [{ model: Unit, as: 'unit' }],
@@ -502,6 +502,15 @@ class BatchBoxService {
                         });
                     }
 
+                    // Validate: Không được chuyển hàng đang pending (pendingOutQuantity)
+                    if (quantity < batchBoxExist.pendingOutQuantity) {
+                        return reject({
+                            status: 'ERR',
+                            statusHttp: HTTP_BAD_REQUEST,
+                            message: `Số lượng còn lại (${quantity}) không được nhỏ hơn số lượng đang chờ xuất (${batchBoxExist.pendingOutQuantity})`,
+                        });
+                    }
+
                     const unitVolume = batch.unit.length * batch.unit.width * batch.unit.height;
                     const currentQuantity = batchBoxExist.quantity;
                     const requiredVolume = (currentQuantity - quantity) * unitVolume;
@@ -511,6 +520,7 @@ class BatchBoxService {
                     await db.BatchBox.update(
                         {
                             quantity,
+                            validQuantity,
                         },
                         { where: { batchID: batch.batchID, boxID: boxExist.boxID }, transaction },
                     );
@@ -530,12 +540,14 @@ class BatchBoxService {
                     listBatchMoveLog.push({ batchID: batch.batchID, logID: log.logID });
                     // Cập nhật remain của box
                     boxExist.remainingAcreage += requiredVolume;
-                    if (boxExist.remainingAcreage === 0) {
-                        boxExist.status = 'FULL';
-                    } else if (boxExist.status === 'AVAILABLE') {
-                        boxExist.status = 'OCCUPIED';
-                    }
+
                     await db.Box.increment({ remainingAcreage: requiredVolume }, { where: { boxID }, transaction });
+
+                    // Cập nhật status box
+                    const updatedBox = await Box.findOne({ where: { boxID }, transaction });
+                    if (updatedBox.remainingAcreage > 0 && updatedBox.status === 'FULL') {
+                        await db.Box.update({ status: 'OCCUPIED' }, { where: { boxID }, transaction });
+                    }
                 }
 
                 // 2. Duyệt từng location để kiểm tra và cập nhật
@@ -610,6 +622,7 @@ class BatchBoxService {
                             });
                             if (oldBatchBox) {
                                 oldBatchBox.quantity += quantity;
+                                oldBatchBox.validQuantity += quantity;
                                 await oldBatchBox.save({ transaction });
                             } else {
                                 // Cập nhật BatchBox
@@ -618,6 +631,8 @@ class BatchBoxService {
                                         batchID: batch.batchID,
                                         boxID: boxExist.boxID,
                                         quantity,
+                                        validQuantity: quantity,
+                                        pendingOutQuantity: 0,
                                     },
                                     { transaction },
                                 );
@@ -635,15 +650,18 @@ class BatchBoxService {
 
                             // Cập nhật remain của box
                             boxExist.remainingAcreage -= requiredVolume;
-                            if (boxExist.remainingAcreage === 0) {
-                                boxExist.status = 'FULL';
-                            } else if (boxExist.status === 'AVAILABLE') {
-                                boxExist.status = 'OCCUPIED';
-                            }
+
                             await db.Box.increment(
                                 { remainingAcreage: -requiredVolume },
                                 { where: { boxID }, transaction },
                             );
+
+                            // Cập nhật status
+                            if (boxExist.remainingAcreage === 0) {
+                                await db.Box.update({ status: 'FULL' }, { where: { boxID }, transaction });
+                            } else if (boxExist.status === 'AVAILABLE') {
+                                await db.Box.update({ status: 'OCCUPIED' }, { where: { boxID }, transaction });
+                            }
                         }
                     }
                 }

@@ -10,6 +10,7 @@ const Shelf = db.Shelf;
 const Zone = db.Zone;
 const dotenv = require('dotenv');
 const { Op } = require('sequelize');
+const { generateQRURL } = require('../common');
 
 dotenv.config();
 
@@ -496,7 +497,7 @@ class BatchService {
                             ],
                             through: {
                                 model: BatchBox,
-                                attributes: ['quantity'],
+                                attributes: ['quantity', 'validQuantity', 'pendingOutQuantity'],
                             },
                             include: [
                                 {
@@ -654,6 +655,36 @@ class BatchService {
                     status: 'ERR',
                     statusHttp: HTTP_INTERNAL_SERVER_ERROR,
                     message: err,
+                });
+            }
+        });
+    }
+
+    generateQRForBatches() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const batches = await Batch.findAll();
+                const updates = batches.map(async (batch) => {
+                    const qrCode = await generateQRURL(batch.batchID);
+                    batch.qrCode = qrCode;
+                    return batch.save();
+                });
+
+                await Promise.all(updates);
+
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Generated QR codes for all batches successfully',
+                    data: batches,
+                });
+            } catch (e) {
+                console.log(e);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: 'Error generating QR codes for batches',
+                    error: e,
                 });
             }
         });
