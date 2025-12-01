@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, Button, TouchableOpacity, Modal, Alert } from '
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function QRScanner({ visible, onScanned, onClose, qrCheck }) {
+export default function QRScanner({ visible, onScanned, onClose, qrCheck, descriptionText }) {
     const [permission, requestPermission] = useCameraPermissions();
     const scanLockRef = useRef(false); // 🔒 lock quét
     const [reRender, setReRender] = useState(false); // để force render khi mở/đóng modal
@@ -21,7 +21,7 @@ export default function QRScanner({ visible, onScanned, onClose, qrCheck }) {
         scanLockRef.current = true; // khóa quét ngay lập tức
         console.log('Scanned:', data);
 
-        if (data !== qrCheck) {
+        if (qrCheck && data !== qrCheck) {
             Alert.alert('Thông báo', 'Mã QR không trùng khớp với mã QR của lô hàng.');
         } else if (onScanned) {
             onScanned(data);
@@ -78,7 +78,9 @@ export default function QRScanner({ visible, onScanned, onClose, qrCheck }) {
 
                         {/* Hướng dẫn */}
                         <View style={styles.instructionContainer}>
-                            <Text style={styles.instructionText}>Di chuyển camera đến mã QR</Text>
+                            <Text style={styles.instructionText}>
+                                {descriptionText || 'Di chuyển camera đến mã QR'}
+                            </Text>
                         </View>
                     </CameraView>
                 )}

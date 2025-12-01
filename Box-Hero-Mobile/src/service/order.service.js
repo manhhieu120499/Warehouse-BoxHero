@@ -262,7 +262,12 @@ export const saveOrderRelease = async (payload) => {
         });
         return res;
     } catch (err) {
-        throw new Error(err.response.data);
+        console.log('login failed', err);
+        Alert.alert(
+            'Lỗi',
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
+        return null;
     }
 };
 
@@ -288,6 +293,95 @@ export const filterOrderRelease = async (params) => {
         );
         return res.data;
     } catch (err) {
-        throw new Error(err.response.data);
+        console.log('login failed', err);
+        Alert.alert(
+            'Lỗi',
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
+        return null;
+    }
+};
+
+export const fetchOrderReleaseById = async (orderReleaseID) => {
+    try {
+        const userJSON = await AsyncStorage.getItem('tokenUser');
+        const { employeeID, accessToken } = JSON.parse(userJSON);
+        const warehouse = await parseToken('warehouse');
+
+        const res = await request.get(`/order-release/get-order-release-by-id/${orderReleaseID}`, {
+            headers: {
+                token: `Bearer ${accessToken}`,
+                employeeid: employeeID,
+                warehouseid: warehouse.warehouseID,
+            },
+        });
+        return res.data;
+    } catch (err) {
+        console.log('fetchOrderReleaseById failed', err);
+        Alert.alert(
+            'Lỗi',
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
+        return null;
+    }
+};
+
+export const completeOrderRelease = async (orderReleaseID) => {
+    try {
+        const userJSON = await AsyncStorage.getItem('tokenUser');
+        const { employeeID, accessToken } = JSON.parse(userJSON);
+        const warehouse = await parseToken('warehouse');
+
+        const res = await request.post(
+            `/order-release/complete`,
+            {
+                orderReleaseID,
+            },
+            {
+                headers: {
+                    token: `Bearer ${accessToken}`,
+                    employeeid: employeeID,
+                    warehouseid: warehouse.warehouseID,
+                },
+            },
+        );
+        return res.data;
+    } catch (err) {
+        console.log('completeOrderRelease failed', err);
+        Alert.alert(
+            'Lỗi',
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
+        return null;
+    }
+};
+
+export const refuseOrderRelease = async (orderReleaseID) => {
+    try {
+        const userJSON = await AsyncStorage.getItem('tokenUser');
+        const { employeeID, accessToken } = JSON.parse(userJSON);
+        const warehouse = await parseToken('warehouse');
+
+        const res = await request.post(
+            `/order-release/refuse`,
+            {
+                orderReleaseID,
+            },
+            {
+                headers: {
+                    token: `Bearer ${accessToken}`,
+                    employeeid: employeeID,
+                    warehouseid: warehouse.warehouseID,
+                },
+            },
+        );
+        return res.data;
+    } catch (err) {
+        console.log('refuseOrderRelease failed', err);
+        Alert.alert(
+            'Lỗi',
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+        );
+        return null;
     }
 };

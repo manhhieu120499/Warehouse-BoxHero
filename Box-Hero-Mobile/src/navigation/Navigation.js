@@ -19,6 +19,7 @@ import CreateMissingImportDetail from '../screens/CreateMissingImportDetail';
 import MissingImport from '../screens/MissingImport';
 import OrderReleaseProduct from '../screens/OrderReleaseProduct';
 import CreateOrderReleaseProduct from '../screens/CreateOrderReleaseProduct';
+import ScanOrderRelease from '../screens/ScanOrderRelease';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,6 +51,7 @@ export default function Navigation() {
                 <Stack.Screen name="MissingImport" component={MissingImport} />
                 <Stack.Screen name="CreateExport" component={OrderReleaseProduct} />
                 <Stack.Screen name="CreateOrderRelease" component={CreateOrderReleaseProduct} />
+                <Stack.Screen name="ScanOrderRelease" component={ScanOrderRelease} />
             </Stack.Navigator>
         </NavigationContainer>
     );

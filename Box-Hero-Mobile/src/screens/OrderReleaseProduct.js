@@ -10,15 +10,17 @@ import {
     Modal,
     ScrollView,
     Platform,
+    Alert,
 } from 'react-native';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { Filter, Calendar, X, ChevronRight, ChevronLeft, Plus } from 'lucide-react-native';
-import { filterOrderRelease } from '../service/order.service';
+import { Filter, Calendar, X, ChevronRight, ChevronLeft, Scan } from 'lucide-react-native';
+import { fetchOrderReleaseById, filterOrderRelease } from '../service/order.service';
 import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import OrderReleaseDetail from '../components/partials/OrderReleaseScreenComponents/OrderReleaseDetail';
+import QRScanner from '../components/QRScanner';
 
 export default function OrderReleaseProduct() {
     const navigation = useNavigation();
@@ -57,6 +59,7 @@ export default function OrderReleaseProduct() {
     // Modal open order detail
     const [isOpen, setIsOpen] = useState(false);
     const [orderSelected, setOrderSelected] = useState(null);
+    const [showScanner, setShowScanner] = useState(false);
 
     const fetchData = async (currentPage = 1) => {
         try {
@@ -69,7 +72,6 @@ export default function OrderReleaseProduct() {
             };
 
             const res = await filterOrderRelease(params);
-            console.log('res', res);
             if (res && res.status === 'OK') {
                 setListOrderRelease(res.data);
                 setTotalPages(res.pagination?.totalPages || 1);
@@ -216,8 +218,8 @@ export default function OrderReleaseProduct() {
                 )}
 
                 {/* Floating Action Button */}
-                <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreateOrderRelease')}>
-                    <Plus size={24} color="white" />
+                <TouchableOpacity style={styles.fab} onPress={() => setShowScanner(true)}>
+                    <Scan size={24} color="white" />
                 </TouchableOpacity>
 
                 {/* Pagination */}
@@ -357,8 +359,28 @@ export default function OrderReleaseProduct() {
                         setOrderSelected(null);
                     }}
                     orderReleaseItem={orderSelected}
+                    refreshData={async () => await fetchData(page)}
                 />
             )}
+
+            <QRScanner
+                visible={showScanner}
+                onClose={() => setShowScanner(false)}
+                onScanned={async (code) => {
+                    const orderFind = await fetchOrderReleaseById(code);
+                    setShowScanner(false);
+
+                    if (!orderFind) return;
+
+                    if (orderFind.status === 'OK') {
+                        setIsOpen(true);
+                        setOrderSelected(orderFind.data);
+                    } else {
+                        console.log(111);
+                        Alert.alert('Lỗi', orderFind.message || 'Không tìm thấy phiếu xuất kho');
+                    }
+                }}
+            />
         </DefaultLayout>
     );
 }

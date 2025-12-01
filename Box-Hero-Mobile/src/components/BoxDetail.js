@@ -58,11 +58,26 @@ const BatchCard = React.memo(({ batch, isSelected, onCheckboxChange, currentUser
                     <Text style={styles.infoValue}>{batch.product?.productID}</Text>
                 </View>
                 <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Số lượng:</Text>
                     <Text style={[styles.infoValue, styles.highlightText]}>
                         {quantity} {batch.unit?.unitName}
                     </Text>
                 </View>
+                {boxID && (
+                    <>
+                        <View style={styles.infoRow}>
+                            <Text style={styles.infoLabel}>Hợp lệ:</Text>
+                            <Text style={[styles.infoValue, { color: '#2563EB' }]}>
+                                {batch.batch_boxes?.validQuantity} {batch.unit?.unitName}
+                            </Text>
+                        </View>
+                        <View style={styles.infoRow}>
+                            <Text style={styles.infoLabel}>Chờ xuất:</Text>
+                            <Text style={[styles.infoValue, { color: '#F59E0B' }]}>
+                                {batch.batch_boxes?.pendingOutQuantity} {batch.unit?.unitName}
+                            </Text>
+                        </View>
+                    </>
+                )}
                 <View style={styles.infoRow}>
                     <Text style={styles.infoLabel}>NSX:</Text>
                     <Text style={styles.infoValue}>{convertDateVN(batch.manufactureDate)}</Text>

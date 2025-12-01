@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { X, Package, Layers, Calendar, Box } from 'lucide-react-native';
 import parseToken from '../../../utilities/parseToken';
+import { useNavigation } from '@react-navigation/native';
 import { format } from 'date-fns';
+import { refuseOrderRelease } from '../../../service/order.service';
 
-const OrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem, onConfirm, onRefuse }) => {
+const OrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem, refreshData }) => {
+    const navigation = useNavigation();
     const [orderDetail, setOrderDetail] = useState([]);
     const [warehouse, setWarehouse] = useState(null);
+
+    console.log('orderReleaseItem', orderReleaseItem.status);
 
     useEffect(() => {
         const getWarehouse = async () => {
@@ -48,6 +53,31 @@ const OrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem, onConfirm, onRe
         return format(new Date(dateString), 'dd/MM/yyyy');
     };
 
+    const onRefuse = async () => {
+        Alert.alert('Từ chối', 'Bạn có chắc chắn muốn từ chối phiếu xuất kho này không?', [
+            {
+                text: 'Hủy',
+                onPress: () => {},
+            },
+            {
+                text: 'Xác nhận',
+                onPress: async () => {
+                    const resRefuse = await refuseOrderRelease(orderReleaseItem.orderReleaseID);
+                    if (resRefuse.status === 'OK') {
+                        onClose();
+                        if (refreshData) await refreshData();
+                        Alert.alert('Thành công', 'Đã từ chối phiếu xuất kho!');
+                    }
+                },
+            },
+        ]);
+    };
+
+    const onConfirm = () => {
+        onClose();
+        navigation.navigate('ScanOrderRelease', { orderReleaseItem });
+    };
+
     return (
         <Modal visible={isOpen} animationType="fade" transparent={true} onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
@@ -69,14 +99,14 @@ const OrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem, onConfirm, onRe
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Thông tin chung</Text>
                             <View style={styles.infoCard}>
-                                <View style={styles.infoRow}>
-                                    <View style={styles.infoItem}>
+                                <View style={styles.infoGrid}>
+                                    <View style={styles.infoItemGrid}>
                                         <Text style={styles.label}>Mã phiếu</Text>
                                         <Text style={styles.valueText}>
                                             {orderReleaseItem?.orderReleaseID || '---'}
                                         </Text>
                                     </View>
-                                    <View style={styles.infoItem}>
+                                    <View style={styles.infoItemGrid}>
                                         <Text style={styles.label}>Ngày lập</Text>
                                         <Text style={styles.valueText}>
                                             {orderReleaseItem?.createdAt
@@ -84,14 +114,21 @@ const OrderReleaseDetail = ({ isOpen, onClose, orderReleaseItem, onConfirm, onRe
                                                 : '---'}
                                         </Text>
                                     </View>
-                                </View>
-                                <View style={styles.divider} />
-                                <View style={styles.infoRow}>
-                                    <View style={styles.infoItem}>
+                                    {orderReleaseItem?.status === 'COMPLETED' && (
+                                        <View style={styles.infoItemGrid}>
+                                            <Text style={styles.label}>Ngày xuất</Text>
+                                            <Text style={styles.valueText}>
+                                                {orderReleaseItem?.updatedAt
+                                                    ? format(new Date(orderReleaseItem.updatedAt), 'dd/MM/yyyy')
+                                                    : '---'}
+                                            </Text>
+                                        </View>
+                                    )}
+                                    <View style={styles.infoItemGrid}>
                                         <Text style={styles.label}>Kho</Text>
                                         <Text style={styles.valueText}>{warehouse?.warehouseName || '---'}</Text>
                                     </View>
-                                    <View style={styles.infoItem}>
+                                    <View style={styles.infoItemGrid}>
                                         <Text style={styles.label}>Người lập</Text>
                                         <Text style={styles.valueText}>
                                             {orderReleaseItem?.employees?.employeeName || '---'}
@@ -470,6 +507,7 @@ const styles = StyleSheet.create({
     footer: {
         flexDirection: 'row',
         padding: 16,
+        paddingBottom: 30,
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderTopColor: '#E5E7EB',
@@ -497,6 +535,14 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    infoGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+    },
+    infoItemGrid: {
+        width: '50%',
+        marginBottom: 16,
     },
 });
 
