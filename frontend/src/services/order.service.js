@@ -253,16 +253,31 @@ export const validatePayloadCreateReceiptMissing = (payload) => {
 export const saveOrderRelease = async (payload) => {
     try {
         const token = parseToken('tokenUser');
-        const res = await request.post('api/order-release/create', payload, {
-            headers: {
-                token: `Bearer ${token.accessToken}`,
+        const warehouse = parseToken('warehouse');
+        const res = await request.post(
+            'api/order-release/create',
+            {
+                ...payload,
+                warehouseID: warehouse.warehouseID,
                 employeeID: token.employeeID,
-                warehouseID: token.warehouseID,
             },
-        });
+            {
+                headers: {
+                    token: `Bearer ${token.accessToken}`,
+                    employeeID: token.employeeID,
+                    warehouseID: warehouse.warehouseID,
+                },
+            },
+        );
         return res;
     } catch (err) {
-        throw new Error(err.response.data);
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
     }
 };
 
@@ -298,6 +313,38 @@ export const checkOrderReleaseID = async (orderReleaseID) => {
                 token: `Bearer ${token.accessToken}`,
                 employeeID: token.employeeID,
                 warehouseID: token.warehouseID,
+            },
+        });
+        return res.data;
+    } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+
+        return err;
+    }
+};
+
+export const suggestExportProduct = async ({ payload }) => {
+    // payload example:
+    //     {
+    //     "type": "FIFO",
+    //     "items": [
+    //         {
+    //             "productID": "SP1",
+    //             "unitID": "1",
+    //             "quantity": 4
+    //         }
+    //     ]
+    // }
+    try {
+        const token = parseToken('tokenUser');
+        const res = await request.post(`/api/order-release/suggest-export`, payload, {
+            headers: {
+                token: `Bearer ${token.accessToken}`,
+                employeeID: token.employeeID,
             },
         });
         return res.data;

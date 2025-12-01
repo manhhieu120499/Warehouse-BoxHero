@@ -1,5 +1,6 @@
 // src/pages/Warehouse3D/Warehouse3D.jsx
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Plane, Text, Html, Box } from '@react-three/drei';
 import useShelvesData from '@/hooks/useShelvesData';
@@ -32,6 +33,7 @@ export default function Warehouse3D() {
     const [batchFilter, setBatchFilter] = useState('');
     const [typeFilter, setTypeFilter] = useState('PRODUCT');
     const [searchResult, setSearchResult] = useState([]);
+    const location = useLocation();
 
     // Tinh chỉnh để xếp các kệ theo 10 cột × 10 hàng (BX1-BX100)
     const getShelfPosition = (index) => {
@@ -86,6 +88,27 @@ export default function Warehouse3D() {
     useEffect(() => {
         fetchCountBatchesWithoutLocation();
     }, []);
+
+    useEffect(() => {
+        if (location.state?.batchID && location.state?.type === 'BATCH') {
+            setBatchFilter(location.state.batchID);
+            setTypeFilter('BATCH');
+            const fetchBatchLocation = async () => {
+                const warehouse = parseToken('warehouse');
+                const res = await getBoxContainBatch(
+                    warehouse.warehouseID,
+                    location.state.batchID.trim().toUpperCase(),
+                );
+                if (res.data?.status === 'OK') {
+                    setSearchResult(res.data.data);
+                    if (res.data.data.length === 0) {
+                        toast.success('Không có ô nào chứa lô này!', styleMessage);
+                    }
+                }
+            };
+            fetchBatchLocation();
+        }
+    }, [location.state]);
 
     return (
         <div

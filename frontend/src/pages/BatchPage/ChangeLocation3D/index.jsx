@@ -17,6 +17,8 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
     const [localBatches, setLocalBatches] = useState([]);
     const [localShelves, setLocalShelves] = useState([]);
 
+    console.log('changelocation', batches);
+
     // Tinh chỉnh để xếp các kệ theo 10 cột × 10 hàng (BX1-BX100)
     const getShelfPosition = (index) => {
         const col = Math.floor(index / 10);
@@ -35,10 +37,6 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
         setLocalShelves(shelvesData?.map((s) => ({ ...s })));
     }, [batches, shelvesData]);
 
-    useEffect(() => {
-        console.log(localBatches);
-    }, [localBatches]);
-
     const handleCheckboxChange = (batchID) => {
         setSelectedBatch(batchID);
     };
@@ -54,12 +52,21 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
                 let boxToAdd;
                 let acreage;
 
-                if (quantityCanAdd > batchFind.batch_boxes.quantity) {
-                    boxToAdd = { ...box, quantity: batchFind.batch_boxes.quantity };
-                    acreage = batchFind.batch_boxes.quantity * totalVolume;
+                if (quantityCanAdd > batchFind.batch_boxes.validQuantity) {
+                    boxToAdd = { ...box, quantity: batchFind.batch_boxes.validQuantity };
+                    acreage = batchFind.batch_boxes.validQuantity * totalVolume;
                     setLocalBatches((prevBatches) =>
                         prevBatches.map((b) =>
-                            b.batchID === selectedBatch ? { ...b, batch_boxes: { quantity: 0 } } : b,
+                            b.batchID === selectedBatch
+                                ? {
+                                      ...b,
+                                      batch_boxes: {
+                                          ...b.batch_boxes,
+                                          validQuantity: 0,
+                                          quantity: b.batch_boxes.quantity - b.batch_boxes.validQuantity,
+                                      },
+                                  }
+                                : b,
                         ),
                     );
                 } else {
@@ -68,7 +75,14 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
                     setLocalBatches((prevBatches) =>
                         prevBatches.map((b) =>
                             b.batchID === selectedBatch
-                                ? { ...b, batch_boxes: { quantity: b.batch_boxes.quantity - quantityCanAdd } }
+                                ? {
+                                      ...b,
+                                      batch_boxes: {
+                                          ...b.batch_boxes,
+                                          validQuantity: b.batch_boxes.validQuantity - quantityCanAdd,
+                                          quantity: b.batch_boxes.quantity - quantityCanAdd,
+                                      },
+                                  }
                                 : b,
                         ),
                     );
@@ -110,7 +124,14 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
                 setLocalBatches((prevBatches) =>
                     prevBatches.map((b) =>
                         b.batchID === selectedBatch
-                            ? { ...b, batch_boxes: { quantity: b.batch_boxes.quantity + quantityCanAdd } }
+                            ? {
+                                  ...b,
+                                  batch_boxes: {
+                                      ...b.batch_boxes,
+                                      validQuantity: b.batch_boxes.validQuantity + quantityCanAdd,
+                                      quantity: b.batch_boxes.quantity + quantityCanAdd,
+                                  },
+                              }
                             : b,
                     ),
                 );
@@ -150,7 +171,7 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
 
     const checkTotalQuantity = (box) => {
         const found = localBatches.find((item) => item.batchID === selectedBatch);
-        if (found?.batch_boxes?.quantity == 0 && !checkBoxExists(box.boxID)) {
+        if (found?.batch_boxes?.validQuantity == 0 && !checkBoxExists(box.boxID)) {
             return true;
         }
 
@@ -170,7 +191,7 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
         let newQuantity = parseInt(value);
         const quantityDiff = newQuantity - locationFind.quantity;
         const acreageDiff = quantityDiff * totalVolume;
-        console.log('batchFind.batch_boxes.quantity', batchFind.batch_boxes.quantity);
+        console.log('batchFind.batch_boxes.validQuantity', batchFind.batch_boxes.validQuantity);
 
         if (isNaN(newQuantity)) {
             toast.error('Số lượng không hợp lệ', styleMessage);
@@ -178,9 +199,9 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
         } else if (newQuantity <= 0) {
             toast.error('Số lượng phải lớn hơn 0', styleMessage);
             return;
-        } else if (quantityDiff > batchFind.batch_boxes.quantity) {
+        } else if (quantityDiff > batchFind.batch_boxes.validQuantity) {
             toast.error(
-                `Số lượng vượt quá số lượng còn lại của lô cần chuyển (${batchFind.batch_boxes.quantity})`,
+                `Số lượng vượt quá số lượng còn lại của lô cần chuyển (${batchFind.batch_boxes.validQuantity})`,
                 styleMessage,
             );
             return;
@@ -194,7 +215,14 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
         setLocalBatches((prevBatches) =>
             prevBatches.map((b) =>
                 b.batchID === selectedBatch
-                    ? { ...b, batch_boxes: { quantity: b.batch_boxes.quantity - quantityDiff } }
+                    ? {
+                          ...b,
+                          batch_boxes: {
+                              ...b.batch_boxes,
+                              validQuantity: b.batch_boxes.validQuantity - quantityDiff,
+                              quantity: b.batch_boxes.quantity - quantityDiff,
+                          },
+                      }
                     : b,
             ),
         );
@@ -234,6 +262,7 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
         const oldLocations = localBatches.map((item) => ({
             batchID: item.batchID,
             quantity: item.batch_boxes.quantity,
+            validQuantity: item.batch_boxes.validQuantity,
         }));
 
         const newLocations = locationToUpdate.map((item) => ({
@@ -292,7 +321,7 @@ const ChangeLocation3D = ({ isOpen, onClose, shelvesData, batches, fetchData }) 
                                             <td className={cx('number')}>
                                                 {batch.unit.length * batch.unit.width * batch.unit.height}
                                             </td>
-                                            <td className={cx('num')}>{batch.batch_boxes?.quantity}</td>
+                                            <td className={cx('num')}>{batch.batch_boxes?.validQuantity}</td>
                                         </tr>
                                     ))}
                                 </tbody>

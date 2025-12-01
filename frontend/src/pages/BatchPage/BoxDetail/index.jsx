@@ -61,8 +61,6 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                 const warehouseID = warehouse.warehouseID;
                 const res = await getBoxDetails(warehouseID, boxID);
                 if (res) {
-                    console.log(res.data.data);
-
                     setBoxDetail(res.data.data);
                     setBatches(res.data.data.batches);
                 }
@@ -221,7 +219,10 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                     </Button>
                     {authIsAdmin(currentUser) && (
                         <Button
-                            disabled={selectedBatches.length === 0}
+                            disabled={
+                                selectedBatches.length === 0 ||
+                                (boxID && selectedBatches.some((batch) => batch.batch_boxes.validQuantity === 0))
+                            }
                             primary
                             className={cx('btn-search')}
                             onClick={handleUpdateLocation}
@@ -245,7 +246,13 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                                 <th className={cx('productID')}>Mã sản phẩm</th>
                                 <th className={cx('productName')}>Tên sản phẩm</th>
                                 <th className={cx('unit')}>Đơn vị tính</th>
-                                <th className={cx('num')}>Số lượng</th>
+                                <th className={cx('num')}>Tổng số lượng</th>
+                                {boxID && (
+                                    <>
+                                        <th className={cx('num')}>SL khả dụng</th>
+                                        <th className={cx('num')}>SL chờ xuất</th>
+                                    </>
+                                )}
                                 <th className={cx('note')}>Ngày sản xuất</th>
                                 <th className={cx('note')}>Ngày hết hạn</th>
                             </tr>
@@ -274,6 +281,16 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                                         <td className={cx('num')}>
                                             {boxID ? batch.batch_boxes?.quantity : batch.remainAmount}
                                         </td>
+                                        {boxID && (
+                                            <>
+                                                <td className={cx('num')}>
+                                                    {boxID ? batch.batch_boxes?.validQuantity : '-'}
+                                                </td>
+                                                <td className={cx('num')}>
+                                                    {boxID ? batch.batch_boxes?.pendingOutQuantity : '-'}
+                                                </td>
+                                            </>
+                                        )}
                                         <td className={cx('note')}>{convertDateVN(batch.manufactureDate)}</td>
                                         <td className={cx('note')}>{convertDateVN(batch.expiryDate)}</td>
                                     </tr>

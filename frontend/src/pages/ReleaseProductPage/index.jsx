@@ -9,6 +9,7 @@ import parseToken from '../../utils/parseToken';
 import ModalOrderReleaseDetail from './ModalOrderReleaseDetail';
 import { filterOrderRelease } from '../../services/order.service';
 import ModalChooseProposalToExport from './ModalChooseProposalToExport';
+import { formatStatusOrderRelease } from '../../constants';
 
 const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyle);
@@ -22,6 +23,7 @@ const ReleaseProductPage = () => {
         receiverName: '',
         employeeNameRelease: '',
         createdAt: '',
+        status: 'ALL',
     });
     const [showModalCreateReleaseProposal, setShowModalCreateReleaseProposal] = useState(false);
     const [orderReleaseList, setOrderReleaseList] = useState([]);
@@ -65,6 +67,32 @@ const ReleaseProductPage = () => {
         },
     ];
 
+    const selectInput = [
+        {
+            label: 'Trạng thái',
+            value: filterProposalRelease.status,
+            option: [
+                {
+                    name: 'Tất cả',
+                    value: 'ALL',
+                },
+                {
+                    name: 'Đang chờ lấy hàng',
+                    value: 'PENDING_PICK',
+                },
+                {
+                    name: 'Đã hoàn thành',
+                    value: 'COMPLETED',
+                },
+                {
+                    name: 'Từ chối',
+                    value: 'REFUSE',
+                },
+            ],
+            setValue: (value) => setFilterProposalRelease({ ...filterProposalRelease, status: value }),
+        },
+    ];
+
     const tableColumnsExportProduct = [
         {
             title: 'Mã phiếu xuất',
@@ -75,27 +103,31 @@ const ReleaseProductPage = () => {
             title: 'Ngày lập',
             dataIndex: 'createdAt',
             key: 'createdAt',
-            render: (text) => <span>{text.split('T')[0]}</span>,
+            render: (text) => <p>{text.split('T')[0]}</p>,
             width: '15%',
         },
         {
             title: 'Người tạo',
             dataIndex: 'employeeName',
             key: 'employeeName',
-            render: (_, record) => <span>{record.employees.employeeName}</span>,
+            render: (_, record) => <p>{record.employees.employeeName}</p>,
         },
         {
             title: 'Người nhận',
             dataIndex: 'customerName',
             key: 'customerName',
-            render: (_, record) => <span>{record.customers.customerName}</span>,
+            render: (_, record) => <p>{record.customers.customerName}</p>,
             width: '25%',
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            render: (index, record) => <span>Đã xuất kho</span>,
+            render: (index, record) => (
+                <div className={cx('status-proposal')}>
+                    <p>{formatStatusOrderRelease[record.status]}</p>
+                </div>
+            ),
             width: '20%',
         },
         {
@@ -120,19 +152,22 @@ const ReleaseProductPage = () => {
         },
     ];
 
-    const handleSubmitFilter = async () => {
-        if (Object.keys(filterProposalRelease).every((key) => filterProposalRelease[key] == '')) return;
+    const handleSubmitFilter = async (page = 1) => {
         try {
-            let params = {};
+            let params = { page };
             if (filterProposalRelease.orderReleaseID) params.orderReleaseID = filterProposalRelease.orderReleaseID;
             if (filterProposalRelease.createdAt) params.createdAt = filterProposalRelease.createdAt;
             if (filterProposalRelease.employeeNameRelease)
                 params.employeeName = filterProposalRelease.employeeNameRelease;
             if (filterProposalRelease.receiverName) params.customerName = filterProposalRelease.receiverName;
+            if (filterProposalRelease.status && filterProposalRelease.status !== 'ALL')
+                params.status = filterProposalRelease.status;
+
+            console.log('params', params);
 
             const res = await filterOrderRelease(params);
             setOrderReleaseList(res.data || []);
-            setCurrentPage(res?.pagination?.currentPage || 0);
+            setCurrentPage(res?.pagination?.currentPage || 1);
             setTotalPages(res?.pagination?.totalPages);
         } catch (err) {
             console.log(err);
@@ -147,9 +182,10 @@ const ReleaseProductPage = () => {
             createdAt: '',
             employeeNameRelease: '',
             receiverName: '',
+            status: 'ALL',
         });
         setCurrentPage(1);
-        fetchOrderRelease(currentPage);
+        fetchOrderRelease(1);
     };
 
     const fetchOrderRelease = async (page = 1) => {
@@ -177,14 +213,43 @@ const ReleaseProductPage = () => {
     const onChangePage = (newPage) => setCurrentPage(newPage);
 
     useEffect(() => {
-        fetchOrderRelease(currentPage);
-    }, []);
+        const isFilterActive =
+            filterProposalRelease.orderReleaseID ||
+            filterProposalRelease.createdAt ||
+            filterProposalRelease.employeeNameRelease ||
+            filterProposalRelease.receiverName ||
+            (filterProposalRelease.status && filterProposalRelease.status !== 'ALL');
+
+        if (isFilterActive) {
+            handleSubmitFilter(currentPage);
+        } else {
+            fetchOrderRelease(currentPage);
+        }
+    }, [currentPage]);
 
     return (
         <div className={cx('wrapper-release-product')}>
             <ModelFilter
                 columns={columnsFilter}
-                handleSubmitFilter={handleSubmitFilter}
+                selectInput={selectInput}
+                handleSubmitFilter={() => {
+                    const isFilterActive =
+                        filterProposalRelease.orderReleaseID ||
+                        filterProposalRelease.createdAt ||
+                        filterProposalRelease.employeeNameRelease ||
+                        filterProposalRelease.receiverName ||
+                        (filterProposalRelease.status && filterProposalRelease.status !== 'ALL');
+
+                    if (currentPage === 1) {
+                        if (isFilterActive) {
+                            handleSubmitFilter(1);
+                        } else {
+                            fetchOrderRelease(1);
+                        }
+                    } else {
+                        setCurrentPage(1);
+                    }
+                }}
                 handleResetFilters={handleResetFilter}
             >
                 <Button

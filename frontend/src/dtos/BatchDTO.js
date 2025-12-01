@@ -10,6 +10,9 @@ class BatchDTO {
         this.wareId = data.warehouseID;
         this.totalProductRemain = data.totalProductRemain;
         this.importDate = data.createdAt.slice(0, 10);
+        this.validAmount = data.validAmount;
+        this.pendingOutAmount = data.pendingOutAmount;
+        this.tempAmount = data.tempAmount;
     }
 }
 

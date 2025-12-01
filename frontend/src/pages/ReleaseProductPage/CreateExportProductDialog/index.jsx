@@ -11,14 +11,13 @@ import ExportInfoSheet from './ExportInfoSheet';
 import ExportProduct from './ExportProduct';
 import parseToken from '../../../utils/parseToken';
 import { getTotalValidAmountByProductAndUnit } from '../../../services/unit.service';
+import { suggestExportProduct } from '../../../services/order.service';
+import SuggestedExportListDialog from './SuggestedExportListDialog';
 
 const cx = classNames.bind(styles);
 
 const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease }) => {
-    const token = parseToken('tokenUser');
     const warehouse = parseToken('warehouse');
-    const batchOfProducts = useSelector((state) => state.BatchProductSlice.batchProductList);
-    const batchBoxOfProducts = useSelector((state) => state.BatchProductSlice.batchBoxProductList);
     const currentUser = useSelector((state) => state.AuthSlice.user);
 
     const [formData, setFormData] = useState({
@@ -38,12 +37,11 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
     const [showMethodSelection, setShowMethodSelection] = useState(false);
     const [insufficientProducts, setInsufficientProducts] = useState([]);
     const [showInsufficientModal, setShowInsufficientModal] = useState(false);
-
-    const dispatch = useDispatch();
+    const [suggestedData, setSuggestedData] = useState([]);
+    const [showSuggestedModal, setShowSuggestedModal] = useState(false);
+    const [selectedMethod, setSelectedMethod] = useState('');
 
     const validate = async (payload) => {
-        console.log(payload);
-
         if (!payload.receiptCode) {
             toast.error('Vui lòng tạo mã phiếu xuất kho', styleMessage);
             return false;
@@ -100,13 +98,71 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
         }
     };
 
-    const handleSelectMethod = (method) => {
-        console.log('Selected method:', method);
+    const handleSelectMethod = async (method) => {
         setShowMethodSelection(false);
-        // TODO: Implement logic for each method
+        setSelectedMethod(method);
 
-        console.log('formData', formData);
-        console.log('productListSelected', productListSelected);
+        const payload = {
+            type: method,
+            items: productListSelected.map((item) => ({
+                productID: item.productID,
+                unitID: item.unit.unitID,
+                quantity: item.amountRequiredExport,
+            })),
+        };
+
+        try {
+            const res = await suggestExportProduct({ payload });
+            if (res && res.status === 'OK') {
+                const dataWithNames = res.data.map((item) => {
+                    const originalProduct = productListSelected.find((p) => p.productID === item.productID);
+                    return {
+                        ...item,
+                        productName: originalProduct ? originalProduct.productName : item.productID,
+                    };
+                });
+                setSuggestedData(dataWithNames);
+                setShowSuggestedModal(true);
+                toast.success(res.message, styleMessage);
+            } else {
+                toast.error(res?.message || 'Có lỗi xảy ra khi gợi ý xuất hàng', styleMessage);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Lỗi kết nối server', styleMessage);
+        }
+    };
+
+    const handleConfirmSuggestion = async () => {
+        const orderReleaseDetails = suggestedData.flatMap((product) =>
+            product.batches.map((batch) => ({
+                batchID: batch.batchID,
+                quantityExported: batch.quantityExport,
+                orderReleaseBatchBoxDetails: (batch.boxes || []).map((box) => ({
+                    batchID: batch.batchID,
+                    boxID: box.boxID,
+                    quantityExported: box.quantity,
+                })),
+            })),
+        );
+
+        const payload = {
+            orderReleaseID: formData.receiptCode,
+            customerID: formData.customerID,
+            note: formData.note,
+            orderReleaseProposalID: formData.orderReleaseProposalID,
+            orderReleaseDetails: orderReleaseDetails,
+        };
+
+        console.log('payload', payload);
+
+        const res = await saveOrderRelease(payload);
+        if (res.data?.status === 'OK') {
+            toast.success('Tạo phiếu xuất kho thành công', styleMessage);
+            setShowSuggestedModal(false);
+            onClose();
+            if (fetchData) fetchData();
+        }
     };
 
     const handleCloseModal = () => {
@@ -121,7 +177,6 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
         }));
     };
 
-    // init form data
     useEffect(() => {
         if (!proposalRelease) return;
         setFormData({
@@ -173,7 +228,6 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
                             <ExportProduct
                                 className={cx('table-product-release')}
                                 productListResult={productListSelected}
-                                setProductListResult={setProductListSelected}
                             />
                         </div>
                     </main>
@@ -253,6 +307,15 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
                     </div>
                 </div>
             </Modal>
+
+            {/* Modal hiển thị gợi ý xuất hàng */}
+            <SuggestedExportListDialog
+                isOpen={showSuggestedModal}
+                onClose={() => setShowSuggestedModal(false)}
+                data={suggestedData}
+                onConfirm={handleConfirmSuggestion}
+                type={selectedMethod}
+            />
         </>
     );
 };

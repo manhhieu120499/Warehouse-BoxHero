@@ -86,3 +86,10 @@ export const typeTransaction = {
     RELEASE: 'Xuất hàng',
     INVENTORY_CHECK: 'Kiểm kê hàng',
 };
+
+export const formatStatusOrderRelease = {
+    PENDING: 'Chờ phê duyệt',
+    PENDING_PICK: 'Đang chờ lấy hàng',
+    COMPLETED: 'Đã hoàn thành',
+    REFUSE: 'Từ chối',
+};

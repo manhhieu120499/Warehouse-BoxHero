@@ -1,11 +1,12 @@
 import React, { useCallback, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Modal from '../Modal';
 import styles from './ProductDetail.module.scss';
 import classNames from 'classnames/bind';
 import Image from '../Image';
 import MyTable from '../MyTable';
 import Button from '../Button';
-import { QrCode } from 'lucide-react';
+import { Eye, QrCode } from 'lucide-react';
 import { Tooltip } from 'antd';
 import TooltipTable from '../TooltipTable';
 
@@ -30,183 +31,98 @@ const RowItem = ({ firstTitle = '', firstValue = '', secondTitle = '', secondVal
     );
 };
 
-const tableColumns = [
-    {
-        title: 'Mã lô hàng',
-        dataIndex: 'sbu',
-        key: 'sbu',
-    },
-    {
-        title: () => <TooltipTable text={'Ngày nhập'} textHover={'Click để sắp xếp ngày nhập'} />,
-        dataIndex: 'importDate',
-        key: 'importDate',
-        defaultSortOrder: 'descend',
-        sorter: (a, b) => new Date(a.importDate) - new Date(b.importDate),
-    },
-    {
-        title: () => <TooltipTable text={'Ngày sản xuất'} textHover={'Click để sắp xếp ngày sản xuất'} />,
-        dataIndex: 'macDate',
-        key: 'macDate',
-        defaultSortOrder: 'descend',
-        sorter: (a, b) => new Date(a.macDate) - new Date(b.macDate),
-    },
-    {
-        title: () => <TooltipTable text={'Hạn sử dụng'} textHover={'Click để sắp xếp hạn sử dụng'} />,
-        dataIndex: 'expiredDate',
-        key: 'expiredDate',
-        defaultSortOrder: 'descend',
-        sorter: (a, b) => new Date(a.expiredDate) - new Date(b.expiredDate),
-    },
-    {
-        title: () => <TooltipTable text={'Số lượng nhập'} textHover={'Click để sắp xếp số lượng nhập'} />,
-        dataIndex: 'receive',
-        key: 'receive',
-        defaultSortOrder: 'descend',
-        sorter: (a, b) => a.receive - b.receive,
-        render: (text) => <p className={cx('number')}>{text}</p>,
-    },
-    {
-        title: () => <TooltipTable text={'Số lượng tồn'} textHover={'Click để sắp xếp số lượng tồn'} />,
-        dataIndex: 'available',
-        key: 'available',
-        defaultSortOrder: 'descend',
-        sorter: (a, b) => a.available - b.available,
-        render: (text) => <p className={cx('number')}>{text}</p>,
-    },
-    {
-        title: 'Đơn vị nhập',
-        dataIndex: 'unit',
-        key: 'unit',
-        render: (text, record) => <p className={cx('number')}>{record.unit}</p>,
-    },
-    {
-        title: () => <TooltipTable text={'Tổng sản phẩm'} textHover={'Click để sắp xếp tổng sản phẩm'} />,
-        dataIndex: 'totalProductRemain',
-        key: 'totalProductRemain',
-        defaultSortOrder: 'descend',
-        sorter: (a, b) => a.totalProductRemain - b.totalProductRemain,
-        render: (text, record) => <p className={cx('number')}>{record.totalProductRemain}</p>,
-    },
-    {
-        title: 'Vị trí',
-        dataIndex: 'location',
-        key: 'location',
-    },
-    {
-        title: 'Mã kho',
-        dataIndex: 'wareId',
-        key: 'wareId',
-    },
-];
-
-const dataSource = [
-    {
-        sbu: 'SPG001',
-        macDate: '12-03-2025',
-        expiredDate: '12-3-2026',
-        receive: 20,
-        available: 15,
-        location: 'Khu A',
-        wareId: 'WH123',
-    },
-    {
-        sbu: 'SPG001',
-        macDate: '12-03-2025',
-        expiredDate: '12-03-2026',
-        receive: 20,
-        available: 15,
-        location: 'Khu A',
-        wareId: 'WH123',
-    },
-    {
-        sbu: 'SPG002',
-        macDate: '15-04-2025',
-        expiredDate: '15-04-2026',
-        receive: 25,
-        available: 20,
-        location: 'Khu B',
-        wareId: 'WH124',
-    },
-    {
-        sbu: 'SPG003',
-        macDate: '20-05-2025',
-        expiredDate: '20-05-2026',
-        receive: 30,
-        available: 28,
-        location: 'Khu C',
-        wareId: 'WH125',
-    },
-    {
-        sbu: 'SPG004',
-        macDate: '10-06-2025',
-        expiredDate: '10-06-2026',
-        receive: 22,
-        available: 18,
-        location: 'Khu D',
-        wareId: 'WH126',
-    },
-    {
-        sbu: 'SPG005',
-        macDate: '01-07-2025',
-        expiredDate: '01-07-2026',
-        receive: 18,
-        available: 12,
-        location: 'Khu E',
-        wareId: 'WH127',
-    },
-    {
-        sbu: 'SPG006',
-        macDate: '12-08-2025',
-        expiredDate: '12-08-2026',
-        receive: 27,
-        available: 21,
-        location: 'Khu F',
-        wareId: 'WH128',
-    },
-    {
-        sbu: 'SPG007',
-        macDate: '23-09-2025',
-        expiredDate: '23-09-2026',
-        receive: 35,
-        available: 30,
-        location: 'Khu G',
-        wareId: 'WH129',
-    },
-    {
-        sbu: 'SPG008',
-        macDate: '05-10-2025',
-        expiredDate: '05-10-2026',
-        receive: 40,
-        available: 38,
-        location: 'Khu H',
-        wareId: 'WH130',
-    },
-    {
-        sbu: 'SPG009',
-        macDate: '17-11-2025',
-        expiredDate: '17-11-2026',
-        receive: 16,
-        available: 10,
-        location: 'Khu I',
-        wareId: 'WH131',
-    },
-    {
-        sbu: 'SPG010',
-        macDate: '28-12-2025',
-        expiredDate: '28-12-2026',
-        receive: 50,
-        available: 45,
-        location: 'Khu J',
-        wareId: 'WH132',
-    },
-];
-
 const ProductDetail = ({ data, classname, onClose }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [showQRCode, setShowQRCode] = useState(false);
     const qrCodeRef = useRef();
+    const navigate = useNavigate();
 
-    console.log('data ', data);
+    const handleViewLocation = (batchID) => {
+        navigate('/batch', { state: { batchID, type: 'BATCH' } });
+    };
+
+    const tableColumns = [
+        {
+            title: 'Mã lô',
+            dataIndex: 'sbu',
+            key: 'sbu',
+        },
+        {
+            title: () => <TooltipTable text={'Ngày nhập'} textHover={'Click để sắp xếp ngày nhập'} />,
+            dataIndex: 'importDate',
+            key: 'importDate',
+            defaultSortOrder: 'descend',
+            sorter: (a, b) => new Date(a.importDate) - new Date(b.importDate),
+        },
+        {
+            title: () => <TooltipTable text={'Ngày sản xuất'} textHover={'Click để sắp xếp ngày sản xuất'} />,
+            dataIndex: 'macDate',
+            key: 'macDate',
+            defaultSortOrder: 'descend',
+            sorter: (a, b) => new Date(a.macDate) - new Date(b.macDate),
+        },
+        {
+            title: () => <TooltipTable text={'Hạn sử dụng'} textHover={'Click để sắp xếp hạn sử dụng'} />,
+            dataIndex: 'expiredDate',
+            key: 'expiredDate',
+            defaultSortOrder: 'descend',
+            sorter: (a, b) => new Date(a.expiredDate) - new Date(b.expiredDate),
+        },
+        {
+            title: () => <TooltipTable text={'SL còn lại'} textHover={'Click để sắp xếp SL còn lại'} />,
+            dataIndex: 'available',
+            key: 'available',
+            defaultSortOrder: 'descend',
+            sorter: (a, b) => a.available - b.available,
+            render: (text) => <p className={cx('number')}>{text}</p>,
+        },
+        {
+            title: () => <TooltipTable text={'SL trong kho tạm'} textHover={'Click để sắp xếp SL trong kho tạm'} />,
+            dataIndex: 'tempAmount',
+            key: 'tempAmount',
+            defaultSortOrder: 'descend',
+            sorter: (a, b) => a.tempAmount - b.tempAmount,
+            render: (text) => <p className={cx('number')}>{text}</p>,
+        },
+        {
+            title: () => <TooltipTable text={'SL hợp lệ'} textHover={'Click để sắp xếp SL hợp lệ'} />,
+            dataIndex: 'validAmount',
+            key: 'validAmount',
+            sorter: (a, b) => a.validAmount - b.validAmount,
+            render: (text) => <p className={cx('number')}>{text}</p>,
+        },
+        {
+            title: () => <TooltipTable text={'SL chờ xuất'} textHover={'Click để sắp xếp SL chờ xuất'} />,
+            dataIndex: 'pendingOutAmount',
+            key: 'pendingOutAmount',
+            sorter: (a, b) => a.pendingOutAmount - b.pendingOutAmount,
+            render: (text) => <p className={cx('number')}>{text}</p>,
+        },
+        {
+            title: 'Đơn vị nhập',
+            dataIndex: 'unit',
+            key: 'unit',
+            render: (text, record) => <p className={cx('number')}>{record.unit}</p>,
+        },
+        {
+            title: 'Mã kho',
+            dataIndex: 'wareId',
+            key: 'wareId',
+        },
+        {
+            title: 'Chi tiết',
+            key: 'action',
+            render: (_, record) => (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <Button
+                        className={cx('btn-view-location')}
+                        onClick={() => handleViewLocation(record.sbu)}
+                        leftIcon={<Eye size={18} />}
+                    ></Button>
+                </div>
+            ),
+        },
+    ];
 
     const handleOnChange = useCallback((page, pageSize) => {
         setCurrentPage(page);
