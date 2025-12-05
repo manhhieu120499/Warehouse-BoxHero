@@ -13,6 +13,7 @@ import parseToken from '../../../utils/parseToken';
 import { getTotalValidAmountByProductAndUnit } from '../../../services/unit.service';
 import { suggestExportProduct } from '../../../services/order.service';
 import SuggestedExportListDialog from './SuggestedExportListDialog';
+import ManualExport3D from './ManualExport3D';
 
 const cx = classNames.bind(styles);
 
@@ -40,6 +41,7 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
     const [suggestedData, setSuggestedData] = useState([]);
     const [showSuggestedModal, setShowSuggestedModal] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState('');
+    const [showManualExportModal, setShowManualExportModal] = useState(false);
 
     const validate = async (payload) => {
         if (!payload.receiptCode) {
@@ -102,6 +104,11 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
         setShowMethodSelection(false);
         setSelectedMethod(method);
 
+        if (method === 'MANUAL') {
+            setShowManualExportModal(true);
+            return;
+        }
+
         const payload = {
             type: method,
             items: productListSelected.map((item) => ({
@@ -131,6 +138,11 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
             console.error(error);
             toast.error('Lỗi kết nối server', styleMessage);
         }
+    };
+
+    const handleManualExportConfirm = (data) => {
+        setSuggestedData(data);
+        setShowSuggestedModal(true);
     };
 
     const handleConfirmSuggestion = async () => {
@@ -315,6 +327,14 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
                 data={suggestedData}
                 onConfirm={handleConfirmSuggestion}
                 type={selectedMethod}
+            />
+
+            {/* Modal tự chọn lô 3D */}
+            <ManualExport3D
+                isOpen={showManualExportModal}
+                onClose={() => setShowManualExportModal(false)}
+                products={productListSelected}
+                onConfirm={handleManualExportConfirm}
             />
         </>
     );

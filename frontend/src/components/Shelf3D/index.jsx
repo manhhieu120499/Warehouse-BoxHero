@@ -16,6 +16,8 @@ export default function Shelf3D({
     checkBoxExistsInSearchResult,
     checkBoxAvailable,
     checkBoxContain,
+    checkDisabled,
+    checkActive,
 }) {
     // Cấu hình mặc định (giữ nguyên kích thước thực tế như cũ)
     const { boxSpacing = 1.6, floorHeight = 2 } = shelfConfig;
@@ -77,6 +79,7 @@ export default function Shelf3D({
                                     return true;
                                 }
                                 if (shelfType === 'inventoryCheck' && checkBoxAvailable(box)) return true;
+                                if (shelfType === 'exportProduct' && checkDisabled(box.boxID)) return true;
                                 return false;
                             };
                             const checkClassName = () => {
@@ -94,6 +97,11 @@ export default function Shelf3D({
                                         classNamesCheck['ready'] = true;
                                     }
                                     if (checkBoxExists(box.boxID)) {
+                                        classNamesCheck['active'] = true;
+                                    }
+                                }
+                                if (shelfType === 'exportProduct') {
+                                    if (checkActive(box.boxID)) {
                                         classNamesCheck['active'] = true;
                                     }
                                 }

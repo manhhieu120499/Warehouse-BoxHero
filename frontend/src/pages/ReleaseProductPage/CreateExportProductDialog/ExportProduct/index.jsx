@@ -48,23 +48,6 @@ const ExportProduct = ({ productListResult, className }) => {
                     </table>
                 </div>
             </section>
-            {/* {isOpenBatchDialog && (
-                <BatchDialog
-                    isOpen={isOpenBatchDialog}
-                    onClose={() => setIsOpenBatchDialog(false)}
-                    product={{
-                        productID: productSelectedToChooseBatch?.productID,
-                        productName: productSelectedToChooseBatch?.productName,
-                    }}
-                />
-            )}
-            {isOpenModalBatchDetailBeChoose && (
-                <ModalBatchProductDetail
-                    isOpen={isOpenModalBatchDetailBeChoose}
-                    onClose={() => setIsOpenModalBatchDetailBeChoose(false)}
-                    productID={productSelectedToChooseBatch?.productID || ''}
-                />
-            )} */}
         </>
     );
 };

@@ -58,13 +58,14 @@ export const countBatchesWithoutLocation = async () => {
     }
 };
 
-export const getAllBatchWithProductID = async (productID) => {
+export const getAllBatchWithProductID = async (productID, unitID) => {
     try {
         const warehouse = parseToken('warehouse');
         const token = parseToken('tokenUser');
         const res = await request.get(`/api/batch/all-batch-by-product`, {
             params: {
                 productID: productID,
+                unitID: unitID,
                 warehouseID: warehouse.warehouseID,
             },
 

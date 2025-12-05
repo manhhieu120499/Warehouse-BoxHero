@@ -9,7 +9,6 @@ const cxGlb = classNames.bind(globalStyles);
 const cx = classNames.bind(styles);
 
 const ExportInfoSheet = ({ formData, setFormData, className }) => {
-    console.log('form', formData);
     return (
         <section className={cx('info-sheet', className)}>
             <h2 className={cx('content-header')}>Thông tin chung</h2>
