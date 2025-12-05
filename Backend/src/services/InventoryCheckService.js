@@ -19,6 +19,7 @@ const HTTP_OK = process.env.HTTP_OK;
 const HTTP_NOT_FOUND = process.env.HTTP_NOT_FOUND;
 const HTTP_BAD_REQUEST = process.env.HTTP_BAD_REQUEST;
 const HTTP_INTERNAL_SERVER_ERROR = process.env.HTTP_INTERNAL_SERVER_ERROR;
+const { generateQRURL } = require('../common');
 
 class InventoryCheckService {
     findAll({ warehouseID, page = 1 }) {
@@ -176,7 +177,9 @@ class InventoryCheckService {
                                         {
                                             model: Box,
                                             as: 'box',
-                                            include: [{ model: Floor, as: 'floor' }],
+                                            include: [
+                                                { model: Floor, as: 'floor', include: [{ model: Shelf, as: 'shelf' }] },
+                                            ],
                                         },
                                     ],
                                 },
@@ -221,26 +224,22 @@ class InventoryCheckService {
         return new Promise(async (resolve, reject) => {
             const transaction = await db.sequelize.transaction();
             try {
-                const { inventoryCheckID, employeeID, warehouseID, checkStatus, details } = data;
+                const { inventoryCheckID, employeeID, warehouseID, details } = data;
+                const qrCode = await generateQRURL(inventoryCheckID);
                 const newInventoryCheck = await InventoryCheck.create(
                     {
                         inventoryCheckID,
                         employeeID,
                         warehouseID,
-                        status: 'PENDING',
-                        checkStatus,
+                        status: 'PENDING_CHECK',
+                        checkStatus: null,
+                        qrCode,
                     },
                     { transaction },
                 );
 
                 const inventoryDetailConvert = details.map((item) => {
-                    let status = 'MATCHED';
-                    if (item.discrepancyQuantity > 0) {
-                        status = 'SURPLUS';
-                    } else if (item.discrepancyQuantity < 0) {
-                        status = 'SHORTAGE';
-                    }
-                    return { ...item, status };
+                    return { ...item, status: null, discrepancyQuantity: null, actualQuantity: null };
                 });
 
                 const inventoryCheckDetails = inventoryDetailConvert.map((detail) => ({
@@ -301,6 +300,99 @@ class InventoryCheckService {
         });
     }
 
+    submitInventoryCheck(data) {
+        return new Promise(async (resolve, reject) => {
+            const transaction = await db.sequelize.transaction();
+            try {
+                const { inventoryCheckID, details } = data;
+
+                const inventoryCheck = await InventoryCheck.findOne({
+                    where: { inventoryCheckID },
+                    transaction,
+                });
+
+                if (!inventoryCheck) {
+                    await transaction.rollback();
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Phiếu kiểm kê không tồn tại',
+                    });
+                }
+
+                if (inventoryCheck.status !== 'PENDING_CHECK') {
+                    await transaction.rollback();
+                    return reject({
+                        status: 'ERROR',
+                        statusHttp: HTTP_BAD_REQUEST,
+                        message: 'Phiếu kiểm kê không ở trạng thái đang kiểm kê',
+                    });
+                }
+
+                let isDiscrepancy = false;
+
+                for (const item of details) {
+                    const { inventoryCheckDetailID, actualQuantity } = item;
+
+                    const detail = await InventoryCheckDetail.findOne({
+                        where: { inventoryCheckDetailID, inventoryCheckID },
+                        transaction,
+                    });
+
+                    if (!detail) continue;
+
+                    const discrepancyQuantity = actualQuantity - detail.systemQuantity;
+                    let status = 'MATCHED';
+                    if (discrepancyQuantity > 0) {
+                        status = 'SURPLUS';
+                        isDiscrepancy = true;
+                    } else if (discrepancyQuantity < 0) {
+                        status = 'SHORTAGE';
+                        isDiscrepancy = true;
+                    }
+
+                    await InventoryCheckDetail.update(
+                        {
+                            actualQuantity,
+                            discrepancyQuantity,
+                            status,
+                        },
+                        {
+                            where: { inventoryCheckDetailID },
+                            transaction,
+                        },
+                    );
+                }
+
+                await InventoryCheck.update(
+                    {
+                        status: 'PENDING',
+                        checkStatus: isDiscrepancy ? 'DISCREPANCY' : 'BALANCED',
+                    },
+                    {
+                        where: { inventoryCheckID },
+                        transaction,
+                    },
+                );
+
+                await transaction.commit();
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Hoàn thành kiểm kê, chờ duyệt',
+                });
+            } catch (err) {
+                await transaction.rollback();
+                console.log(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: 'Lỗi hệ thống',
+                });
+            }
+        });
+    }
+
     updateInventoryCheck(data) {
         return new Promise(async (resolve, reject) => {
             const transaction = await db.sequelize.transaction();
@@ -330,7 +422,7 @@ class InventoryCheckService {
                                         ),
                                     ],
                                 },
-                                attributes: ['quantity'],
+                                attributes: ['quantity', 'validQuantity', 'pendingOutQuantity'],
                                 include: [
                                     {
                                         model: Batch,
@@ -348,39 +440,80 @@ class InventoryCheckService {
                                 ],
                             },
                         ],
+                        transaction,
                     });
 
                     for (const detail of details) {
                         const discrepancyQuantity = detail.discrepancyQuantity;
                         const batchBox = detail.batchBoxByBatch;
 
-                        await BatchBox.increment(
-                            { quantity: discrepancyQuantity },
-                            { where: { batchID: batchBox.batch.batchID, boxID: batchBox.box.boxID }, transaction },
-                        );
+                        if (!batchBox) continue;
 
-                        await Batch.increment(
-                            { remainAmount: discrepancyQuantity },
-                            { where: { batchID: batchBox.batch.batchID }, transaction },
-                        );
+                        if (discrepancyQuantity !== 0) {
+                            let quantityChange = discrepancyQuantity;
+                            let validQuantityChange = 0;
+                            let pendingOutQuantityChange = 0;
 
-                        const amountChange = discrepancyQuantity * batchBox.batch.unit.conversionQuantity;
-                        await Product.increment(
-                            { amount: amountChange },
-                            { where: { productID: batchBox.batch.product.productID }, transaction },
-                        );
-                        const acreage =
-                            batchBox.batch.unit.width *
-                            batchBox.batch.unit.length *
-                            batchBox.batch.unit.height *
-                            -discrepancyQuantity;
+                            if (discrepancyQuantity > 0) {
+                                // Surplus: Increase validQuantity
+                                validQuantityChange = discrepancyQuantity;
+                            } else {
+                                // Shortage: Decrease validQuantity first, then pendingOutQuantity
+                                const shortage = Math.abs(discrepancyQuantity);
+                                const currentValid = batchBox.validQuantity;
 
-                        if (amountChange !== 0) {
-                            // update product quantity log
+                                if (currentValid >= shortage) {
+                                    validQuantityChange = -shortage;
+                                } else {
+                                    validQuantityChange = -currentValid;
+                                    pendingOutQuantityChange = -(shortage - currentValid);
+                                }
+                            }
+
+                            // Update BatchBox
+                            await BatchBox.increment(
+                                {
+                                    quantity: quantityChange,
+                                    validQuantity: validQuantityChange,
+                                    pendingOutQuantity: pendingOutQuantityChange,
+                                },
+                                { where: { batchID: batchBox.batch.batchID, boxID: batchBox.box.boxID }, transaction },
+                            );
+
+                            // Update Batch
+                            await Batch.increment(
+                                {
+                                    remainAmount: quantityChange,
+                                    validAmount: validQuantityChange,
+                                    pendingOutAmount: pendingOutQuantityChange,
+                                },
+                                { where: { batchID: batchBox.batch.batchID }, transaction },
+                            );
+
+                            // Update Product
+                            const amountChange = discrepancyQuantity * batchBox.batch.unit.conversionQuantity;
+                            await Product.increment(
+                                { amount: amountChange },
+                                { where: { productID: batchBox.batch.product.productID }, transaction },
+                            );
+
+                            // Update Box Acreage
+                            const acreage =
+                                batchBox.batch.unit.width *
+                                batchBox.batch.unit.length *
+                                batchBox.batch.unit.height *
+                                -discrepancyQuantity;
+
+                            await Box.increment(
+                                { remainingAcreage: acreage },
+                                { where: { boxID: batchBox.box.boxID }, transaction },
+                            );
+
+                            // Create ProductQuantityLog
                             await ProductQuantityLog.create(
                                 {
                                     actionType: 'INVENTORY_CHECK',
-                                    quantityChange: Math.abs(amountChange),
+                                    quantityChange: amountChange,
                                     previousAmount: batchBox.batch.product.amount,
                                     newAmount: batchBox.batch.product.amount + amountChange,
                                     referenceID: inventoryCheckID,
@@ -388,11 +521,6 @@ class InventoryCheckService {
                                     productID: batchBox.batch.product.productID,
                                 },
                                 { transaction },
-                            );
-
-                            await Box.increment(
-                                { remainingAcreage: acreage },
-                                { where: { boxID: batchBox.box.boxID }, transaction },
                             );
                         }
                     }

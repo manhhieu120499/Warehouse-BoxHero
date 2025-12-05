@@ -26,12 +26,11 @@ module.exports = (sequelize, Sequelize) => {
             },
             actualQuantity: {
                 type: Sequelize.INTEGER,
-                allowNull: false,
+                allowNull: true,
             },
             discrepancyQuantity: {
                 type: Sequelize.INTEGER,
-                allowNull: false,
-                defaultValue: 0,
+                allowNull: true,
             },
             reason: {
                 type: Sequelize.TEXT,
@@ -39,8 +38,7 @@ module.exports = (sequelize, Sequelize) => {
             },
             status: {
                 type: Sequelize.ENUM('MATCHED', 'SHORTAGE', 'SURPLUS'),
-                allowNull: false,
-                defaultValue: 'MATCHED',
+                allowNull: true,
             },
         },
         {

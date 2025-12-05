@@ -71,8 +71,12 @@ class BatchController {
     }
     async getAllBatchByProductID(req, res) {
         try {
-            const { productID, warehouseID } = req.query;
-            const { statusHttp, ...response } = await BatchService.getAllBatchByProductID(productID, warehouseID);
+            const { productID, warehouseID, unitID } = req.query;
+            const { statusHttp, ...response } = await BatchService.getAllBatchByProductID(
+                productID,
+                warehouseID,
+                unitID,
+            );
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp).json(err);

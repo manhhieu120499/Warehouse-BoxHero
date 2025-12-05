@@ -21,15 +21,18 @@ module.exports = (sequelize, Sequelize) => {
             },
 
             status: {
-                type: Sequelize.ENUM('PENDING', 'COMPLETED', 'REFUSE'),
+                type: Sequelize.ENUM('PENDING', 'PENDING_CHECK', 'COMPLETED', 'REFUSE'),
                 allowNull: false,
-                defaultValue: 'PENDING',
+                defaultValue: 'PENDING_CHECK',
             },
 
             checkStatus: {
                 type: Sequelize.ENUM('BALANCED', 'DISCREPANCY'),
-                allowNull: false,
-                defaultValue: 'BALANCED',
+                allowNull: true,
+            },
+            qrCode: {
+                type: Sequelize.TEXT,
+                allowNull: true,
             },
         },
         {

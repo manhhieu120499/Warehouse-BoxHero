@@ -730,6 +730,20 @@ class OrderReleaseService {
                             { amount: -quantityInBaseUnit },
                             { where: { productID: batch.productID }, transaction },
                         );
+
+                        // Create ProductQuantityLog
+                        await ProductQuantityLog.create(
+                            {
+                                productID: batch.productID,
+                                actionType: 'RELEASE',
+                                quantityChange: -quantityInBaseUnit,
+                                previousAmount: batch.product.amount,
+                                newAmount: batch.product.amount - quantityInBaseUnit,
+                                referenceID: orderReleaseID,
+                                note: `Xuất kho lô ${batchID}, box ${boxID}`,
+                            },
+                            { transaction },
+                        );
                     }
                 }
 

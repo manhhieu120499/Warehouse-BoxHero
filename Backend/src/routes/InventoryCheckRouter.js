@@ -8,6 +8,7 @@ const {
     createInventoryCheck,
     filterInventoryCheck,
     updateInventoryCheck,
+    submitInventoryCheck,
 } = require('../validates/inventoryCheck.validation');
 router.get('/', (req, res) => {
     return res.send('InventoryCheckRouter Router is working!');
@@ -35,6 +36,14 @@ router.post(
     validate,
     authUserIsManager,
     InventoryCheckController.updateInventoryCheck,
+);
+
+router.post(
+    '/submit-inventory-checks',
+    submitInventoryCheck,
+    validate,
+    authUserIsManagerOrAccountant,
+    InventoryCheckController.submitInventoryCheck,
 );
 
 router.get(

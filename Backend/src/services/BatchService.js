@@ -550,7 +550,7 @@ class BatchService {
             }
         });
     }
-    async getAllBatchByProductID(productID, warehouseID) {
+    async getAllBatchByProductID(productID, warehouseID, unitID) {
         return new Promise(async (resolve, reject) => {
             try {
                 const productExist = await Product.findOne({
@@ -563,9 +563,8 @@ class BatchService {
                         message: 'Sản phẩm không tồn tại',
                     });
                 }
-                const today = new Date();
                 const batches = await Batch.findAll({
-                    where: { productID, warehouseID, remainAmount: { [Op.gt]: 0 }, expiryDate: { [Op.gte]: today } },
+                    where: { productID, warehouseID, validAmount: { [Op.gt]: 0 }, unitID },
 
                     include: [
                         { model: Unit, as: 'unit', attributes: ['unitID', 'unitName'] },
@@ -573,7 +572,10 @@ class BatchService {
                             model: Box,
                             as: 'boxes',
                             attributes: ['boxID', 'boxName'],
-                            through: { attributes: ['quantity'], where: { quantity: { [Op.gt]: 0 } } },
+                            through: {
+                                attributes: ['quantity', 'validQuantity', 'pendingOutQuantity'],
+                                where: { validQuantity: { [Op.gt]: 0 } },
+                            },
                             required: true,
                         },
                     ],
