@@ -11,124 +11,16 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { format } from 'date-fns';
-import { X, Check, AlertCircle } from 'lucide-react-native';
-import request from '../config/axiosConfig';
+import { X } from 'lucide-react-native';
 import { updateInventoryCheck } from '../service/inventoryCheck.service';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import parseToken from '../utilities/parseToken';
 import { authIsAdmin } from '../common';
 
-const formatStatusInventoryCheckDetail = {
-    BALANCED: 'Cân bằng',
-    DISCREPANCY: 'Chênh lệch',
-};
-
-const CreateCheckDetail = ({
-    isOpen,
-    onClose,
-    inventoryCheckDetail,
-    type = 'create',
-    fetchData,
-    listBatchBoxCheck,
-    handleOnclose,
-}) => {
+const CreateCheckDetail = ({ isOpen, onClose, inventoryCheckDetail, fetchData }) => {
+    const navigation = useNavigation();
     const currentUser = useSelector((state) => state.AuthSlice.user);
-    const [inventoryCheckId, setInventoryCheckId] = useState('');
-    const [note, setNote] = useState('');
-    const [listBatchBox, setListBatchBox] = useState([]);
-
-    useEffect(() => {
-        if (type === 'create' && listBatchBoxCheck) {
-            const mapConvert = listBatchBoxCheck.flatMap((box) =>
-                box.batches.map((batch) => ({
-                    ...batch,
-                    boxID: box.boxID,
-                    location: box.location,
-                    systemQuantity: batch.batch_boxes.quantity,
-                    actualQuantity: batch.batch_boxes.quantity.toString(),
-                    discrepancyQuantity: 0,
-                    reason: '',
-                })),
-            );
-            setListBatchBox(mapConvert);
-        }
-    }, [listBatchBoxCheck, type]);
-
-    const handleActualQuantityChange = (text, index, systemQuantity) => {
-        const value = text;
-        const difference = Number(value) - systemQuantity;
-        setListBatchBox((prevDetails) =>
-            prevDetails.map((item, i) =>
-                i === index ? { ...item, actualQuantity: value, discrepancyQuantity: difference } : item,
-            ),
-        );
-    };
-
-    const generateCode = (prefix) => {
-        const random = Math.floor(Math.random() * 10000);
-        return `${prefix}${random}`;
-    };
-
-    const handleSaveInventoryCheck = async () => {
-        let status = 'BALANCED';
-        if (!inventoryCheckId) {
-            Alert.alert('Lỗi', 'Vui lòng nhập mã phiếu kiểm kê');
-            return;
-        }
-        for (const item of listBatchBox) {
-            if (item.actualQuantity === null || item.actualQuantity === undefined || item.actualQuantity === '') {
-                Alert.alert('Lỗi', 'Vui lòng nhập số lượng thực tế cho sản phẩm ' + item.product.productName);
-                return;
-            }
-            if (item.discrepancyQuantity !== 0) {
-                status = 'DISCREPANCY';
-            }
-        }
-
-        try {
-            const token = await parseToken('tokenUser');
-            const warehouse = await parseToken('warehouse');
-            const { employeeID, accessToken } = token;
-
-            const data = {
-                inventoryCheckID: inventoryCheckId,
-                employeeID: employeeID,
-                warehouseID: warehouse.warehouseID,
-                note: note,
-                checkStatus: status,
-                details: listBatchBox.map((item) => ({
-                    batchID: item.batchID,
-                    boxID: item.boxID,
-                    systemQuantity: item.systemQuantity,
-                    actualQuantity: Number(item.actualQuantity),
-                    discrepancyQuantity: Number(item.discrepancyQuantity),
-                    reason: item.reason,
-                })),
-            };
-
-            await request.post('/inventory-check/create-inventory-checks', data, {
-                headers: {
-                    token: `Bearer ${accessToken}`,
-                    employeeID: employeeID,
-                    warehouseID: warehouse.warehouseID,
-                },
-            });
-            Alert.alert('Thành công', 'Tạo phiếu kiểm kê thành công');
-            onClose();
-            if (handleOnclose) handleOnclose();
-            if (fetchData) fetchData();
-        } catch (err) {
-            Alert.alert(
-                'Lỗi',
-                Array.isArray(err.response?.data?.message)
-                    ? err.response.data.message[0]
-                    : err.response?.data?.message || 'Có lỗi xảy ra',
-            );
-            console.log(err);
-        }
-    };
 
     const handleUpdateStatus = async (status, id) => {
         const res = await updateInventoryCheck(status, id);
@@ -158,24 +50,11 @@ const CreateCheckDetail = ({
                                 <Text style={styles.label}>Mã phiếu kiểm kê</Text>
                                 <View style={styles.inputRow}>
                                     <TextInput
-                                        style={[styles.input, { flex: 1 }, type !== 'create' && styles.disabledInput]}
-                                        value={
-                                            type === 'create'
-                                                ? inventoryCheckId
-                                                : inventoryCheckDetail?.inventoryCheckID
-                                        }
-                                        onChangeText={setInventoryCheckId}
+                                        style={[styles.input, { flex: 1 }, styles.disabledInput]}
+                                        value={inventoryCheckDetail?.inventoryCheckID}
                                         placeholder="Nhập mã phiếu"
-                                        editable={type === 'create'}
+                                        editable={false}
                                     />
-                                    {type === 'create' && (
-                                        <TouchableOpacity
-                                            style={styles.btnGenerate}
-                                            onPress={() => setInventoryCheckId(generateCode('IVC-'))}
-                                        >
-                                            <Text style={styles.btnGenerateText}>Tạo mã</Text>
-                                        </TouchableOpacity>
-                                    )}
                                 </View>
                             </View>
 
@@ -196,11 +75,7 @@ const CreateCheckDetail = ({
                                     <Text style={styles.label}>Người lập</Text>
                                     <TextInput
                                         style={[styles.input, styles.disabledInput]}
-                                        value={
-                                            type === 'create'
-                                                ? currentUser?.employeeName || currentUser?.username
-                                                : inventoryCheckDetail?.employee?.employeeName
-                                        }
+                                        value={inventoryCheckDetail?.employee?.employeeName}
                                         editable={false}
                                     />
                                 </View>
@@ -212,13 +87,12 @@ const CreateCheckDetail = ({
                                     style={[
                                         styles.input,
                                         { height: 80, textAlignVertical: 'top' },
-                                        type !== 'create' && styles.disabledInput,
+                                        styles.disabledInput,
                                     ]}
-                                    value={type === 'create' ? note : inventoryCheckDetail?.note || 'Không có ghi chú'}
-                                    onChangeText={setNote}
+                                    value={inventoryCheckDetail?.note || 'Không có ghi chú'}
                                     placeholder="Nhập ghi chú chung..."
                                     multiline={true}
-                                    editable={type === 'create'}
+                                    editable={false}
                                 />
                             </View>
                         </View>
@@ -226,163 +100,104 @@ const CreateCheckDetail = ({
                         {/* List Items */}
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>
-                                Danh sách hàng hóa (
-                                {type === 'create' ? listBatchBox?.length : inventoryCheckDetail?.details?.length})
+                                Danh sách hàng hóa ({inventoryCheckDetail?.details?.length})
                             </Text>
 
-                            {type === 'create' &&
-                                listBatchBox?.map((item, index) => (
+                            {inventoryCheckDetail?.details?.map((detail, index) => {
+                                return (
                                     <View key={index} style={styles.card}>
                                         <View style={styles.cardHeader}>
-                                            <Text style={styles.productName}>{item.product.productName}</Text>
-                                            <View style={styles.badge}>
-                                                <Text style={styles.badgeText}>{item.batchID}</Text>
-                                            </View>
+                                            <Text style={styles.productName}>
+                                                {detail.batchBoxByBatch.batch.product.productName}
+                                            </Text>
                                         </View>
 
-                                        <Text style={styles.locationText}>📍 {item.location}</Text>
-                                        <Text style={styles.unitText}>Đơn vị: {item.unit.unitName}</Text>
+                                        <View style={styles.rowInfo}>
+                                            <Text style={styles.batchText}>
+                                                Lô: {detail.batchBoxByBatch.batch.batchID}
+                                            </Text>
+                                            <Text style={styles.unitText}>
+                                                {' '}
+                                                | {detail.batchBoxByBatch.batch.unit.unitName}
+                                            </Text>
+                                        </View>
 
                                         <View style={styles.divider} />
 
                                         <View style={styles.quantityContainer}>
                                             <View style={styles.qBox}>
                                                 <Text style={styles.qLabel}>Tồn hệ thống</Text>
-                                                <Text style={styles.qValue}>{item.systemQuantity}</Text>
+                                                <Text style={styles.qValue}>{detail.systemQuantity}</Text>
                                             </View>
                                             <View style={styles.qBox}>
                                                 <Text style={styles.qLabel}>Thực tế</Text>
-                                                <TextInput
-                                                    style={styles.qInput}
-                                                    value={item.actualQuantity.toString()}
-                                                    onChangeText={(text) =>
-                                                        handleActualQuantityChange(text, index, item.systemQuantity)
-                                                    }
-                                                    keyboardType="numeric"
-                                                    selectTextOnFocus
-                                                />
+                                                <Text style={[styles.qValue, { fontWeight: 'bold' }]}>
+                                                    {inventoryCheckDetail?.status === 'PENDING_CHECK'
+                                                        ? '---'
+                                                        : detail.actualQuantity}
+                                                </Text>
                                             </View>
                                             <View style={styles.qBox}>
                                                 <Text style={styles.qLabel}>Chênh lệch</Text>
                                                 <Text
                                                     style={[
                                                         styles.qValue,
-                                                        Math.abs(item.discrepancyQuantity) !== 0
-                                                            ? styles.textError
-                                                            : styles.textSuccess,
+                                                        inventoryCheckDetail?.status !== 'PENDING_CHECK'
+                                                            ? Math.abs(detail.discrepancyQuantity) !== 0
+                                                                ? styles.textError
+                                                                : styles.textSuccess
+                                                            : {},
                                                     ]}
                                                 >
-                                                    {Math.abs(item.discrepancyQuantity)}
+                                                    {inventoryCheckDetail?.status === 'PENDING_CHECK'
+                                                        ? '---'
+                                                        : Math.abs(detail.discrepancyQuantity)}
                                                 </Text>
                                             </View>
                                         </View>
 
-                                        <TextInput
-                                            style={styles.noteInput}
-                                            value={item.reason}
-                                            onChangeText={(text) => {
-                                                setListBatchBox((prev) =>
-                                                    prev.map((p, i) => (i === index ? { ...p, reason: text } : p)),
-                                                );
-                                            }}
-                                            placeholder="Ghi chú chi tiết..."
-                                        />
+                                        {detail.reason ? (
+                                            <View style={styles.noteContainer}>
+                                                <Text style={styles.noteLabel}>Ghi chú:</Text>
+                                                <Text style={styles.noteContent}>{detail.reason}</Text>
+                                            </View>
+                                        ) : null}
                                     </View>
-                                ))}
-
-                            {type === 'detail' &&
-                                inventoryCheckDetail?.details?.map((detail, index) => {
-                                    const location = `${detail.batchBoxByBatch.box.floor.shelf.shelfName} - ${detail.batchBoxByBatch.box.floor.floorName} - ${detail.batchBoxByBatch.box.boxName}`;
-                                    return (
-                                        <View key={index} style={styles.card}>
-                                            <View style={styles.cardHeader}>
-                                                <Text style={styles.productName}>
-                                                    {detail.batchBoxByBatch.batch.product.productName}
-                                                </Text>
-                                            </View>
-
-                                            <View style={styles.rowInfo}>
-                                                <Text style={styles.batchText}>
-                                                    Lô: {detail.batchBoxByBatch.batch.batchID}
-                                                </Text>
-                                                <Text style={styles.unitText}>
-                                                    {' '}
-                                                    | {detail.batchBoxByBatch.batch.unit.unitName}
-                                                </Text>
-                                            </View>
-                                            <Text style={styles.locationText}>📍{location}</Text>
-
-                                            <View style={styles.divider} />
-
-                                            <View style={styles.quantityContainer}>
-                                                <View style={styles.qBox}>
-                                                    <Text style={styles.qLabel}>Tồn hệ thống</Text>
-                                                    <Text style={styles.qValue}>{detail.systemQuantity}</Text>
-                                                </View>
-                                                <View style={styles.qBox}>
-                                                    <Text style={styles.qLabel}>Thực tế</Text>
-                                                    <Text style={[styles.qValue, { fontWeight: 'bold' }]}>
-                                                        {detail.actualQuantity}
-                                                    </Text>
-                                                </View>
-                                                <View style={styles.qBox}>
-                                                    <Text style={styles.qLabel}>Chênh lệch</Text>
-                                                    <Text
-                                                        style={[
-                                                            styles.qValue,
-                                                            Math.abs(detail.discrepancyQuantity) !== 0
-                                                                ? styles.textError
-                                                                : styles.textSuccess,
-                                                        ]}
-                                                    >
-                                                        {Math.abs(detail.discrepancyQuantity)}
-                                                    </Text>
-                                                </View>
-                                            </View>
-
-                                            {detail.reason ? (
-                                                <View style={styles.noteContainer}>
-                                                    <Text style={styles.noteLabel}>Ghi chú:</Text>
-                                                    <Text style={styles.noteContent}>{detail.reason}</Text>
-                                                </View>
-                                            ) : null}
-                                        </View>
-                                    );
-                                })}
+                                );
+                            })}
                         </View>
                     </ScrollView>
 
                     {/* Footer Actions */}
                     <View style={styles.footer}>
-                        {type === 'detail' &&
-                            inventoryCheckDetail?.status === 'PENDING' &&
-                            authIsAdmin(currentUser) && (
-                                <>
-                                    <TouchableOpacity
-                                        style={[styles.btn, styles.btnError, { flex: 1 }]}
-                                        onPress={() =>
-                                            handleUpdateStatus('REFUSE', inventoryCheckDetail?.inventoryCheckID)
-                                        }
-                                    >
-                                        <Text style={styles.btnText}>Từ chối</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.btn, styles.btnSuccess, { flex: 1 }]}
-                                        onPress={() =>
-                                            handleUpdateStatus('COMPLETED', inventoryCheckDetail?.inventoryCheckID)
-                                        }
-                                    >
-                                        <Text style={styles.btnText}>Phê duyệt</Text>
-                                    </TouchableOpacity>
-                                </>
-                            )}
-                        {type === 'create' && (
+                        {inventoryCheckDetail?.status === 'PENDING_CHECK' && (
                             <TouchableOpacity
                                 style={[styles.btn, styles.btnPrimary, { flex: 1 }]}
-                                onPress={handleSaveInventoryCheck}
+                                onPress={() => {
+                                    onClose();
+                                    navigation.navigate('ScanInventoryCheck', { inventoryCheckDetail });
+                                }}
                             >
-                                <Text style={styles.btnText}>Lưu phiếu</Text>
+                                <Text style={styles.btnText}>Kiểm kê</Text>
                             </TouchableOpacity>
+                        )}
+                        {inventoryCheckDetail?.status === 'PENDING' && authIsAdmin(currentUser) && (
+                            <>
+                                <TouchableOpacity
+                                    style={[styles.btn, styles.btnError, { flex: 1 }]}
+                                    onPress={() => handleUpdateStatus('REFUSE', inventoryCheckDetail?.inventoryCheckID)}
+                                >
+                                    <Text style={styles.btnText}>Từ chối</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.btn, styles.btnSuccess, { flex: 1 }]}
+                                    onPress={() =>
+                                        handleUpdateStatus('COMPLETED', inventoryCheckDetail?.inventoryCheckID)
+                                    }
+                                >
+                                    <Text style={styles.btnText}>Phê duyệt</Text>
+                                </TouchableOpacity>
+                            </>
                         )}
                     </View>
                 </View>

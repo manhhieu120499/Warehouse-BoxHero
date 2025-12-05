@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     StyleSheet,
     Text,
@@ -10,19 +10,22 @@ import {
     Modal,
     ScrollView,
     Platform,
+    Alert,
 } from 'react-native';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
-import { useNavigation } from '@react-navigation/native';
-import { Filter, Plus, Calendar, X, ChevronRight, ChevronLeft } from 'lucide-react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Filter, Scan, Calendar, X, ChevronRight, ChevronLeft } from 'lucide-react-native';
 import { getAllInventoryCheck, getFilterInventoryCheck } from '../service/inventoryCheck.service';
 import parseToken from '../utilities/parseToken';
 import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import CreateCheckDetail from '../components/CreateCheckDetail';
 import ShowLocationDetail from '../components/ShowLocationDetail';
+import QRScanner from '../components/QRScanner';
 
 const formatStatusInventoryCheck = {
+    PENDING_CHECK: 'Đang chờ kiểm kê',
     PENDING: 'Chờ phê duyệt',
     COMPLETED: 'Đã phê duyệt',
     REFUSE: 'Từ chối',
@@ -34,6 +37,7 @@ const formatStatusOrderPurchaseMissingInventoryCheck = {
 };
 
 const statusColors = {
+    PENDING_CHECK: '#3b82f6', // Blue
     PENDING: '#f59e0b', // Orange
     COMPLETED: '#10b981', // Green
     REFUSE: '#ef4444', // Red
@@ -48,42 +52,60 @@ export default function CheckPage() {
 
     // Modals
     const [showDetailInventoryCheck, setShowDetailInventoryCheck] = useState(false);
-    const [showCreateInventoryCheck, setShowCreateInventoryCheck] = useState(false);
+    // const [showCreateInventoryCheck, setShowCreateInventoryCheck] = useState(false);
     const [inventoryCheckDetail, setInventoryCheckDetail] = useState(null);
+    const [showScanner, setShowScanner] = useState(false);
 
     // Filters
     const [filterInventoryCheck, setFilterInventoryCheck] = useState({
         inventoryCheckID: '',
-        status: 'ALL',
+        status: 'PENDING_CHECK',
         checkStatus: 'ALL',
         createdAt: null,
         employeeName: '',
     });
     const [showDatePicker, setShowDatePicker] = useState(false);
 
-    const fetchData = async (currentPage = 1) => {
+    const fetchData = async (currentPage = 1, overrideFilters = null) => {
         try {
             const warehouse = await parseToken('warehouse');
             if (!warehouse) return;
 
+            const currentFilters = overrideFilters || filterInventoryCheck;
+
             // If filtering
             if (
-                filterInventoryCheck.status !== 'ALL' ||
-                filterInventoryCheck.checkStatus !== 'ALL' ||
-                filterInventoryCheck.inventoryCheckID ||
-                filterInventoryCheck.employeeName ||
-                filterInventoryCheck.createdAt
+                currentFilters.status !== 'ALL' ||
+                currentFilters.checkStatus !== 'ALL' ||
+                currentFilters.inventoryCheckID ||
+                currentFilters.employeeName ||
+                currentFilters.createdAt
             ) {
+                console.log(
+                    'warehouseID: ',
+                    warehouse.warehouseID,
+                    'currentPage: ',
+                    currentPage,
+                    'status: ',
+                    currentFilters.status,
+                    'checkStatus: ',
+                    currentFilters.checkStatus === 'ALL' ? '' : currentFilters.checkStatus,
+                    'inventoryCheckID: ',
+                    currentFilters.inventoryCheckID,
+                    'createdAt: ',
+                    currentFilters.createdAt ? format(currentFilters.createdAt, 'yyyy-MM-dd') : '',
+                    'employeeName: ',
+                    currentFilters.employeeName,
+                );
+
                 const res = await getFilterInventoryCheck({
                     warehouseID: warehouse.warehouseID,
                     currentPage: currentPage,
-                    status: filterInventoryCheck.status === 'ALL' ? '' : filterInventoryCheck.status,
-                    checkStatus: filterInventoryCheck.checkStatus === 'ALL' ? '' : filterInventoryCheck.checkStatus,
-                    inventoryCheckID: filterInventoryCheck.inventoryCheckID,
-                    createdAt: filterInventoryCheck.createdAt
-                        ? format(filterInventoryCheck.createdAt, 'yyyy-MM-dd')
-                        : '',
-                    employeeName: filterInventoryCheck.employeeName,
+                    status: currentFilters.status,
+                    checkStatus: currentFilters.checkStatus === 'ALL' ? '' : currentFilters.checkStatus,
+                    inventoryCheckID: currentFilters.inventoryCheckID,
+                    createdAt: currentFilters.createdAt ? format(currentFilters.createdAt, 'yyyy-MM-dd') : '',
+                    employeeName: currentFilters.employeeName,
                 });
                 if (res?.data?.status === 'OK') {
                     setListInventoryCheck(res.data.data);
@@ -102,9 +124,11 @@ export default function CheckPage() {
         }
     };
 
-    useEffect(() => {
-        fetchData(page);
-    }, [page]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchData(page);
+        }, [page, filterInventoryCheck.status]),
+    );
 
     const handleApplyFilter = () => {
         setPage(1);
@@ -113,17 +137,25 @@ export default function CheckPage() {
     };
 
     const handleResetFilter = () => {
-        setFilterInventoryCheck({
+        const defaultFilters = {
             inventoryCheckID: '',
-            status: 'ALL',
+            status: 'PENDING_CHECK',
             checkStatus: 'ALL',
             createdAt: null,
             employeeName: '',
-        });
+        };
+
+        const isStatusChanged = filterInventoryCheck.status !== defaultFilters.status;
+
+        setFilterInventoryCheck(defaultFilters);
         setPage(1);
-        // Need to trigger fetch with reset values, so we can just call fetchData(1) but state update is async
-        // Better to just set state and let effect run or manually call with defaults
-        setTimeout(() => fetchData(1), 0);
+
+        // If status changed, useFocusEffect will trigger fetchData with the new state.
+        // If status did NOT change, we must manually fetch with the default filters.
+        if (!isStatusChanged) {
+            fetchData(1, defaultFilters);
+        }
+
         setShowFilter(false);
     };
 
@@ -159,6 +191,10 @@ export default function CheckPage() {
         </View>
     );
 
+    const handleScan = () => {
+        setShowScanner(true);
+    };
+
     return (
         <DefaultLayout>
             <Header
@@ -172,6 +208,33 @@ export default function CheckPage() {
                 }
             />
             <View style={styles.container}>
+                <View style={styles.tabContainer}>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.tabContent}
+                    >
+                        {['PENDING_CHECK', 'PENDING', 'COMPLETED', 'REFUSE'].map((status) => (
+                            <TouchableOpacity
+                                key={status}
+                                style={[styles.tabItem, filterInventoryCheck.status === status && styles.tabItemActive]}
+                                onPress={() => {
+                                    setFilterInventoryCheck({ ...filterInventoryCheck, status });
+                                    setPage(1);
+                                }}
+                            >
+                                <Text
+                                    style={[
+                                        styles.tabText,
+                                        filterInventoryCheck.status === status && styles.tabTextActive,
+                                    ]}
+                                >
+                                    {formatStatusInventoryCheck[status]}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
                 <FlatList
                     data={listInventoryCheck}
                     renderItem={renderItem}
@@ -181,8 +244,8 @@ export default function CheckPage() {
                 />
 
                 {/* Floating Action Button */}
-                <TouchableOpacity style={styles.fab} onPress={() => setShowCreateInventoryCheck(true)}>
-                    <Plus size={24} color="white" />
+                <TouchableOpacity style={styles.fab} onPress={handleScan}>
+                    <Scan size={24} color="white" />
                 </TouchableOpacity>
 
                 {/* Pagination */}
@@ -271,31 +334,6 @@ export default function CheckPage() {
                             </View>
 
                             <View style={styles.filterSection}>
-                                <Text style={styles.filterLabel}>Trạng thái phiếu</Text>
-                                <View style={styles.chipContainer}>
-                                    {['ALL', 'PENDING', 'COMPLETED', 'REFUSE'].map((status) => (
-                                        <TouchableOpacity
-                                            key={status}
-                                            style={[
-                                                styles.chip,
-                                                filterInventoryCheck.status === status && styles.chipActive,
-                                            ]}
-                                            onPress={() => setFilterInventoryCheck({ ...filterInventoryCheck, status })}
-                                        >
-                                            <Text
-                                                style={[
-                                                    styles.chipText,
-                                                    filterInventoryCheck.status === status && styles.chipTextActive,
-                                                ]}
-                                            >
-                                                {status === 'ALL' ? 'Tất cả' : formatStatusInventoryCheck[status]}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            </View>
-
-                            <View style={styles.filterSection}>
                                 <Text style={styles.filterLabel}>Kết quả kiểm kê</Text>
                                 <View style={styles.chipContainer}>
                                     {['ALL', 'BALANCED', 'DISCREPANCY'].map((status) => (
@@ -340,6 +378,44 @@ export default function CheckPage() {
                 </View>
             </Modal>
 
+            {/* Create Modal (ShowLocationDetail first) */}
+            {/* {showCreateInventoryCheck && (
+                <ShowLocationDetail
+                    isOpen={showCreateInventoryCheck}
+                    onClose={() => setShowCreateInventoryCheck(false)}
+                    fetchData={() => fetchData(1)}
+                />
+            )} */}
+
+            <QRScanner
+                visible={showScanner}
+                onClose={() => setShowScanner(false)}
+                onScanned={async (code) => {
+                    setShowScanner(false);
+                    try {
+                        const warehouse = await parseToken('warehouse');
+                        if (!warehouse) return;
+
+                        const res = await getFilterInventoryCheck({
+                            warehouseID: warehouse.warehouseID,
+                            inventoryCheckID: code,
+                        });
+
+                        console.log('res', res);
+
+                        if (res?.data?.status === 'OK' && res.data.data.length > 0) {
+                            setInventoryCheckDetail(res.data.data[0]);
+                            setShowDetailInventoryCheck(true);
+                        } else {
+                            Alert.alert('Lỗi', 'Không tìm thấy phiếu kiểm kê');
+                        }
+                    } catch (error) {
+                        console.log('Error scanning:', error);
+                        Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tìm kiếm phiếu kiểm kê');
+                    }
+                }}
+            />
+
             {/* Detail Modal */}
             {showDetailInventoryCheck && (
                 <CreateCheckDetail
@@ -348,15 +424,6 @@ export default function CheckPage() {
                     inventoryCheckDetail={inventoryCheckDetail}
                     type="detail"
                     fetchData={() => fetchData(page)}
-                />
-            )}
-
-            {/* Create Modal (ShowLocationDetail first) */}
-            {showCreateInventoryCheck && (
-                <ShowLocationDetail
-                    isOpen={showCreateInventoryCheck}
-                    onClose={() => setShowCreateInventoryCheck(false)}
-                    fetchData={() => fetchData(1)}
                 />
             )}
         </DefaultLayout>
@@ -381,6 +448,39 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 20,
         color: '#6b7280',
+    },
+
+    // Tabs
+    tabContainer: {
+        backgroundColor: 'white',
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+    },
+    tabContent: {
+        paddingHorizontal: 16,
+        gap: 12,
+    },
+    tabItem: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#f3f4f6',
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+    },
+    tabItemActive: {
+        backgroundColor: '#eff6ff',
+        borderColor: '#2563eb',
+    },
+    tabText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#6b7280',
+    },
+    tabTextActive: {
+        color: '#2563eb',
+        fontWeight: '600',
     },
 
     // Card

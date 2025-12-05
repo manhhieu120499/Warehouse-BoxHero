@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, Button, TouchableOpacity, Modal, Alert } from 'react-native';
+import { StyleSheet, Text, View, Button, TouchableOpacity, Modal, Alert, Vibration } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -24,6 +24,7 @@ export default function QRScanner({ visible, onScanned, onClose, qrCheck, descri
         if (qrCheck && data !== qrCheck) {
             Alert.alert('Thông báo', 'Mã QR không trùng khớp với mã QR của lô hàng.');
         } else if (onScanned) {
+            Vibration.vibrate();
             onScanned(data);
         }
 
