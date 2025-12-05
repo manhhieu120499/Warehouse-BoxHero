@@ -66,6 +66,7 @@ export const formatStatusOrderPurchaseMissing = {
 
 export const formatStatusInventoryCheck = {
     PENDING: 'Chờ phê duyệt',
+    PENDING_CHECK: 'Chờ kiểm kê',
     COMPLETED: 'Đã phê duyệt',
     REFUSE: 'Từ chối',
 };

@@ -14,11 +14,18 @@ import { Trash2 } from 'lucide-react';
 
 const cx = classNames.bind(styles);
 
-const ManualExport3D = ({ isOpen, onClose, products, onConfirm }) => {
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('vi-VN');
+};
+
+const ManualExport3D = ({ isOpen, onClose, products, onConfirm, suggestedData }) => {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [shelves, setShelves] = useState([]);
     const [inventory, setInventory] = useState([]); // Batches of selected product
     const [selectedExports, setSelectedExports] = useState([]); // Items selected for export
+    const [conflictingBatches, setConflictingBatches] = useState([]); // For resolving multiple batches in one box
+    const [targetBox, setTargetBox] = useState(null); // Box being clicked
 
     useEffect(() => {
         const warehouse = parseToken('warehouse');
@@ -32,6 +39,42 @@ const ManualExport3D = ({ isOpen, onClose, products, onConfirm }) => {
             setInventory([]);
         }
     }, [selectedProduct]);
+
+    useEffect(() => {
+        console.log(suggestedData);
+
+        if (suggestedData && suggestedData.length > 0) {
+            const initialExports = [];
+            suggestedData.forEach((product) => {
+                const productInfo = products.find((p) => p.productID === product.productID);
+                if (product.batches) {
+                    product.batches.forEach((batch) => {
+                        if (batch.boxes) {
+                            batch.boxes.forEach((box) => {
+                                initialExports.push({
+                                    productID: product.productID,
+                                    batchID: batch.batchID,
+                                    boxID: box.boxID,
+                                    boxName: box.boxID,
+                                    quantity: box.quantity,
+                                    unit: productInfo?.unit?.unitName || '',
+                                    available: box.quantity, // Initially assume available is at least what's suggested
+                                    createdAt: batch.createdAt,
+                                    expiryDate: batch.expiryDate,
+                                });
+                            });
+                        }
+                    });
+                }
+            });
+            setSelectedExports(initialExports);
+
+            // Auto select first product
+            if (products.length > 0) {
+                setSelectedProduct(products[0]);
+            }
+        }
+    }, [suggestedData, products]);
 
     const fetchShelves = async (id) => {
         const token = parseToken('tokenUser');
@@ -108,6 +151,45 @@ const ManualExport3D = ({ isOpen, onClose, products, onConfirm }) => {
         }
     };
 
+    const addBatchToExport = (batch, box) => {
+        console.log(batch);
+
+        // Get quantity in box
+        let quantityInBox = 0;
+        const bbEntry = batch.boxes.find((b) => b.boxID == box.boxID);
+        const bb = bbEntry ? bbEntry.batch_boxes : null;
+
+        quantityInBox = bb ? bb.validQuantity : 0;
+
+        const currentSelectedQty = selectedExports
+            .filter((e) => e.productID === selectedProduct.productID)
+            .reduce((acc, curr) => acc + curr.quantity, 0);
+        const requiredQty = selectedProduct.amountRequiredExport;
+        const remainingNeeded = requiredQty - currentSelectedQty;
+
+        const quantityToAdd = Math.min(quantityInBox, remainingNeeded);
+
+        if (quantityToAdd <= 0) {
+            toast.error('Đã đủ số lượng hoặc ô không có hàng khả dụng', styleMessage);
+            return;
+        }
+
+        setSelectedExports((prev) => [
+            ...prev,
+            {
+                productID: selectedProduct.productID,
+                batchID: batch.batchID,
+                boxID: box.boxID,
+                boxName: box.boxID,
+                quantity: quantityToAdd,
+                unit: selectedProduct.unit.unitName,
+                available: quantityInBox,
+                createdAt: batch.createdAt,
+                expiryDate: batch.expiryDate,
+            },
+        ]);
+    };
+
     const handleBoxClick = (box) => {
         if (!selectedProduct) return;
         if (checkDisabled(box.boxID)) return;
@@ -131,41 +213,13 @@ const ManualExport3D = ({ isOpen, onClose, products, onConfirm }) => {
 
             if (batchesInBox.length === 0) return;
 
-            const batch = batchesInBox[0]; // Pick first for now
-
-            // Get quantity in box
-            let quantityInBox = 0;
-            const bb = batch.boxes.find((b) => b.boxID == box.boxID).batch_boxes;
-
-            quantityInBox = bb ? bb.validQuantity : 0;
-
-            console.log('selectedExports', selectedExports);
-
-            const currentSelectedQty = selectedExports
-                .filter((e) => e.productID === selectedProduct.productID)
-                .reduce((acc, curr) => acc + curr.quantity, 0);
-            const requiredQty = selectedProduct.amountRequiredExport;
-            const remainingNeeded = requiredQty - currentSelectedQty;
-
-            const quantityToAdd = Math.min(quantityInBox, remainingNeeded);
-
-            if (quantityToAdd <= 0) {
-                toast.error('Đã đủ số lượng hoặc ô không có hàng khả dụng', styleMessage);
-                return;
+            if (batchesInBox.length === 1) {
+                addBatchToExport(batchesInBox[0], box);
+            } else {
+                // Multiple batches found, show selection modal
+                setTargetBox(box);
+                setConflictingBatches(batchesInBox);
             }
-
-            setSelectedExports((prev) => [
-                ...prev,
-                {
-                    productID: selectedProduct.productID,
-                    batchID: batch.batchID,
-                    boxID: box.boxID,
-                    boxName: box.boxName || box.boxID,
-                    quantity: quantityToAdd,
-                    unit: selectedProduct.unit.unitName,
-                    available: quantityInBox,
-                },
-            ]);
         }
     };
 
@@ -229,9 +283,12 @@ const ManualExport3D = ({ isOpen, onClose, products, onConfirm }) => {
         onClose();
     };
 
-    useEffect(() => {
-        console.log(selectedExports);
-    }, [selectedExports]);
+    const isAllSatisfied = products.every((product) => {
+        const selectedQty = selectedExports
+            .filter((e) => e.productID === product.productID)
+            .reduce((acc, curr) => acc + curr.quantity, 0);
+        return selectedQty >= product.amountRequiredExport;
+    });
 
     return (
         <Modal
@@ -289,7 +346,18 @@ const ManualExport3D = ({ isOpen, onClose, products, onConfirm }) => {
                                                 <td className={cx('productName')}>{product.productName}</td>
                                                 <td>{product.unit.unitName}</td>
                                                 <td className={cx('num')}>{product.amountRequiredExport}</td>
-                                                <td className={cx('num')}>{selectedQty}</td>
+                                                <td
+                                                    className={cx('num')}
+                                                    style={{
+                                                        color:
+                                                            selectedQty >= product.amountRequiredExport
+                                                                ? 'green'
+                                                                : 'red',
+                                                        fontWeight: 'bold',
+                                                    }}
+                                                >
+                                                    {selectedQty}
+                                                </td>
                                             </tr>
                                         );
                                     })}
@@ -306,6 +374,8 @@ const ManualExport3D = ({ isOpen, onClose, products, onConfirm }) => {
                                 <thead>
                                     <tr>
                                         <th>Mã lô</th>
+                                        <th>Ngày nhập</th>
+                                        <th>HSD</th>
                                         <th>Vị trí</th>
                                         <th>Có sẵn</th>
                                         <th>Xuất</th>
@@ -318,6 +388,8 @@ const ManualExport3D = ({ isOpen, onClose, products, onConfirm }) => {
                                         .map((item, index) => (
                                             <tr key={index}>
                                                 <td>{item.batchID}</td>
+                                                <td>{formatDate(item.createdAt)}</td>
+                                                <td>{formatDate(item.expiryDate)}</td>
                                                 <td>{item.boxName || item.boxID}</td>
                                                 <td className={cx('num')}>{item.available}</td>
                                                 <td>
@@ -352,7 +424,7 @@ const ManualExport3D = ({ isOpen, onClose, products, onConfirm }) => {
                     </div>
 
                     <div className={cx('action')}>
-                        <Button primary onClick={handleConfirm}>
+                        <Button primary onClick={handleConfirm} disabled={!isAllSatisfied}>
                             Xác nhận xuất
                         </Button>
                     </div>
@@ -388,6 +460,104 @@ const ManualExport3D = ({ isOpen, onClose, products, onConfirm }) => {
                     </div>
                 </div>
             </div>
+
+            {conflictingBatches.length > 0 && (
+                <Modal
+                    isOpenInfo={true}
+                    onClose={() => {
+                        setConflictingBatches([]);
+                        setTargetBox(null);
+                    }}
+                    showButtonClose={false}
+                >
+                    <div style={{ padding: '10px', minWidth: '350px' }}>
+                        <h3 style={{ fontSize: '1.6rem', marginBottom: '15px', fontWeight: '600' }}>
+                            Chọn lô hàng tại {targetBox?.boxID}
+                        </h3>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                maxHeight: '60vh',
+                                overflowY: 'auto',
+                            }}
+                        >
+                            {conflictingBatches.map((batch) => {
+                                const bbEntry = batch.boxes.find((b) => b.boxID == targetBox?.boxID);
+                                const qty = bbEntry?.batch_boxes?.validQuantity || 0;
+                                const isSelected = selectedExports.some(
+                                    (e) =>
+                                        e.batchID === batch.batchID &&
+                                        e.boxID == targetBox?.boxID &&
+                                        e.productID === selectedProduct.productID,
+                                );
+
+                                return (
+                                    <div
+                                        key={batch.batchID}
+                                        style={{
+                                            padding: '12px',
+                                            border: isSelected ? '2px solid #1890ff' : '1px solid #ccc',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            fontSize: '1.3rem',
+                                            backgroundColor: isSelected ? '#e6f7ff' : 'white',
+                                        }}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                handleRemoveItem(batch.batchID, targetBox.boxID);
+                                            } else {
+                                                addBatchToExport(batch, targetBox);
+                                            }
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                readOnly
+                                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                            />
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <span style={{ fontWeight: 'bold' }}>{batch.batchID}</span>
+                                                <span style={{ fontSize: '1.1rem', color: '#555' }}>
+                                                    Ngày nhập: {formatDate(batch.createdAt)} - HSD:{' '}
+                                                    {formatDate(batch.expiryDate)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <span>SL: {qty}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                            <Button
+                                outline
+                                onClick={() => {
+                                    setConflictingBatches([]);
+                                    setTargetBox(null);
+                                }}
+                            >
+                                Đóng
+                            </Button>
+                            <Button
+                                primary
+                                onClick={() => {
+                                    setConflictingBatches([]);
+                                    setTargetBox(null);
+                                }}
+                            >
+                                Hoàn tất
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </Modal>
     );
 };

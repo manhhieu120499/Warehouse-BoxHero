@@ -328,17 +328,6 @@ export const checkOrderReleaseID = async (orderReleaseID) => {
 };
 
 export const suggestExportProduct = async ({ payload }) => {
-    // payload example:
-    //     {
-    //     "type": "FIFO",
-    //     "items": [
-    //         {
-    //             "productID": "SP1",
-    //             "unitID": "1",
-    //             "quantity": 4
-    //         }
-    //     ]
-    // }
     try {
         const token = parseToken('tokenUser');
         const res = await request.post(`/api/order-release/suggest-export`, payload, {

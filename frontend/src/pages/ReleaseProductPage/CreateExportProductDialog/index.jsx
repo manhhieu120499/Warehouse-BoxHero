@@ -128,9 +128,13 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
                         productName: originalProduct ? originalProduct.productName : item.productID,
                     };
                 });
+                // setSuggestedData(dataWithNames);
+                // setShowSuggestedModal(true);
+                // toast.success(res.message, styleMessage);
+
+                // Pass suggested data to ManualExport3D
                 setSuggestedData(dataWithNames);
-                setShowSuggestedModal(true);
-                toast.success(res.message, styleMessage);
+                setShowManualExportModal(true);
             } else {
                 toast.error(res?.message || 'Có lỗi xảy ra khi gợi ý xuất hàng', styleMessage);
             }
@@ -140,23 +144,26 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
         }
     };
 
-    const handleManualExportConfirm = (data) => {
-        setSuggestedData(data);
-        setShowSuggestedModal(true);
-    };
+    const handleManualExportConfirm = async (data) => {
+        // Group by batchID
+        const groupedByBatch = data.reduce((acc, item) => {
+            if (!acc[item.batchID]) {
+                acc[item.batchID] = {
+                    batchID: item.batchID,
+                    quantityExported: 0,
+                    orderReleaseBatchBoxDetails: [],
+                };
+            }
+            acc[item.batchID].quantityExported += item.quantity;
+            acc[item.batchID].orderReleaseBatchBoxDetails.push({
+                batchID: item.batchID,
+                boxID: item.boxID,
+                quantityExported: item.quantity,
+            });
+            return acc;
+        }, {});
 
-    const handleConfirmSuggestion = async () => {
-        const orderReleaseDetails = suggestedData.flatMap((product) =>
-            product.batches.map((batch) => ({
-                batchID: batch.batchID,
-                quantityExported: batch.quantityExport,
-                orderReleaseBatchBoxDetails: (batch.boxes || []).map((box) => ({
-                    batchID: batch.batchID,
-                    boxID: box.boxID,
-                    quantityExported: box.quantity,
-                })),
-            })),
-        );
+        const orderReleaseDetails = Object.values(groupedByBatch);
 
         const payload = {
             orderReleaseID: formData.receiptCode,
@@ -168,12 +175,19 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
 
         console.log('payload', payload);
 
-        const res = await saveOrderRelease(payload);
-        if (res.data?.status === 'OK') {
-            toast.success('Tạo phiếu xuất kho thành công', styleMessage);
-            setShowSuggestedModal(false);
-            onClose();
-            if (fetchData) fetchData();
+        try {
+            const res = await saveOrderRelease(payload);
+            if (res.data?.status === 'OK') {
+                toast.success('Tạo phiếu xuất kho thành công', styleMessage);
+                setShowManualExportModal(false);
+                onClose();
+                if (fetchData) fetchData();
+            } else {
+                toast.error(res?.data?.message || 'Có lỗi xảy ra khi tạo phiếu xuất kho', styleMessage);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Lỗi kết nối server', styleMessage);
         }
     };
 
@@ -321,20 +335,24 @@ const CreateExportProductDialog = ({ isOpen, onClose, fetchData, proposalRelease
             </Modal>
 
             {/* Modal hiển thị gợi ý xuất hàng */}
-            <SuggestedExportListDialog
+            {/* <SuggestedExportListDialog
                 isOpen={showSuggestedModal}
                 onClose={() => setShowSuggestedModal(false)}
                 data={suggestedData}
                 onConfirm={handleConfirmSuggestion}
                 type={selectedMethod}
-            />
+            /> */}
 
             {/* Modal tự chọn lô 3D */}
             <ManualExport3D
                 isOpen={showManualExportModal}
-                onClose={() => setShowManualExportModal(false)}
+                onClose={() => {
+                    setShowManualExportModal(false);
+                    setSuggestedData([]); // Reset suggested data when closing
+                }}
                 products={productListSelected}
                 onConfirm={handleManualExportConfirm}
+                suggestedData={suggestedData}
             />
         </>
     );

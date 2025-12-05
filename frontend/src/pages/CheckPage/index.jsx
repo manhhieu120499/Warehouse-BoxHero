@@ -97,7 +97,7 @@ const ImportProduct = () => {
                 return (
                     <div className={cx('status-proposal')}>
                         <div className={cx('status-indicator', record.checkStatus)}></div>
-                        <p>{formatStatusOrderPurchaseMissingInventoryCheck[record.checkStatus]}</p>
+                        <p>{formatStatusOrderPurchaseMissingInventoryCheck[record.checkStatus] || 'Chưa có'}</p>
                     </div>
                 );
             },
@@ -161,6 +161,10 @@ const ImportProduct = () => {
                 {
                     name: 'Tất cả',
                     value: 'ALL',
+                },
+                {
+                    name: 'Chờ kiểm kê',
+                    value: 'PENDING_CHECK',
                 },
                 {
                     name: 'Chờ phê duyệt',
