@@ -3,6 +3,7 @@ const ProductService = require('../services/ProductService');
 class ProductController {
     async getProductById(req, res) {
         try {
+            console.log(1);
             const { productID } = req.query;
             const warehouseID = req.headers['warehouseid'];
             const { statusHttp, ...response } = await ProductService.findProductById(productID, warehouseID);
@@ -12,9 +13,10 @@ class ProductController {
         }
     }
     async getAllProduct(req, res) {
-        const { page } = req.query;
+        console.log(2);
+        const { page, ...rest } = req.query;
         try {
-            const { statusHttp, ...response } = await ProductService.findAllProduct(page);
+            const { statusHttp, ...response } = await ProductService.findAllProduct(page, rest);
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp).json(err);

@@ -42,6 +42,11 @@ class OrderPurchaseMissingService {
                                                 },
                                             ],
                                         },
+                                        {
+                                            model: Batch,
+                                            as: 'batch',
+                                            attributes: ['batchID', 'qrCode'],
+                                        },
                                     ],
                                 },
                             ],
@@ -80,18 +85,41 @@ class OrderPurchaseMissingService {
                                                     model: Product,
                                                     as: 'product',
                                                 },
+                                                {
+                                                    model: Unit,
+                                                    as: 'unit',
+                                                    attributes: ['unitID', 'unitName'],
+                                                },
+                                                {
+                                                    model: Supplier,
+                                                    as: 'supplier',
+                                                    attributes: ['supplierID', 'supplierName'],
+                                                },
                                             ],
                                         },
                                     ],
+                                },
+                                {
+                                    model: Batch,
+                                    as: 'batch',
+                                    attributes: ['batchID', 'qrCode'],
                                 },
                             ],
                         },
                     ],
                 });
+                const orderPurchaseOriginal = await OrderPurchase.findOne({
+                    where: {
+                        orderPurchaseID: orderPurchaseMissingFind.orderPurchaseID,
+                    },
+                });
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
-                    data: orderPurchaseMissingFind,
+                    data: {
+                        ...orderPurchaseMissingFind.toJSON(),
+                        proposalID: orderPurchaseOriginal.toJSON().proposalID,
+                    },
                 });
             } catch (e) {
                 console.log(e);
@@ -141,7 +169,7 @@ class OrderPurchaseMissingService {
                     include: [
                         {
                             model: OrderPurchase,
-                            attributes: ['orderPurchaseID', 'warehouseID'],
+                            attributes: ['orderPurchaseID', 'warehouseID', 'proposalID'],
                             as: 'orderPurchase',
                             where: { warehouseID },
                             include: [
@@ -179,6 +207,11 @@ class OrderPurchaseMissingService {
                                             ],
                                         },
                                     ],
+                                },
+                                {
+                                    model: Batch,
+                                    as: 'batch',
+                                    attributes: ['batchID', 'qrCode'],
                                 },
                             ],
                         },

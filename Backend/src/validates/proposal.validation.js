@@ -71,8 +71,8 @@ const checkUpdateStatusProposal = [
         .notEmpty()
         .withMessage('Status là bắt buộc')
         .bail()
-        .isIn(['PENDING', 'COMPLETED', 'REFUSE'])
-        .withMessage('Status không nằm trong danh sách cho phép (PENDING, COMPLETED, REFUSE)'),
+        .isIn(['PENDING', 'COMPLETED', 'REFUSE', 'APPROVED'])
+        .withMessage('Status không nằm trong danh sách cho phép (PENDING, COMPLETED, REFUSE, APPROVED)'),
 ];
 
 // update proposal detail
