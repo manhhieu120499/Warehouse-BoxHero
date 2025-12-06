@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ModalProductCreate.module.scss';
 import Modal from '../Modal';
@@ -8,6 +8,8 @@ import { styleMessage } from '../../constants';
 import { createProduct } from '../../services/product.service';
 import noUser from '../../assets/no_image.jpg';
 import Image from '../Image';
+import { getAllCategories, getAllCategoriesForCreateProduct } from '../../services/category.service';
+import { getAllBaseUnitsProduct } from '../../services/baseUnitProduct.service';
 
 const cx = classNames.bind(styles);
 
@@ -23,24 +25,66 @@ const ModalProductCreate = ({ isOpen, onClose, prefectProductList }) => {
         image: '',
         description: '',
     });
+    const [categories, setCategories] = useState([]);
+    const [baseUnits, setBaseUnits] = useState([]);
+
+    useEffect(() => {
+        // fetchCategories
+        async function fetchCategories() {
+            try {
+                const res = await getAllCategoriesForCreateProduct();
+                const updateCategory = [
+                    { value: '', label: 'Chọn mã nhóm sản phẩm' },
+                    ...(res?.data || []).map((category) => ({
+                        value: category.categoryID,
+                        label: category.categoryName,
+                    })),
+                ];
+                setCategories(updateCategory);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+        fetchCategories();
+    }, []);
+
+    useEffect(() => {
+        // fetch baseUnits
+        async function fetchBaseUnitsProduct() {
+            try {
+                const res = await getAllBaseUnitsProduct();
+                const updateBaseUnit = [
+                    { value: '', label: 'Chọn đơn vị cơ bản' },
+                    ...(res?.data || []).map((item) => ({
+                        value: item.baseUnitProductID,
+                        label: item.baseUnitName,
+                    })),
+                ];
+                setBaseUnits(updateBaseUnit);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+        fetchBaseUnitsProduct();
+    }, []);
 
     // Options cho select
-    const unitOptions = [
-        { value: '', label: 'Chọn đơn vị cơ bản' },
-        { value: 'UOM1', label: 'Lon' },
-        { value: 'UOM2', label: 'Hộp' },
-        { value: 'UOM3', label: 'Bịch' },
-        { value: 'UOM4', label: 'Chai' },
-    ];
+    // const unitOptions = [
+    //     { value: '', label: 'Chọn đơn vị cơ bản' },
+    //     { value: 'UOM1', label: 'Lon' },
+    //     { value: 'UOM2', label: 'Hộp' },
+    //     { value: 'UOM3', label: 'Bịch' },
+    //     { value: 'UOM4', label: 'Chai' },
+    // ];
 
     // categrory options
-    const categoryOptions = [
-        { value: '', label: 'Chọn mã nhóm sản phẩm' },
-        { value: 'CA1', label: 'Sữa bột' },
-        { value: 'CA2', label: 'Sữa đặc' },
-        { value: 'CA3', label: 'Sữa tươi' },
-        { value: 'CA4', label: 'Sữa hộp' },
-    ];
+    // const categoryOptions = [
+    //     { value: '', label: 'Chọn mã nhóm sản phẩm' },
+    //     { value: 'CA1', label: 'Sữa bột' },
+    //     { value: 'CA2', label: 'Sữa đặc' },
+    //     { value: 'CA3', label: 'Sữa tươi' },
+    //     { value: 'CA4', label: 'Sữa hộp' },
+    // ];
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({
@@ -68,6 +112,16 @@ const ModalProductCreate = ({ isOpen, onClose, prefectProductList }) => {
 
         if (!formData.baseUnitProductID) {
             toast.error('Vui lòng chọn đơn vị cơ bản', styleMessage);
+            return;
+        }
+
+        if (!formData.minStock) {
+            toast.error('Vui lòng nhập số lượng tối thiểu', styleMessage);
+            return;
+        }
+
+        if (!formData.image) {
+            toast.error('Vui lòng chọn ảnh cho sản phẩm', styleMessage);
             return;
         }
 
@@ -155,7 +209,7 @@ const ModalProductCreate = ({ isOpen, onClose, prefectProductList }) => {
                                 onChange={(e) => handleInputChange('categoryID', e.target.value)}
                                 className={cx('select-field')}
                             >
-                                {categoryOptions.map((option) => (
+                                {categories.map((option) => (
                                     <option key={option.value} value={option.value}>
                                         {option.label}
                                     </option>
@@ -175,7 +229,7 @@ const ModalProductCreate = ({ isOpen, onClose, prefectProductList }) => {
                         </div>
 
                         <div className={cx('form-group')}>
-                            <label className={cx('label')}>Tên sản phẩm</label>
+                            <label className={cx('label', 'required')}>Tên sản phẩm</label>
                             <input
                                 type="text"
                                 placeholder="Nhập Tên sản phẩm"
@@ -197,13 +251,13 @@ const ModalProductCreate = ({ isOpen, onClose, prefectProductList }) => {
                         </div>
 
                         <div className={cx('form-group')}>
-                            <label className={cx('label')}>Đơn vị cơ bản</label>
+                            <label className={cx('label', 'required')}>Đơn vị cơ bản</label>
                             <select
                                 value={formData.baseUnitProductID}
                                 onChange={(e) => handleInputChange('baseUnitProductID', e.target.value)}
                                 className={cx('select-field')}
                             >
-                                {unitOptions.map((option) => (
+                                {baseUnits.map((option) => (
                                     <option key={option.value} value={option.value}>
                                         {option.label}
                                     </option>
@@ -218,8 +272,17 @@ const ModalProductCreate = ({ isOpen, onClose, prefectProductList }) => {
                                 placeholder="Nhập Số lượng tồn tối thiểu"
                                 value={formData.minStock}
                                 min={1}
-                                onChange={(e) => handleInputChange('minStock', e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val < 0) return;
+                                    handleInputChange('minStock', val);
+                                }}
                                 className={cx('input-field')}
+                                onKeyDown={(e) => {
+                                    if (e.key === '-') {
+                                        e.preventDefault();
+                                    }
+                                }}
                             />
                         </div>
 

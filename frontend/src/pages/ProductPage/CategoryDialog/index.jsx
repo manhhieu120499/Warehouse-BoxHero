@@ -167,7 +167,7 @@ const CategoryDialog = ({ isOpen, onClose }) => {
                         <div className={cx('input-search')}>
                             <Search
                                 allowClear
-                                placeholder="Nhập mã sản phẩm"
+                                placeholder="Nhập mã nhóm sản phẩm"
                                 //enterButton="Tìm kiếm"
                                 onSearch={onSearchCategory}
                                 size="middle"

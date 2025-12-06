@@ -13,10 +13,14 @@ export const searchCustomer = async (customerID) => {
     }
 };
 
-export const getAllCustomer = async () => {
+export const getAllCustomer = async (page) => {
     try {
-        const res = await request.get('/api/customer/list');
-        return res?.data?.data || [];
+        const res = await request.get('/api/customer/list', {
+            params: {
+                page,
+            },
+        });
+        return res?.data || null;
     } catch (err) {
         console.log(err);
         toast.error(

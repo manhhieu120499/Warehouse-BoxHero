@@ -7,6 +7,7 @@ import globalStyles from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import { formatDate } from '../../../utils/formatDate';
 import ModalCreateApproveRelease from '../../ApproveReleasePage/ModalCreateApproveRelease';
 import ModalHistoryOrderCustomerDetail from '../ModalHistoryOrderCustomerDetail';
+import ModalOrderReleaseDetail from '../../../pages/ReleaseProductPage/ModalOrderReleaseDetail';
 
 const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyles);
@@ -89,11 +90,16 @@ const ModalHistoryOrderCustomer = ({ isOpen, onClose, customerID }) => {
                     />
                 </div>
             </Modal>
-            <ModalHistoryOrderCustomerDetail
+            <ModalOrderReleaseDetail
+                isOpen={!!selectedHistory}
+                onClose={() => setSelectedHistory(null)}
+                orderReleaseItem={selectedHistory}
+            />
+            {/* <ModalHistoryOrderCustomerDetail
                 initialData={selectedHistory}
                 isOpen={!!selectedHistory}
                 onClose={() => setSelectedHistory(null)}
-            />
+            /> */}
         </>
     );
 };

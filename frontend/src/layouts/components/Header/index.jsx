@@ -69,12 +69,12 @@ const Header = ({ children }) => {
             </div>
             {children}
             <div className={cx('right-header')}>
-                <Search />
+                {/* <Search />
                 <div>
                     <Notification>
                         <Bell className={cx('icon-right-header')} size={26} />
                     </Notification>
-                </div>
+                </div> */}
 
                 <div>
                     {/** avatar */}
