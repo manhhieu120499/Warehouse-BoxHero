@@ -20,6 +20,7 @@ const CustomerPage = () => {
     const [emailFilter, setEmailFilter] = useState('');
     const [isOpenInfo, setIsOpenInfo] = useState(null);
     const [customerList, setCustomerList] = useState([]);
+    const [totalPages, setTotalPages] = useState(1);
 
     const columns = [
         {
@@ -153,18 +154,20 @@ const CustomerPage = () => {
         },
     ];
 
-    const fetchListCustomer = async () => {
+    const fetchListCustomer = async (page) => {
         try {
-            const res = await getAllCustomer();
-            setCustomerList(res);
+            const res = await getAllCustomer(page);
+            setCustomerList(res.data || []);
+            setPage(res?.pagination?.currentPage || 1);
+            setTotalPages(res?.pagination?.totalPages || 1);
         } catch (err) {
             console.log(err);
         }
     };
 
     useEffect(() => {
-        fetchListCustomer();
-    }, []);
+        fetchListCustomer(page);
+    }, [page]);
 
     return (
         <div className={cx('wrapper-report')}>
@@ -190,6 +193,7 @@ const CustomerPage = () => {
                     pagination
                     pageSize={5}
                     onChangePage={onChangePage}
+                    total={totalPages * 5}
                 />
             </div>
             <ModalHistoryOrderCustomer

@@ -62,3 +62,22 @@ export const searchCategoryProduct = async (keyword) => {
         return err.response.data;
     }
 };
+export const getAllCategoriesForCreateProduct = async () => {
+    try {
+        const token = parseToken('tokenUser');
+        const res = await request.get(`/api/category-product/all-categories-create-product`, {
+            headers: {
+                token: `Beare ${token.accessToken}`,
+                employeeid: token.employeeID,
+            },
+        });
+        return res.data || null;
+    } catch (err) {
+        toast.error(
+            Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+            styleMessage,
+        );
+        console.log(err);
+        return err.response.data;
+    }
+};

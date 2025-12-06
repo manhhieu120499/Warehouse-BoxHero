@@ -166,6 +166,8 @@ const ProductPage = () => {
             title: 'Tên sản phẩm',
             dataIndex: 'productName',
             key: 'productName',
+            width: '300px',
+            render: (text, record) => <p className={cx('product-name')}>{record.productName}</p>,
         },
         {
             title: 'Đơn vị tính',
@@ -272,7 +274,8 @@ const ProductPage = () => {
             setProductList(formatProduct || []);
             setTotalPage(res.data.pagination.totalPages);
         } catch (err) {
-            fetchProducts();
+            console.log(err);
+            //fetchProducts();
         }
     };
 

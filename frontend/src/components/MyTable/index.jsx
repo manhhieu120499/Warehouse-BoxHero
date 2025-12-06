@@ -52,6 +52,7 @@ export default function MyTable({
                                 border: `1px solid rgba(0,0,0,.05)`,
                                 borderRightColor: 'transparent',
                                 borderLeftColor: 'transparent',
+                                padding: '10px',
                             }}
                         >
                             {props.children}
@@ -63,7 +64,7 @@ export default function MyTable({
                         <td
                             {...props}
                             style={{
-                                padding: '6px',
+                                padding: '10px',
                                 fontSize: '1.4rem',
                                 paddingLeft: '12px',
                                 ...props.style,

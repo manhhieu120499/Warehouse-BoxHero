@@ -198,13 +198,13 @@ const SupplierPage = () => {
             width: '20%',
             ellipsis: true,
         },
-        // {
-        //     title: 'Trạng thái',
-        //     dataIndex: 'statusWork',
-        //     key: 'statusWork',
-        //     width: '12%',
-        //     ellipsis: true,
-        // },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'statusWork',
+            key: 'statusWork',
+            width: '12%',
+            ellipsis: true,
+        },
         {
             title: 'Thao tác',
             dataIndex: 'transactionHistory',

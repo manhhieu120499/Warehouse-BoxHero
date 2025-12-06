@@ -23,7 +23,7 @@ import {
     FileChartPie,
 } from 'lucide-react';
 import logo from '../../../assets/logo_v2.jpg';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Modal } from '@/components';
 import { InfoWare } from '@/components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -158,6 +158,7 @@ const Sidebar = () => {
         address: '',
         status: '',
     });
+    const navigate = useNavigate();
 
     const closeInfoWarehouse = () => {
         setIsOpenInfo(false);
@@ -176,7 +177,10 @@ const Sidebar = () => {
             <div className={cx('wrapper-sidebar')}>
                 <div className={cx('sidebar-content')}>
                     <div className={cx('info-user')}>
-                        <img src={logo} className={cx('logo-sidebar')} loading="lazy" />
+                        <button className={cx('logo-sidebar')} onClick={() => navigate('/')}>
+                            <img src={logo} loading="lazy" />
+                        </button>
+
                         <div className={cx('ware-brand')}>
                             <h1 className={cx('username')}>{shopName}</h1>
                             <Info className={cx('icon')} size={16} onClick={() => setIsOpenInfo(true)} />

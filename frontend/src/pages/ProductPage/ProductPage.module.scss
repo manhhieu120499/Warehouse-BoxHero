@@ -48,3 +48,8 @@
     display: flex;
     justify-content: flex-end;
 }
+.product-name {
+    max-width: 300px;
+    white-space: normal;
+    word-break: break-word;
+}

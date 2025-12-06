@@ -1,13 +1,21 @@
 .table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
 
     th,
     td {
-        padding: 10px 12px;
+        padding: 16px 20px;
         border-bottom: 1px solid #e5e7eb;
         text-align: left;
         font-size: 1.3rem;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        vertical-align: top;
     }
 
     th.stt {
@@ -79,8 +87,20 @@
             color: #dc2626;
         }
     }
+
+    tbody tr:last-child td {
+        border-bottom: none;
+    }
 }
 .pagination {
     justify-content: flex-end;
     margin-top: 20px;
+}
+
+.header {
+    margin-bottom: 20px;
+
+    & > h2 {
+        font-size: 17px;
+    }
 }

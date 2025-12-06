@@ -199,7 +199,7 @@ const ProductDetail = ({ data, classname, onClose }) => {
                 </div>
             </Modal>
             {showQRCode && (
-                <Modal isOpenInfo={true} onClose={handleCloseQRCodePreview}>
+                <Modal isOpenInfo={true} onClose={handleCloseQRCodePreview} showButtonClose={false}>
                     <div className={cx('wrapper-qrcode')}>
                         <h2>QRCode sản phẩm</h2>
                         <div className={cx('qrcode-preview')}>
@@ -212,16 +212,14 @@ const ProductDetail = ({ data, classname, onClose }) => {
                                 }
                             />
                         </div>
-                        <Button
-                            className={cx('download-qrcode')}
-                            rounded
-                            text
-                            medium
-                            primary
-                            onClick={handleDownloadQRCode}
-                        >
-                            <a>Tải xuống</a>
-                        </Button>
+                        <div className={cx('action-qrcode')}>
+                            <Button rounded medium success onClick={handleDownloadQRCode}>
+                                <span>Tải xuống</span>
+                            </Button>
+                            <Button rounded medium primary onClick={handleCloseQRCodePreview}>
+                                <span>Đóng</span>
+                            </Button>
+                        </div>
                     </div>
                 </Modal>
             )}

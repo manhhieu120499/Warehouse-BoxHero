@@ -5,6 +5,8 @@ class ProductDTO {
         this.productName = data.productName;
         this.minStock = data.minStock;
         this.status = data.status;
+        this.baseUnitName = data.baseUnitProducts.baseUnitName;
+        this.baseUnitProductID = data.baseUnitProducts.baseUnitProductID;
     }
 }
 
