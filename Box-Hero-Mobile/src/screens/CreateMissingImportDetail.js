@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     View,
     Text,
@@ -22,6 +22,9 @@ import { formatDate } from '../utilities/formatDate';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Calendar } from 'lucide-react-native';
 import parseToken from '../utilities/parseToken';
+import QRScanner from '../components/QRScanner';
+import Toast from 'react-native-toast-message';
+import { filterSupplier } from '../service/supplier.service';
 
 export default function CreateMissingImportDetail() {
     const navigation = useNavigation();
@@ -29,6 +32,10 @@ export default function CreateMissingImportDetail() {
     const { order } = route.params || {};
     const currentUser = useSelector((state) => state.AuthSlice.user);
     const [warehouse, setWarehouse] = useState(null);
+
+    //log
+    console.log('order', order);
+    console.log('order detail', order.orderPurchaseDetail);
 
     const [orderInfo, setOrderInfo] = useState({
         code: '',
@@ -39,6 +46,8 @@ export default function CreateMissingImportDetail() {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [datePickerMode, setDatePickerMode] = useState('manufacture');
     const [currentProductIndex, setCurrentProductIndex] = useState(null);
+    const [isScannerVisible, setIsScannerVisible] = useState(false);
+    const [scanningIndex, setScanningIndex] = useState(null);
 
     useEffect(() => {
         const loadWarehouse = async () => {
@@ -62,12 +71,14 @@ export default function CreateMissingImportDetail() {
                 unitID: detail.orderPurchaseDetail?.batch?.unitID,
                 unitName: detail.orderPurchaseDetail?.batch?.unit?.unitName,
                 missingQuantity: detail.missingQuantity,
-                realAmount: detail.missingQuantity.toString(),
-                batchID: '',
+                realAmount: 0,
+                batchID: detail?.batchID || '',
                 manufactureDate: new Date(),
                 expiryDate: new Date(new Date().setDate(new Date().getDate() + 1)),
                 supplierID: detail.orderPurchaseDetail?.batch?.supplierID,
-                supplierName: detail.orderPurchaseDetail?.batch?.supplier?.supplierName,
+                supplierName: `${detail.orderPurchaseDetail?.batch?.supplier?.supplierID}-${detail.orderPurchaseDetail?.batch?.supplier?.supplierName}`,
+                enableScan: false,
+                isScanned: false,
             }));
             setProductList(products);
         }
@@ -132,6 +143,49 @@ export default function CreateMissingImportDetail() {
         }
     };
 
+    const toggleScanMode = (index) => {
+        const updatedList = productList.map((item, i) => ({
+            ...item,
+            enableScan: i === index ? !item.enableScan : false, // Only allow one active scan at a time
+        }));
+        setProductList(updatedList);
+    };
+
+    const handleOpenScanner = (index) => {
+        setScanningIndex(index);
+        setIsScannerVisible(true);
+    };
+
+    const handleScan = (data) => {
+        if (scanningIndex === null) return;
+
+        console.log('scanning', data);
+
+        const updatedList = [...productList];
+        const item = updatedList[scanningIndex];
+
+        if (item.enableScan) {
+            // tăng số lượng
+            const currentReal = parseInt(item.realAmount) || 0;
+            const req = Number(item.missingQuantity);
+
+            const newReal = currentReal + 1;
+
+            updatedList[scanningIndex].realAmount = newReal.toString();
+            updatedList[scanningIndex].isScanned = true; // đánh dấu đã scanned
+
+            if (newReal === req) {
+                updatedList[scanningIndex].enableScan = false;
+                Alert.alert('Thông báo', 'Đã quét đủ số lượng đề xuất bổ sung của lô hàng');
+                setTimeout(() => setIsScannerVisible(false), 100);
+            }
+
+            setProductList(updatedList);
+
+            return;
+        }
+    };
+
     const handleSave = async () => {
         const payload = {
             orderPurchaseID: orderInfo.code,
@@ -140,6 +194,7 @@ export default function CreateMissingImportDetail() {
             status: 'COMPLETED',
             type: 'SUPPLEMENT',
             originalOrderPurchaseID: order.orderPurchaseID,
+            proposalID: order?.proposalID || order?.orderPurchase?.proposalID,
 
             orderPurchaseDetails: productList.map((item, index) => ({
                 orderPurchaseDetailID: index + 1,
@@ -154,6 +209,9 @@ export default function CreateMissingImportDetail() {
             })),
         };
 
+        console.log('payload', payload);
+        console.log('order', order);
+
         if (!validatePayloadCreateReceiptMissing(payload)) return;
 
         try {
@@ -167,6 +225,10 @@ export default function CreateMissingImportDetail() {
             Alert.alert('Lỗi', 'Có lỗi xảy ra khi lưu phiếu');
         }
     };
+
+    const isValidSave = useMemo(() => {
+        return productList.every((item) => Number(item.realAmount) === Number(item.missingQuantity));
+    }, [productList]);
 
     return (
         <DefaultLayout>
@@ -240,84 +302,166 @@ export default function CreateMissingImportDetail() {
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Danh sách sản phẩm ({productList.length})</Text>
-                        {productList.map((item, index) => (
-                            <View key={index} style={styles.productCard}>
-                                <View style={styles.productHeader}>
-                                    <Text style={styles.productName}>{item.productName}</Text>
-                                    <Text style={styles.productSku}>#{item.productID}</Text>
-                                </View>
-                                <Text style={styles.unitText}>Đơn vị: {item.unitName}</Text>
+                        {productList.map((item, index) => {
+                            const isAnyScanning = productList.some((p) => p.enableScan);
+                            const isThisScanning = item.enableScan;
+                            const isDisabled = isAnyScanning && !isThisScanning;
+                            const realAmount = parseInt(item.realAmount) || 0;
+                            const isEnough = realAmount >= item.missingQuantity;
+                            const isMissing = realAmount < item.missingQuantity;
 
-                                <View style={styles.gridRow}>
-                                    <View style={styles.gridCol}>
-                                        <Text style={styles.labelSmall}>Thiếu</Text>
-                                        <TextInput
-                                            style={[styles.inputSmall, styles.readOnly]}
-                                            value={item.missingQuantity.toString()}
-                                            editable={false}
-                                        />
-                                    </View>
-                                    <View style={styles.gridCol}>
-                                        <Text style={styles.labelSmall}>Bổ sung</Text>
-                                        <TextInput
-                                            style={styles.inputSmall}
-                                            value={item.realAmount}
-                                            keyboardType="numeric"
-                                            onChangeText={(text) => updateProduct(index, 'realAmount', text)}
-                                        />
-                                    </View>
-                                </View>
-
-                                <View style={styles.divider} />
-
-                                <View style={styles.row}>
-                                    <View style={{ flex: 1, marginRight: 10 }}>
-                                        <Text style={styles.labelSmall}>Mã lô</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            value={item.batchID}
-                                            onChangeText={(text) => updateProduct(index, 'batchID', text)}
-                                            placeholder="Mã lô"
-                                        />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.labelSmall}>Nhà cung cấp</Text>
-                                        <TextInput
-                                            style={[styles.input, styles.readOnly]}
-                                            value={item.supplierName}
-                                            editable={false}
-                                        />
-                                    </View>
-                                </View>
-
-                                <View style={styles.row}>
-                                    <View style={{ flex: 1, marginRight: 10 }}>
-                                        <Text style={styles.labelSmall}>NSX</Text>
-                                        <TouchableOpacity
-                                            onPress={() => openDatePicker(index, 'manufacture')}
-                                            style={styles.dateInput}
+                            return (
+                                <View
+                                    key={index}
+                                    style={[
+                                        styles.productCard,
+                                        isMissing && item.isScanned && styles.warningProductCard,
+                                        isEnough && styles.completedProductCard,
+                                        isThisScanning && styles.activeProductCard,
+                                        isDisabled && styles.disabledProductCard,
+                                    ]}
+                                    pointerEvents={isDisabled ? 'none' : 'auto'}
+                                >
+                                    <View style={styles.productHeader}>
+                                        <View
+                                            style={{
+                                                flex: 1,
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                flexWrap: 'wrap',
+                                            }}
                                         >
-                                            <Text style={styles.dateInputText}>{formatDate(item.manufactureDate)}</Text>
-                                            <Calendar size={16} color="#6B7280" />
-                                        </TouchableOpacity>
+                                            <Text style={styles.productName}>{item.productName}</Text>
+                                            <View
+                                                style={[
+                                                    styles.statusBadge,
+                                                    isEnough ? styles.statusSuccess : styles.statusWarning,
+                                                ]}
+                                            >
+                                                <Text style={styles.statusBadgeText}>
+                                                    {isEnough ? 'Đủ hàng' : 'Chưa đủ hàng'}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <Text style={styles.productSku}>#{item.productID}</Text>
                                     </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.labelSmall}>HSD</Text>
-                                        <TouchableOpacity
-                                            onPress={() => openDatePicker(index, 'expiry')}
-                                            style={styles.dateInput}
-                                        >
-                                            <Text style={styles.dateInputText}>{formatDate(item.expiryDate)}</Text>
-                                            <Calendar size={16} color="#6B7280" />
-                                        </TouchableOpacity>
+                                    <Text style={styles.unitText}>Đơn vị: {item.unitName}</Text>
+
+                                    <View style={styles.gridRow}>
+                                        <View style={styles.gridCol}>
+                                            <Text style={styles.labelSmall}>Thiếu</Text>
+                                            <TextInput
+                                                style={[styles.inputSmall, styles.readOnly]}
+                                                value={item.missingQuantity.toString()}
+                                                editable={false}
+                                            />
+                                        </View>
+                                        <View style={styles.gridCol}>
+                                            <Text style={styles.labelSmall}>Bổ sung</Text>
+                                            <TextInput
+                                                style={[styles.inputSmall, styles.readOnly]}
+                                                value={item.realAmount.toString()}
+                                                keyboardType="numeric"
+                                                onChangeText={(text) => updateProduct(index, 'realAmount', text)}
+                                                editable={false}
+                                            />
+                                        </View>
                                     </View>
+
+                                    <View style={styles.divider} />
+
+                                    <View style={styles.row}>
+                                        <View style={{ flex: 1, marginRight: 10 }}>
+                                            <Text style={styles.labelSmall}>Mã lô</Text>
+                                            <TextInput
+                                                style={styles.input}
+                                                value={item.batchID}
+                                                onChangeText={(text) => updateProduct(index, 'batchID', text)}
+                                                placeholder="Mã lô"
+                                            />
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={styles.labelSmall}>Nhà cung cấp</Text>
+                                            <TextInput
+                                                style={[styles.input, styles.readOnly]}
+                                                value={item.supplierName}
+                                                editable={false}
+                                            />
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.row}>
+                                        <View style={{ flex: 1, marginRight: 10 }}>
+                                            <Text style={styles.labelSmall}>NSX</Text>
+                                            <TouchableOpacity
+                                                onPress={() => openDatePicker(index, 'manufacture')}
+                                                style={styles.dateInput}
+                                            >
+                                                <Text style={styles.dateInputText}>
+                                                    {formatDate(item.manufactureDate)}
+                                                </Text>
+                                                <Calendar size={16} color="#6B7280" />
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={styles.labelSmall}>HSD</Text>
+                                            <TouchableOpacity
+                                                onPress={() => openDatePicker(index, 'expiry')}
+                                                style={styles.dateInput}
+                                            >
+                                                <Text style={styles.dateInputText}>{formatDate(item.expiryDate)}</Text>
+                                                <Calendar size={16} color="#6B7280" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+
+                                    {!isEnough && (
+                                        <View style={styles.row}>
+                                            <TouchableOpacity
+                                                style={styles.checkboxContainer}
+                                                onPress={() => toggleScanMode(index)}
+                                            >
+                                                <Icon
+                                                    name={
+                                                        item.enableScan ? 'checkbox-marked' : 'checkbox-blank-outline'
+                                                    }
+                                                    size={24}
+                                                    color={item.enableScan ? '#2563EB' : '#6B7280'}
+                                                />
+                                                <Text style={styles.checkboxLabel}>Scan</Text>
+                                            </TouchableOpacity>
+
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.scanButton,
+                                                    !item.enableScan && { backgroundColor: '#9CA3AF' },
+                                                ]}
+                                                onPress={() => handleOpenScanner(index)}
+                                                disabled={!item.enableScan}
+                                            >
+                                                <Icon name="qrcode-scan" size={20} color="#fff" />
+                                                <Text style={styles.scanButtonText}>Quét mã</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                    <QRScanner
+                                        visible={isScannerVisible && scanningIndex === index}
+                                        onScanned={handleScan}
+                                        onClose={() => setIsScannerVisible(false)}
+                                        qrCheck={productList[index].batchID}
+                                        descriptionText={`Đã quét ${productList[index].realAmount} / ${productList[index].missingQuantity} của lô hàng`}
+                                    />
                                 </View>
-                            </View>
-                        ))}
+                            );
+                        })}
                     </View>
 
                     <View style={styles.createFooter}>
-                        <TouchableOpacity style={styles.btnSave} onPress={handleSave}>
+                        <TouchableOpacity
+                            style={[styles.btnSave, !isValidSave && { backgroundColor: '#9CA3AF' }]}
+                            onPress={handleSave}
+                            disabled={!isValidSave}
+                        >
                             <Text style={styles.btnText}>Lưu phiếu</Text>
                         </TouchableOpacity>
                     </View>
@@ -557,6 +701,72 @@ const styles = StyleSheet.create({
     iosConfirmText: {
         color: 'white',
         fontSize: 16,
+        fontWeight: '600',
+    },
+    activeProductCard: {
+        borderColor: '#2563EB',
+        borderWidth: 2,
+        backgroundColor: '#EFF6FF',
+    },
+    disabledProductCard: {
+        opacity: 0.6,
+        backgroundColor: '#F3F4F6',
+    },
+    statusBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 12,
+        marginLeft: 8,
+        marginRight: 8,
+    },
+    statusSuccess: {
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+    },
+    statusWarning: {
+        backgroundColor: '#FEF3C7',
+        borderWidth: 1,
+        borderColor: '#F59E0B',
+    },
+    statusBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#000000',
+    },
+    completedProductCard: {
+        backgroundColor: '#D1FAE5',
+        borderColor: '#10B981',
+    },
+    warningProductCard: {
+        backgroundColor: '#FEF3C7',
+        borderColor: '#F59E0B',
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 12,
+        paddingVertical: 8,
+    },
+    checkboxLabel: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: '#374151',
+        fontWeight: '500',
+    },
+    scanButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#2563EB',
+        paddingVertical: 10,
+        borderRadius: 8,
+        gap: 8,
+    },
+    scanButtonText: {
+        color: '#fff',
+        fontSize: 14,
         fontWeight: '600',
     },
 });

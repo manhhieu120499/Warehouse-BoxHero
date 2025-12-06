@@ -27,9 +27,9 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
             const token = await parseToken('tokenUser');
             const warehouse = await parseToken('warehouse');
             const res = await request.post(
-                '/order-purchase-missing/update-status',
+                '/order-purchase/update-status-order-purchase',
                 {
-                    orderPurchaseMissingID: data.orderPurchaseMissingID,
+                    orderPurchaseID: data.orderPurchaseMissingID,
                     status,
                 },
                 {
@@ -41,7 +41,8 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
                 },
             );
             Alert.alert('Thành công', 'Cập nhật trạng thái thành công');
-            reset({ pageFilter: 1 });
+            //reset({ pageFilter: 1 });
+            reset(1);
             onClose();
         } catch (err) {
             Alert.alert('Lỗi', 'Cập nhật trạng thái thất bại');

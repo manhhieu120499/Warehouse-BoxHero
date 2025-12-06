@@ -17,17 +17,19 @@ import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import { Filter, Plus, X, ChevronRight, ChevronLeft, Calendar } from 'lucide-react-native';
+import { Filter, Plus, X, ChevronRight, ChevronLeft, Calendar, Scan } from 'lucide-react-native';
 import { format } from 'date-fns';
 import ModalSelectProposal from '../components/ModalSelectProposal';
 import { fetchOrderPurchase, filterOrderPurchase } from '../service/order.service';
 import { formatDate } from '../utilities/formatDate';
+import QRScanner from '../components/QRScanner';
+import { getProposalDetail } from '../service/proposal.service';
 
 const formatStatusOrderPurchase = {
     PENDING: 'Chờ duyệt',
     COMPLETED: 'Đã hoàn thành',
     INCOMPLETE: 'Chưa hoàn thành',
-    REFUSE: 'Đã từ chối',
+    CANCELED: 'Đã từ chối',
 };
 
 const statusColors = {
@@ -35,7 +37,14 @@ const statusColors = {
     COMPLETED: '#10b981',
     INCOMPLETE: '#ef4444',
     REFUSE: '#6b7280',
+    CANCELED: '#6b7280',
 };
+
+const statusTabs = [
+    { label: 'Đã hoàn thành', value: 'COMPLETED' },
+    { label: 'Đã từ chối', value: 'CANCELED' },
+    { label: 'Chưa hoàn thành', value: 'INCOMPLETE' },
+];
 
 export default function CreateImport() {
     const navigation = useNavigation();
@@ -49,6 +58,8 @@ export default function CreateImport() {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
     const [showSelectProposalModal, setShowSelectProposalModal] = useState(false);
+    const [showQRScannerModal, setShowQRScannerModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('COMPLETED');
 
     // Filter State
     const [filterOrder, setFilterOrder] = useState({
@@ -61,42 +72,33 @@ export default function CreateImport() {
         code: '',
         createdAt: null,
         employeeName: '',
-        type: 'ALL',
+        type: 'COMPLETED',
     });
     const [showDatePickerFilter, setShowDatePickerFilter] = useState(false);
 
     useFocusEffect(
         React.useCallback(() => {
             fetchData(page);
-        }, [page, appliedFilter]),
+        }, [page, appliedFilter, activeTab]),
     );
 
     const fetchData = async (currentPage = 1) => {
         try {
-            if (
-                appliedFilter.code ||
-                appliedFilter.createdAt ||
-                appliedFilter.employeeName ||
-                appliedFilter.type !== 'ALL'
-            ) {
-                const res = await filterOrderPurchase({
-                    page: currentPage,
-                    code: appliedFilter.code,
-                    createdAt: appliedFilter.createdAt ? format(appliedFilter.createdAt, 'yyyy-MM-dd') : '',
-                    employeeName: appliedFilter.employeeName,
-                    type: appliedFilter.type === 'ALL' ? '' : appliedFilter.type,
-                });
+            const params = {
+                page: currentPage,
+                status: activeTab,
+            };
 
-                if (res?.data?.status === 'OK') {
-                    setListOrderPurchase(res.data.data || []);
-                    setTotalPages(res.data.pagination?.totalPages || 0);
-                }
-            } else {
-                const res = await fetchOrderPurchase(currentPage);
-                if (res?.data?.status === 'OK') {
-                    setListOrderPurchase(res.data.data || []);
-                    setTotalPages(res.data.pagination?.totalPages || 0);
-                }
+            if (appliedFilter.code) params.code = appliedFilter.code;
+            if (appliedFilter.createdAt) params.createdAt = format(appliedFilter.createdAt, 'yyyy-MM-dd');
+            if (appliedFilter.employeeName) params.employeeName = appliedFilter.employeeName;
+
+            const res = await filterOrderPurchase(params);
+
+            if (res?.data?.status === 'OK') {
+                console.log('res', res.data.data);
+                setListOrderPurchase(res.data.data || []);
+                setTotalPages(res.data.pagination?.totalPages || 0);
             }
         } catch (error) {
             console.log('Error fetching order purchase:', error);
@@ -114,7 +116,7 @@ export default function CreateImport() {
             code: '',
             createdAt: null,
             employeeName: '',
-            type: 'ALL',
+            type: 'COMPLETED',
         };
         setFilterOrder(resetState);
         setAppliedFilter(resetState);
@@ -123,11 +125,21 @@ export default function CreateImport() {
     };
 
     const handleOpenCreate = () => {
-        setShowSelectProposalModal(true);
+        //setShowSelectProposalModal(true);
+        setShowQRScannerModal(true);
     };
 
-    const handleSelectProposal = (proposal) => {
-        navigation.navigate('CreateImportDetail', { proposal });
+    const handleScanProposal = (data) => {
+        if (data) {
+            (async () => {
+                const res = await getProposalDetail(data);
+                if (res) {
+                    console.log('res', res);
+                    setShowQRScannerModal(false);
+                    navigation.navigate('CreateImportDetail', { proposal: res.proposal });
+                }
+            })();
+        }
     };
 
     const handleViewDetail = (item) => {
@@ -167,6 +179,25 @@ export default function CreateImport() {
                 }
             />
 
+            {/* Status Tabs */}
+            <View style={styles.tabContainer}>
+                {statusTabs.map((tab) => (
+                    <TouchableOpacity
+                        key={tab.value}
+                        style={[styles.tabItem, activeTab === tab.value && styles.activeTabItem]}
+                        onPress={() => {
+                            setActiveTab(tab.value);
+                            setAppliedFilter((prev) => ({ ...prev, status: tab.value }));
+                            setPage(1);
+                        }}
+                    >
+                        <Text style={[styles.tabText, activeTab === tab.value && styles.activeTabText]}>
+                            {tab.label}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
             <View style={styles.container}>
                 <FlatList
                     data={listOrderPurchase}
@@ -177,7 +208,7 @@ export default function CreateImport() {
                 />
 
                 <TouchableOpacity style={styles.fab} onPress={handleOpenCreate}>
-                    <Plus size={24} color="white" />
+                    <Scan size={24} color="white" />
                 </TouchableOpacity>
 
                 <View style={styles.footer}>
@@ -297,10 +328,15 @@ export default function CreateImport() {
                 </View>
             </Modal>
 
-            <ModalSelectProposal
+            {/* <ModalSelectProposal
                 visible={showSelectProposalModal}
                 onClose={() => setShowSelectProposalModal(false)}
                 onSelect={handleSelectProposal}
+            /> */}
+            <QRScanner
+                visible={showQRScannerModal}
+                onClose={() => setShowQRScannerModal(false)}
+                onScanned={handleScanProposal}
             />
 
             {/* Detail Modal */}
@@ -491,6 +527,34 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f3f4f6',
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+        gap: 8,
+    },
+    tabItem: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#f3f4f6',
+    },
+    activeTabItem: {
+        backgroundColor: '#2563eb',
+    },
+    tabText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#4b5563',
+    },
+    activeTabText: {
+        color: '#fff',
+        fontWeight: '600',
     },
     listContent: {
         padding: 16,

@@ -186,7 +186,7 @@ export default function Dashboard() {
                         data={warehouseUsageData}
                         donut
                         radius={120}
-                        showText
+                        showText={false}
                         centerLabelComponent={() => <Text style={{ fontSize: 15, fontWeight: 'bold' }}>Kho</Text>}
                         // Tắt chú thích nội bộ, tự tạo Legend bên dưới
                         showTextBackground={false}

@@ -3,7 +3,7 @@ import request from '../config/axiosConfig';
 import { uploadImage } from '../utilities/uploadImage';
 import { Alert } from 'react-native';
 import parseToken from '../utilities/parseToken';
-export const fetchProduct = async (page = 1) => {
+export const fetchProduct = async (page = 1, optionFilter = {}) => {
     try {
         // call api
         const userJSON = await AsyncStorage.getItem('tokenUser');
@@ -11,6 +11,7 @@ export const fetchProduct = async (page = 1) => {
         const res = await request.get('/product/list', {
             params: {
                 page,
+                ...optionFilter,
             },
             headers: {
                 token: `Bearer ${accessToken}`,
@@ -42,15 +43,17 @@ export const fetchProductById = async (productID) => {
 export const getProductById = async (productID, warehouseID) => {
     try {
         const userJSON = await AsyncStorage.getItem('tokenUser');
-        const { employeeID, warehouseID, accessToken } = JSON.parse(userJSON);
+        const { employeeID, accessToken } = JSON.parse(userJSON);
+        const warehouse = await parseToken('warehouse');
 
         const res = await request.get(`/product?productID=${productID}`, {
             headers: {
                 token: `Bearer ${accessToken}`,
                 employeeID: employeeID,
-                warehouseID: warehouseID,
+                warehouseID: warehouse.warehouseID,
             },
         });
+        console.log('res', res.data.product);
         return res.data.product;
     } catch (err) {
         Alert.alert(
