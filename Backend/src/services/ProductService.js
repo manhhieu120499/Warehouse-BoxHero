@@ -1,6 +1,7 @@
 const dotenv = require('dotenv');
 const db = require('../../models');
 const { Op, where } = require('sequelize');
+const { generateQRURL } = require('../common');
 const Product = db.Product;
 const Batch = db.Batch;
 const Box = db.Box;
@@ -22,7 +23,8 @@ const HTTP_DUPLICATE = process.env.HTTP_DUPLICATE;
 class ProductService {
     findProductById(productID, warehouseID) {
         return new Promise(async (resolve, reject) => {
-            //console.log('----', warehouseID);
+            console.log('----', productID);
+            console.log('vào', productID);
             try {
                 // tìm sản phẩm kèm tất cả các lô của sản phẩm
                 const product = await Product.findOne({
@@ -31,7 +33,6 @@ class ProductService {
                         {
                             model: Batch,
                             as: 'batches',
-                            where: { remainAmount: { [Op.gt]: 0 } },
                         },
                         {
                             model: BaseUnitProduct,
@@ -41,12 +42,14 @@ class ProductService {
                     ],
                 });
 
-                if (!product)
-                    reject({
+                if (!product) {
+                    console.log('product not found');
+                    return reject({
                         status: 'ERR',
                         statusHttp: HTTP_NOT_FOUND,
                         message: 'Sản phẩm không tồn tại',
                     });
+                }
 
                 const { batches, ...restProduct } = product.toJSON();
                 const filterBatch = batches.filter((item) => item.warehouseID == warehouseID);
@@ -94,12 +97,6 @@ class ProductService {
                     ),
                 );
 
-                if (!product)
-                    resolve({
-                        status: 'OK',
-                        statusHttp: HTTP_NOT_FOUND,
-                        message: 'Sản phẩm không tồn tại',
-                    });
                 if (listBatch) {
                     const formatBatchResponse = listBatch.map((item) => {
                         const { boxes, ...restBatch } = item.toJSON();
@@ -127,7 +124,7 @@ class ProductService {
                         };
                     });
 
-                    resolve({
+                    return resolve({
                         status: 'OK',
                         statusHttp: HTTP_OK,
                         message: 'Lấy thông tin sản phẩm thành công',
@@ -138,6 +135,15 @@ class ProductService {
                     });
                     //console.log('3');
                 }
+                return resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy thông tin sản phẩm thành công',
+                    product: {
+                        ...restProduct,
+                        batches: [],
+                    },
+                });
                 //console.log(4);
             } catch (err) {
                 console.log(err);
@@ -149,11 +155,12 @@ class ProductService {
             }
         });
     }
-    findAllProduct(page = 1) {
+    findAllProduct(page = 1, rest = {}) {
         return new Promise(async (resolve, reject) => {
             const LIMIT_PAGE = 5;
             try {
                 const products = await Product.findAll({
+                    where: { ...rest },
                     include: [
                         {
                             model: Category,
@@ -326,6 +333,7 @@ class ProductService {
                         message: 'Sản phẩm đã tồn tại',
                     });
                 }
+                const qrCode = await generateQRURL(data.productID);
                 const newProduct = await Product.create(
                     {
                         productID: data.productID,
@@ -335,7 +343,7 @@ class ProductService {
                         status: data.status,
                         baseUnitProductID: data.baseUnitProductID,
                         amount: 0,
-                        qrCode: '1',
+                        qrCode,
                         price: data?.price || 25000,
                         image: data?.image || '',
                         description: data?.description || '',

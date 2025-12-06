@@ -27,6 +27,10 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 allowNull: true,
             },
+            batchID: {
+                type: Sequelize.STRING,
+                allowNull: false,
+            },
         },
         {
             tableName: 'proposal_details',
@@ -38,6 +42,7 @@ module.exports = (sequelize, Sequelize) => {
         ProposalDetail.belongsTo(models.Proposal, { foreignKey: 'proposalID', as: 'proposal' });
         ProposalDetail.belongsTo(models.Product, { foreignKey: 'productID', as: 'product' });
         ProposalDetail.belongsTo(models.Unit, { foreignKey: 'unitID', as: 'unit' });
+        ProposalDetail.belongsTo(models.Batch, { foreignKey: 'batchID', as: 'batch' });
     };
 
     return ProposalDetail;

@@ -13,6 +13,7 @@ const Supplier = db.Supplier;
 const Warehouse = db.Warehouse;
 const Employee = db.Employee;
 const dotenv = require('dotenv');
+const { generateQRURL, generateBatchID } = require('../common');
 
 dotenv.config();
 
@@ -68,12 +69,22 @@ class OrderPurchaseService {
             }
         });
     }
-    filterOrderPurchase({ page = 1, code, createdAt, employeeName, type, originalOrderPurchaseID, proposalID }) {
+    filterOrderPurchase({
+        page = 1,
+        code,
+        createdAt,
+        employeeName,
+        type,
+        status,
+        originalOrderPurchaseID,
+        proposalID,
+    }) {
         return new Promise(async (resolve, reject) => {
             const queryEmployee = {};
             const filterOptions = {};
             const date = {};
 
+            console.log(status);
             console.log(code);
             if (code) {
                 filterOptions.orderPurchaseID = code;
@@ -97,6 +108,9 @@ class OrderPurchaseService {
             }
             if (proposalID) {
                 filterOptions.proposalID = proposalID;
+            }
+            if (status) {
+                filterOptions.status = status;
             }
             const LIMIT_PAGE = 5;
             try {
@@ -209,12 +223,14 @@ class OrderPurchaseService {
 
                 // check and create orderPurchaseMissing
                 if (status === 'INCOMPLETE') {
+                    const qrCode = await generateQRURL(orderPurchaseID);
                     const orderPurchaseMissing = await OrderPurchaseMissing.create(
                         {
                             orderPurchaseMissingID: orderPurchaseID,
                             orderPurchaseID: orderPurchaseID,
                             note: note,
                             status: 'PENDING',
+                            qrCode,
                         },
                         { transaction },
                     );
@@ -269,12 +285,12 @@ class OrderPurchaseService {
                     const batchID = orderPurchaseDetail.batchID;
                     const batchFind = await Batch.findOne({ where: { batchID } });
 
-                    if (batchFind) {
+                    if (!batchFind) {
                         await transaction.rollback();
                         return resolve({
                             statusHttp: HTTP_BAD_REQUEST,
                             status: 'ERR',
-                            message: 'Lô đã tồn tại',
+                            message: 'Lô không tồn tại',
                         });
                     }
 
@@ -354,19 +370,22 @@ class OrderPurchaseService {
                     }
 
                     // save batch
-                    await Batch.create(
+                    await Batch.update(
                         {
                             batchID,
                             manufactureDate: orderPurchaseDetail.manufactureDate,
                             expiryDate: orderPurchaseDetail.expiryDate,
                             importAmount: orderPurchaseDetail.actualQuantity,
+                            tempAmount: orderPurchaseDetail.actualQuantity,
                             remainAmount: orderPurchaseDetail.actualQuantity,
                             productID: orderPurchaseDetail.productID,
                             supplierID: orderPurchaseDetail.supplierID,
                             unitID: orderPurchaseDetail.unitID,
                             warehouseID: warehouseID,
+                            status: 'AVAILABLE',
                         },
-                        { transaction },
+
+                        { where: { batchID }, transaction },
                     );
 
                     // save order purchase detail
@@ -388,17 +407,38 @@ class OrderPurchaseService {
                         status === 'INCOMPLETE' &&
                         orderPurchaseDetail.requestedQuantity > orderPurchaseDetail.actualQuantity
                     ) {
+                        // create new batch suggest for order purchase missing detail
+                        const count = await Batch.count();
+                        //const batchID = generateBatchID('B', count + 1);
+                        const batchID = generateBatchID('B', Math.floor(Math.random() * (1000 - 60 + 1)) + 60);
+                        const qrCode = await generateQRURL(batchID);
+                        const batchSuggest = await Batch.create(
+                            {
+                                batchID,
+                                productID: orderPurchaseDetail.productID,
+                                supplierID: orderPurchaseDetail.supplierID,
+                                unitID: orderPurchaseDetail.unitID,
+                                warehouseID: warehouseID,
+                                status: 'WAITING_IMPORT',
+                                qrCode,
+                            },
+                            { transaction },
+                        );
                         await OrderPurchaseMissingDetail.create(
                             {
                                 orderPurchaseMissingID: orderPurchaseID,
                                 orderPurchaseDetailID: orderPurchaseDetailItem.orderPurchaseDetailID,
                                 missingQuantity:
                                     orderPurchaseDetailItem.requestedQuantity - orderPurchaseDetailItem.actualQuantity,
+                                batchID: batchSuggest.batchID,
                             },
                             { transaction },
                         );
                     }
                 }
+
+                // update status proposal
+                await Proposal.update({ status: 'COMPLETED' }, { where: { proposalID: proposalID }, transaction });
 
                 await transaction.commit();
                 resolve({
@@ -445,13 +485,25 @@ class OrderPurchaseService {
                     });
                 } else {
                     // Update trạng thái đơn nhập hàng
-                    await orderPurchaseFind.update({ status }, { transaction });
+                    await orderPurchaseFind.update({ status }, { transaction }); // đơn nhập
                     if (orderPurchaseFind.status === 'CANCELED') {
                         // update orderpurchasemissing
                         await OrderPurchaseMissing.update(
                             { status: 'CANCELED' },
                             { where: { orderPurchaseID }, transaction },
                         );
+
+                        const orderPurchaseMissingDetails = await OrderPurchaseMissingDetail.findAll({
+                            where: { orderPurchaseMissingID: orderPurchaseID },
+                        });
+
+                        // update batch status for order purchase missing detai
+                        for (const orderPurchaseMissingDetail of orderPurchaseMissingDetails) {
+                            await Batch.update(
+                                { status: 'REFUSE_IMPORT' },
+                                { where: { batchID: orderPurchaseMissingDetail.batchID }, transaction },
+                            );
+                        }
                     } else if (orderPurchaseFind.status === 'COMPLETED') {
                         // update orderpurchasemissing
                         await OrderPurchaseMissing.update(
@@ -460,12 +512,12 @@ class OrderPurchaseService {
                         );
 
                         // update amount batch
-                        const orderPurchaseDetails = await OrderPurchaseDetail.findAll({
-                            where: { orderPurchaseID },
+                        const orderPurchaseMissingDetails = await OrderPurchaseMissingDetail.findAll({
+                            where: { orderPurchaseMissingID: orderPurchaseID },
                         });
 
-                        for (const orderPurchaseMissingDetail of orderPurchaseMissingFind.orderPurchaseMissingDetails) {
-                            const orderPurchaseDetail = orderPurchaseDetails.find(
+                        for (const orderPurchaseMissingDetail of orderPurchaseMissingDetails) {
+                            const orderPurchaseDetail = orderPurchaseMissingDetails.find(
                                 (item) =>
                                     item.orderPurchaseDetailID === orderPurchaseMissingDetail.orderPurchaseDetailID,
                             );
@@ -479,17 +531,16 @@ class OrderPurchaseService {
                             if (batchFind) {
                                 await batchFind.update(
                                     {
-                                        importAmount:
-                                            batchFind.importAmount + orderPurchaseMissingDetail.missingQuantity,
-                                        remainAmount:
-                                            batchFind.remainAmount + orderPurchaseMissingDetail.missingQuantity,
+                                        importAmount: orderPurchaseDetail.missingQuantity,
+                                        remainAmount: orderPurchaseDetail.missingQuantity,
+                                        tempAmount: orderPurchaseDetail.missingQuantity,
                                     },
                                     { transaction },
                                 );
 
                                 // update amount product
                                 const amountConvert =
-                                    batchFind.unit.conversionQuantity * orderPurchaseMissingDetail.missingQuantity;
+                                    batchFind.unit.conversionQuantity * orderPurchaseDetail.missingQuantity;
 
                                 await Product.update(
                                     {

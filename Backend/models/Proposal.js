@@ -23,9 +23,13 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: false,
             },
             status: {
-                type: Sequelize.ENUM('PENDING', 'COMPLETED', 'REFUSE'),
+                type: Sequelize.ENUM('PENDING', 'COMPLETED', 'REFUSE', 'APPROVED'),
                 allowNull: false,
                 defaultValue: 'PENDING',
+            },
+            qrCode: {
+                type: Sequelize.TEXT,
+                allowNull: true,
             },
         },
         {

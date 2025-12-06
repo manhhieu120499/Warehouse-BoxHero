@@ -5,7 +5,12 @@ const Product = db.Product;
 const HTTP_OK = process.env.HTTP_OK || 200;
 
 class SupplierService {
-    async searchSuppliers({ supplierID, phoneNumber, email, address, supplierName }, page = 1, limit = 10) {
+    async searchSuppliers(
+        { supplierID, phoneNumber, email, address, supplierName },
+        page = 1,
+        limit = 10,
+        status = 'ACTIVE',
+    ) {
         try {
             const { Op } = require('sequelize');
             const where = {};
@@ -14,6 +19,7 @@ class SupplierService {
             if (email) where.email = { [Op.like]: `%${email}%` };
             if (address) where.address = { [Op.like]: `%${address}%` };
             if (supplierName) where.supplierName = { [Op.like]: `%${supplierName}%` };
+            if (status) where.status = status;
             const offset = (page - 1) * limit;
             const { count, rows } = await Supplier.findAndCountAll({
                 where,
@@ -49,12 +55,13 @@ class SupplierService {
         }
     }
 
-    async getAllSuppliers(page = 1, limit = 10) {
+    async getAllSuppliers(page = 1, limit = 10, status = 'ACTIVE') {
         try {
             const offset = (page - 1) * limit;
             const { count, rows } = await Supplier.findAndCountAll({
                 offset,
                 limit,
+                where: { status },
                 order: [['supplierID', 'ASC']],
             });
             return {

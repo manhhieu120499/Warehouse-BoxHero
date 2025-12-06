@@ -20,10 +20,9 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.INTEGER,
                 allowNull: false,
             },
-            status: {
-                type: Sequelize.ENUM('open', 'closed'),
-                allowNull: false,
-                defaultValue: 'open',
+            batchID: {
+                type: Sequelize.STRING,
+                allowNull: true,
             },
         },
         {
@@ -38,6 +37,7 @@ module.exports = (sequelize, Sequelize) => {
             foreignKey: 'orderPurchaseDetailID',
             as: 'orderPurchaseDetail',
         });
+        OrderPurchaseMissingDetail.belongsTo(models.Batch, { foreignKey: 'batchID', as: 'batch' });
     };
 
     return OrderPurchaseMissingDetail;

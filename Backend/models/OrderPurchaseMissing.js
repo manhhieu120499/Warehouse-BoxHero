@@ -20,6 +20,10 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: false,
                 defaultValue: 'PENDING',
             },
+            qrCode: {
+                type: Sequelize.TEXT,
+                allowNull: true,
+            },
         },
         {
             tableName: 'order_purchase_missing',

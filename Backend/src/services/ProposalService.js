@@ -1,6 +1,7 @@
 const dotenv = require('dotenv');
 const db = require('../../models');
 const { Op, fn, col, where, literal } = require('sequelize');
+const { generateBatchID, generateQRURL } = require('../common');
 const Proposal = db.Proposal;
 const Employee = db.Employee;
 const Product = db.Product;
@@ -14,6 +15,7 @@ const OrderReleaseProposalDetail = db.OrderReleaseProposalDetail;
 const OrderReleaseProposal = db.OrderReleaseProposal;
 const OrderRelease = db.OrderRelease;
 const BaseUnitProduct = db.BaseUnitProduct;
+const Batch = db.Batch;
 
 dotenv.config();
 
@@ -68,6 +70,9 @@ class ProposalService {
                 const proposal = await Proposal.findOne({
                     where: { proposalID: data.proposalID },
                 });
+                const proposalDetails = await ProposalDetail.findAll({
+                    where: { proposalID: data.proposalID },
+                });
                 if (!proposal) {
                     return reject({
                         status: 'ERR',
@@ -75,17 +80,51 @@ class ProposalService {
                         message: 'Không tìm thấy đề xuất',
                     });
                 }
-                // update proposal
-                proposal.status = data.status;
-                proposal.approverID = data.employeeIDApproval;
-                await proposal.save({ transaction });
                 let message = '';
-                if (data.status === 'COMPLETED') {
+                if (data.status === 'APPROVED') {
                     message = 'Đề xuất đã được phê duyệt';
+                    const count = await Batch.count();
+                    // update batchID for proposal detail
+                    for (const proposalDetail of proposalDetails) {
+                        //const batchID = generateBatchID('B', count + 1);
+                        const batchID = generateBatchID('B', Math.floor(Math.random() * (1000 - 60 + 1)) + 60);
+                        const qrCode = await generateQRURL(batchID);
+                        const newBatch = await Batch.create(
+                            {
+                                batchID,
+                                productID: proposalDetail.productID,
+                                unitID: proposalDetail.unitID,
+                                warehouseID: proposal.warehouseID,
+                                status: 'WAITING_IMPORT',
+                                qrCode,
+                            },
+                            { transaction },
+                        );
+
+                        const updateBatchIDProposalDetail = await ProposalDetail.update(
+                            {
+                                batchIDQR: newBatch.qrCode,
+                                batchID: newBatch.batchID,
+                            },
+                            {
+                                where: { proposalDetailID: proposalDetail.proposalDetailID },
+                                transaction,
+                            },
+                        );
+                    }
+
+                    // update qrCode for proposal
+                    const qrCode = await generateQRURL(proposal.proposalID);
+                    proposal.qrCode = qrCode;
                 }
                 if (data.status === 'REFUSE') {
                     message = 'Đề xuất đã bị từ chối';
                 }
+                // update proposal
+                proposal.status = data.status;
+                proposal.approverID = data.employeeIDApproval;
+                await proposal.save({ transaction });
+
                 await transaction.commit();
                 resolve({
                     status: 'OK',
@@ -201,6 +240,7 @@ class ProposalService {
                             include: [
                                 { model: Product, as: 'product' },
                                 { model: Unit, as: 'unit' },
+                                { model: Batch, as: 'batch', attributes: ['qrCode'] },
                             ],
                         },
                         { model: Employee, as: 'employeeCreate' },
@@ -293,6 +333,7 @@ class ProposalService {
                             include: [
                                 { model: Product, as: 'product' },
                                 { model: Unit, as: 'unit' },
+                                { model: Batch, as: 'batch', attributes: ['qrCode'] },
                             ],
                         },
                         { model: Employee, as: 'employeeCreate' },
@@ -310,6 +351,7 @@ class ProposalService {
                             include: [
                                 { model: Product, as: 'product' },
                                 { model: Unit, as: 'unit' },
+                                { model: Batch, as: 'batch', attributes: ['qrCode', 'batchID'] },
                             ],
                         },
                         { model: Employee, as: 'employeeCreate' },
@@ -445,7 +487,7 @@ class ProposalService {
             try {
                 const proposals = await Proposal.findAll({
                     where: {
-                        status: 'COMPLETED',
+                        status: 'APPROVED',
                         warehouseID,
                         proposalID: {
                             [Op.notIn]: sequelize.literal(

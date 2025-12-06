@@ -87,6 +87,7 @@ class SupplierController {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
+            const status = req.query.status || 'ACTIVE';
             const searchFields = {
                 supplierID: req.query.supplierID,
                 phoneNumber: req.query.phoneNumber,
@@ -98,9 +99,9 @@ class SupplierController {
             const hasSearch = Object.values(searchFields).some((v) => v);
             let result;
             if (hasSearch) {
-                result = await SupplierService.searchSuppliers(searchFields, page, limit);
+                result = await SupplierService.searchSuppliers(searchFields, page, limit, status);
             } else {
-                result = await SupplierService.getAllSuppliers(page, limit);
+                result = await SupplierService.getAllSuppliers(page, limit, status);
             }
             return res.status(HTTP_OK).json({ status: 'OK', ...result });
         } catch (e) {
