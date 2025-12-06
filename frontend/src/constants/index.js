@@ -43,8 +43,9 @@ export const formatStatusProduct = {
 
 export const formatStatusProposal = {
     PENDING: 'Chờ phê duyệt',
-    COMPLETED: 'Đã phê duyệt',
+    APPROVED: 'Đã phê duyệt',
     REFUSE: 'Từ chối',
+    COMPLETED: 'Đã hoàn thành',
 };
 
 export const formatStatusOrderPurchase = {

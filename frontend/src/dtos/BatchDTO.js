@@ -1,8 +1,8 @@
 class BatchDTO {
     constructor(data) {
         this.sbu = data.batchID;
-        this.macDate = data.manufactureDate.slice(0, 10);
-        this.expiredDate = data.expiryDate.slice(0, 10);
+        this.macDate = data?.manufactureDate?.slice(0, 10);
+        this.expiredDate = data?.expiryDate?.slice(0, 10);
         this.receive = data.importAmount;
         this.available = data.remainAmount;
         this.unit = data.unitName;

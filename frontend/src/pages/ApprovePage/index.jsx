@@ -69,11 +69,15 @@ const ApprovePage = () => {
                 },
                 {
                     name: 'Đã phê duyệt',
-                    value: 'COMPLETED',
+                    value: 'APPROVED',
                 },
                 {
                     name: 'Đã từ chối',
                     value: 'REFUSE',
+                },
+                {
+                    name: 'Đã hoàn thành',
+                    value: 'COMPLETED',
                 },
             ],
         },

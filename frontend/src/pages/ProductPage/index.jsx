@@ -80,13 +80,14 @@ const ProductPage = () => {
     const handleShowProductDetail = async (productId) => {
         try {
             const tokenUser = parseToken('tokenUser');
+            console.log('tokenUser', currentUser);
             dispatch(startLoading());
             // call api lấy thông tin product
             const res = await request.get(`/api/product?productID=${productId}`, {
                 headers: {
                     token: `Beare ${tokenUser.accessToken}`,
                     employeeid: tokenUser.employeeID,
-                    warehouseid: currentUser.warehouseId ? currentUser.warehouseId : null,
+                    warehouseid: currentUser.warehouseId,
                 },
             });
             const { batches, ...rest } = res.data.product;
@@ -95,6 +96,7 @@ const ProductPage = () => {
                 const batch = new BatchDTO(item);
                 return { ...batch };
             });
+            console.log('formatBatch', formatBatch);
             const productDetail = new ProductDetailDTO({
                 ...rest,
                 listBatch: formatBatch,

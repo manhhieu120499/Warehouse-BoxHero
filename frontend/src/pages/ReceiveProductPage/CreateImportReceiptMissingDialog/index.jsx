@@ -57,6 +57,7 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
             orderPurchaseID: orderPurchase.code,
             employeeID: currentUser.empID,
             warehouseID: warehouse.warehouseID,
+            proposalID: orderPurchaseMissing?.orderPurchase?.proposalID,
             status: 'COMPLETED',
             type: 'SUPPLEMENT',
 
@@ -107,6 +108,7 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
             productItem.realAmount = it?.missingQuantity;
             productItem.supplierID = it?.orderPurchaseDetail?.batch?.supplierID;
             productItem.supplierName = it?.orderPurchaseDetail?.batch?.supplier?.supplierName;
+            productItem.batchID = it?.batch?.batchID;
             return productItem;
         });
         setProductListImport(listProduct);
@@ -270,15 +272,7 @@ const CreateImportReceiptMissingDialog = ({ orderPurchaseMissing, isOpen, onClos
                                                         />
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã lô"
-                                                            value={it.batchID ?? ''}
-                                                            onChange={(e) => {
-                                                                it.batchID = e.target.value;
-                                                                updateCellData(idx, it);
-                                                            }}
-                                                        />
+                                                        <span>{it.batchID}</span>
                                                     </td>
                                                     <td>
                                                         <input

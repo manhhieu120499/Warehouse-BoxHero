@@ -8,3 +8,12 @@ export const findSupplier = async (supplierID) => {
         throw new Error(err);
     }
 };
+
+export const getAllSupllier = async () => {
+    try {
+        const res = await request.get('/api/supplier');
+        return res.data.suppliers ? res.data.suppliers : [];
+    } catch (err) {
+        throw new Error(err);
+    }
+};

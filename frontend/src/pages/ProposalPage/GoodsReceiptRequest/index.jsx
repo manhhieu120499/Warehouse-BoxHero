@@ -9,8 +9,11 @@ import request, { post } from '../../../utils/httpRequest';
 import parseToken from '../../../utils/parseToken';
 import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';
-import { Search } from 'lucide-react';
+import { Icon, Search } from 'lucide-react';
 import { authIsAdmin } from '../../../common';
+import { QrCode } from 'lucide-react';
+import Printer from '../../../components/Printer';
+import { QRCode } from 'antd';
 
 const cx = classNames.bind(styles);
 
@@ -128,7 +131,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
         }
     };
 
-    const handleApproveProposal = async (proposalID, status = 'COMPLETED') => {
+    const handleApproveProposal = async (proposalID, status = 'APPROVED') => {
         try {
             const token = parseToken('tokenUser');
             const res = await post(
@@ -268,7 +271,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
 
     const createdAt = proposalDetail?.createdAt ? new Date(proposalDetail.createdAt).toISOString().split('T')[0] : '';
 
-    const handleShowProposalDetail = (items) => {
+    const handleShowProposalDetail = (items, isPrinter = false) => {
         if (items) {
             return items.map((it, idx) => {
                 return (
@@ -295,51 +298,242 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                             <span>{typeDetail ? it.product?.productName || '' : it.name || ''}</span>
                         </td>
                         <td>
-                            <select
-                                value={typeDetail ? it.unit?.unitID || '' : it.uom || ''}
-                                onChange={(e) => updateCell(idx, 'uom', e.target.value)}
-                                className={cx(typeDetail ? 'readOnly' : '')}
-                            >
-                                <option>-- Chọn đơn vị --</option>
-                                {typeDetail ? (
-                                    <option value={it.unit.unitID}>{it.unit.unitName}</option>
-                                ) : (
-                                    it.listUom.map((uom) => <option value={uom.unitID}>{uom.unitName}</option>)
-                                )}
-                            </select>
+                            {!isPrinter ? (
+                                <select
+                                    value={typeDetail ? it.unit?.unitID || '' : it.uom || ''}
+                                    onChange={(e) => updateCell(idx, 'uom', e.target.value)}
+                                    className={cx(typeDetail ? 'readOnly' : '')}
+                                >
+                                    <option>-- Chọn đơn vị --</option>
+                                    {typeDetail ? (
+                                        <option value={it.unit.unitID}>{it.unit.unitName}</option>
+                                    ) : (
+                                        it.listUom.map((uom) => <option value={uom.unitID}>{uom.unitName}</option>)
+                                    )}
+                                </select>
+                            ) : (
+                                <span>{typeDetail ? it.unit?.unitName || '' : it.uomName || ''}</span>
+                            )}
                         </td>
                         <td className={cx('num')}>
-                            <input
-                                type="number"
-                                min={1}
-                                value={typeDetail ? it.quantity || '' : it.qty || ''}
-                                onChange={(e) => updateCell(idx, 'qty', e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key == '-') e.preventDefault();
-                                }}
-                                readOnly={typeDetail}
-                                className={cx(typeDetail ? 'readOnly' : '')}
-                            />
+                            {!isPrinter ? (
+                                <input
+                                    type="number"
+                                    min={1}
+                                    value={typeDetail ? it.quantity || '' : it.qty || ''}
+                                    onChange={(e) => updateCell(idx, 'qty', e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key == '-') e.preventDefault();
+                                    }}
+                                    readOnly={typeDetail}
+                                    className={cx(typeDetail ? 'readOnly' : '')}
+                                />
+                            ) : (
+                                <span>{typeDetail ? it.quantity || '' : it.qty || ''}</span>
+                            )}
                         </td>
                         <td>
-                            <input
-                                value={typeDetail ? it.note || 'Không có ghi chú' : it.note || ''}
-                                onChange={(e) => updateCell(idx, 'note', e.target.value)}
-                                placeholder="Ghi chú"
-                                className={cx(typeDetail ? 'readOnly' : '')}
-                            />
+                            {!isPrinter ? (
+                                <input
+                                    value={typeDetail ? it.note || 'Không có ghi chú' : it.note || ''}
+                                    onChange={(e) => updateCell(idx, 'note', e.target.value)}
+                                    placeholder="Ghi chú"
+                                    className={cx(typeDetail ? 'readOnly' : '')}
+                                />
+                            ) : (
+                                <span>{typeDetail ? it.note || 'Không có ghi chú' : it.note || ''}</span>
+                            )}
                         </td>
+                        {!isPrinter && (
+                            <td>
+                                {!typeDetail && (
+                                    <button className={cx('iconBtn')} onClick={() => removeRow(idx)} title="Xóa dòng">
+                                        ✕
+                                    </button>
+                                )}
+                            </td>
+                        )}
+
                         <td>
-                            {!typeDetail && (
-                                <button className={cx('iconBtn')} onClick={() => removeRow(idx)} title="Xóa dòng">
-                                    ✕
-                                </button>
+                            {proposalDetail.status === 'APPROVED' && typeDetail && (
+                                <div className={cx('batch-qrCode')}>
+                                    <span>{it?.batchID}</span>
+                                </div>
                             )}
                         </td>
                     </tr>
                 );
             });
         }
+    };
+
+    const renderPrinter = (
+        label = 'In phiếu đề xuất',
+        Icon = <QrCode size={24} />,
+        propsButton = { success: true, borderRadiusSmall: true, small: true },
+    ) => {
+        return (
+            <Printer buttonLabel={label} Icon={Icon} propsButton={propsButton}>
+                <div className={cx('page')}>
+                    {/* Header */}
+                    <header className={cx('header')}>
+                        <div className={cx('headerLeft')}>
+                            <h1 className={cx('title')}>Phiếu đề xuất nhập kho</h1>
+                        </div>
+                    </header>
+
+                    <main className={cx('container')}>
+                        {/* Thông tin chung */}
+                        <section className={cx('card')}>
+                            <h2 className={cx('cardTitle')}>Thông tin chung</h2>
+                            <div className={cx('grid4')}>
+                                <div className={cx('field')}>
+                                    <label>Mã phiếu</label>
+                                    <div className={cx('field-control')}>
+                                        <input
+                                            placeholder="Tạo mã phiếu"
+                                            readOnly={true}
+                                            value={typeDetail ? proposalDetail.proposalID || '' : code || ''}
+                                            onChange={(e) => setCode(e.target.value)}
+                                            className={cx(typeDetail ? 'readOnly' : '')}
+                                        />
+                                        {!typeDetail && (
+                                            <Button
+                                                small
+                                                primary
+                                                borderRadiusSmall
+                                                onClick={() => setCode(generateCode('PDX-'))}
+                                            >
+                                                <span>Tạo mã phiếu</span>
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className={cx('field')}>
+                                    <label>Ngày tạo phiếu</label>
+                                    <input
+                                        type="date"
+                                        value={typeDetail ? createdAt : date}
+                                        readOnly
+                                        className={cx('readOnly')}
+                                    />
+                                </div>
+                                <div className={cx('field')}>
+                                    <label>Kho nhập</label>
+                                    <input
+                                        value={
+                                            typeDetail
+                                                ? proposalDetail?.warehouse?.warehouseName || ''
+                                                : warehouse.warehouseName || ''
+                                        }
+                                        readOnly
+                                        className={cx('readOnly')}
+                                    />
+                                </div>
+                                <div className={cx('field')}>
+                                    <label>Người lập phiếu</label>
+                                    <input
+                                        value={
+                                            typeDetail
+                                                ? proposalDetail?.employeeCreate?.employeeName || ''
+                                                : creator.empName || ''
+                                        }
+                                        readOnly
+                                        className={cx('readOnly')}
+                                    />
+                                </div>
+                                <div className={cx('field', 'colSpan4')}>
+                                    <label>Ghi chú</label>
+                                    <textarea
+                                        rows={3}
+                                        placeholder="Nhập bổ sung, trả hàng NCC, nhập khuyến mãi..."
+                                        value={typeDetail ? proposalDetail.note || 'Không có ghi chú' : reason}
+                                        onChange={(e) => setReason(e.target.value)}
+                                        readOnly={typeDetail}
+                                        className={cx(typeDetail ? 'readOnly' : '')}
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Danh sách hàng hóa */}
+                        <section className={cx('card')}>
+                            <div className={cx('cardHeader')}>
+                                <h2 className={cx('cardTitle')}>Danh sách hàng hóa đề xuất nhập</h2>
+                            </div>
+
+                            <div className={cx('tableWrap')}>
+                                <table className={cx('table')}>
+                                    <thead>
+                                        <tr>
+                                            <th className={cx('stt')}>STT</th>
+                                            <th className={cx('productID')}>Mã SP</th>
+                                            <th className={cx('productName')}>Tên SP</th>
+                                            <th className={cx('unit')}>Đơn vị tính</th>
+                                            <th className={cx('num')}>Số lượng</th>
+                                            <th className={cx('note')}>Ghi chú </th>
+                                            <th className={cx('qr')}>Mã lô đề xuất</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>{handleShowProposalDetail(proposalDetails, true)}</tbody>
+                                </table>
+                            </div>
+
+                            {/* Tổng hợp */}
+                            <div className={cx('summary')}>
+                                <div>
+                                    <span className={cx('muted')}>Số mặt hàng: </span>
+                                    <b>{totals.unique}</b>
+                                </div>
+                                <div>
+                                    <span className={cx('muted')}>Tổng số lượng: </span>
+                                    <b>{currency(totals.totalQty)}</b>
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+
+                    <footer className={cx('footer')}>
+                        <p>© {new Date().getFullYear()} Kho Hàng • Phiếu đề xuất nhập kho</p>
+                        <div className={cx('layout-qrCode')}>
+                            <p>QR CODE Phiếu Đề Xuất Nhập Kho</p>
+                            <img
+                                src={
+                                    proposalDetail?.qrCode ||
+                                    'https://support.thinkific.com/hc/article_attachments/360042081334/5d37325ea1ff6.png'
+                                }
+                                alt="qrCode"
+                            />
+                        </div>
+                    </footer>
+                </div>
+            </Printer>
+        );
+    };
+
+    const renderPrinterBatchQRCode = (items) => {
+        return (
+            <Printer
+                buttonLabel={'In mã lô'}
+                Icon={<QrCode size={20} />}
+                propsButton={{ primary: true, small: true, borderRadiusSmall: true }}
+            >
+                <div className={cx('layout-multiple-qrCode')}>
+                    {items.map(
+                        (item, index) =>
+                            item?.batch?.qrCode && (
+                                <div key={index} className={cx('qr-item')}>
+                                    <img src={item.batch.qrCode} alt={`QR Code ${item.batchID}`} />
+                                    <p>
+                                        {item.productID}-{item.product.productName}
+                                    </p>
+                                    <p>{item.batchID}</p>
+                                </div>
+                            ),
+                    )}
+                </div>
+            </Printer>
+        );
     };
 
     return (
@@ -361,7 +555,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                 )}
                 {typeDetail && proposalDetail?.status === 'PENDING' && authIsAdmin(currentUser) && (
                     <div>
-                        <Button success onClick={() => handleApproveProposal(proposalDetail.proposalID, 'COMPLETED')}>
+                        <Button success onClick={() => handleApproveProposal(proposalDetail.proposalID, 'APPROVED')}>
                             <span>Chấp nhận</span>
                         </Button>
                         <Button error onClick={() => handleApproveProposal(proposalDetail.proposalID, 'REFUSE')}>
@@ -369,6 +563,7 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                         </Button>
                     </div>
                 )}
+                {typeDetail && proposalDetail?.status === 'APPROVED' && <div>{renderPrinter()}</div>}
             </header>
 
             <main className={cx('container')}>
@@ -462,22 +657,27 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                     </div>
 
                     <div className={cx('search')}>
-                        <div className={cx('input')}>
-                            <input
-                                placeholder="Nhập mã sản phẩm"
-                                value={productIDSearch}
-                                onChange={(e) => setProductIDSearch(e.target.value)}
-                            />
+                        <div className={cx('searchLeft')}>
+                            <div className={cx('input')}>
+                                <input
+                                    placeholder="Nhập mã sản phẩm"
+                                    value={productIDSearch}
+                                    onChange={(e) => setProductIDSearch(e.target.value)}
+                                />
+                            </div>
+                            <Button
+                                primary
+                                medium
+                                borderRadiusSmall
+                                className={cx('btn-filter')}
+                                onClick={() => handleSearchProduct(productIDSearch)}
+                            >
+                                Tìm kiếm
+                            </Button>
                         </div>
-                        <Button
-                            primary
-                            medium
-                            borderRadiusSmall
-                            className={cx('btn-filter')}
-                            onClick={() => handleSearchProduct(productIDSearch)}
-                        >
-                            Tìm kiếm
-                        </Button>
+                        {typeDetail &&
+                            proposalDetail?.status === 'APPROVED' &&
+                            renderPrinterBatchQRCode(proposalDetails)}
                     </div>
 
                     <div className={cx('tableWrap')}>
@@ -489,8 +689,13 @@ export default function GoodsReceiptRequest({ typeDetail = false, proposalDetail
                                     <th className={cx('productName')}>Tên SP</th>
                                     <th className={cx('unit')}>Đơn vị tính</th>
                                     <th className={cx('num')}>Số lượng</th>
-                                    <th className={cx('note')}>Ghi chú</th>
+                                    <th className={cx('note')}>Ghi chú </th>
                                     <th></th>
+                                    {proposalDetail.status == 'APPROVED' ? (
+                                        <th className={cx('qr')}>Mã lô đề xuất</th>
+                                    ) : (
+                                        <th></th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody>

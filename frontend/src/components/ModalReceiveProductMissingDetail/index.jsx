@@ -11,6 +11,9 @@ import parseToken from '../../utils/parseToken';
 import request from '../../utils/httpRequest';
 import PopupMessage from '../PopupMessage';
 import CreateImportReceiptMissingDialog from '../../pages/ReceiveProductPage/CreateImportReceiptMissingDialog';
+import Printer from '../Printer';
+import { Printer as PrinterIcon, QrCode } from 'lucide-react';
+import { QRCode } from 'antd';
 
 const cx = classNames.bind(styles);
 
@@ -38,7 +41,7 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
             );
             console.log(res.data);
             toast.success('Cập nhật trạng thái thành công', styleMessage);
-            reset({ pageFilter: 1 });
+            //reset({ pageFilter: 1 });
             onClose(false);
         } catch (err) {
             toast.error('Cập nhật trạng thái thất bại', styleMessage);
@@ -76,14 +79,126 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
             title: 'Số lượng yêu cầu',
             dataIndex: 'requestedQuantity',
             key: 'requestedQuantity',
-            render: (text, record) => <span>{record.orderPurchaseDetail.requestedQuantity}</span>,
+            render: (text, record) => <span className={cx('num')}>{record.orderPurchaseDetail.requestedQuantity}</span>,
         },
         {
             title: 'Số lượng thiếu',
             dataIndex: 'missingQuantity',
             key: 'missingQuantity',
+            render: (text, record) => <span className={cx('num')}>{record.missingQuantity}</span>,
+        },
+        {
+            title: 'Mã lô hàng đề xuất nhập',
+            width: '20%',
+            dataIndex: 'batchID',
+            key: 'batchID',
+            render: (text, record) => <span>{record.batchID}</span>,
         },
     ];
+
+    console.log('ppp', data);
+
+    const renderPrinter = () => {
+        return (
+            <Printer
+                buttonLabel="In phiếu"
+                Icon={<PrinterIcon size={20} />}
+                propsButton={{ outline: true, small: true }}
+            >
+                <div className={cx('wrapper-detail-import-product-content')}>
+                    <p className={cx('title-header')}>Chi tiết lô hàng thiếu</p>
+                    <div className={cx('info-container')}>
+                        <div className={cx('info-row')}>
+                            <div className={cx('info-item')}>
+                                <label>Mã phiếu nhập</label>
+                                <p>{data.orderPurchaseID}</p>
+                            </div>
+                            <div className={cx('info-item')}>
+                                <label>Mã kho</label>
+                                <p>{data?.orderPurchase?.warehouseID}</p>
+                            </div>
+                        </div>
+                        <div className={cx('info-row')}>
+                            <div className={cx('info-item')}>
+                                <label>Mã nhân viên</label>
+                                <p>{data?.orderPurchase?.employee.employeeID}</p>
+                            </div>
+                            <div className={cx('info-item')}>
+                                <label>Ngày tạo</label>
+                                <p>{data?.createdAt ? convertDateVN(data.createdAt) : ''}</p>
+                            </div>
+                        </div>
+                        <div className={cx('info-row')}>
+                            <div className={cx('info-item')}>
+                                <label>Tên nhân viên</label>
+                                <p>{data?.orderPurchase?.employee.employeeName}</p>
+                            </div>
+                            <div className={cx('info-item')}>
+                                <label>Trạng thái</label>
+                                <p>{formatStatusOrderPurchaseMissing[data?.status]}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={cx('suggest-location-view')}>
+                        <p>Chi tiết đơn hàng thiếu</p>
+                        <table className={cx('table')}>
+                            <thead>
+                                <tr>
+                                    <th>Mã CTDN</th>
+                                    <th>Mã lô</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Đơn vị</th>
+                                    <th>SL yêu cầu</th>
+                                    <th>SL thiếu</th>
+                                    <th>Mã lô đề xuất</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data?.orderPurchaseMissingDetails?.map((item, index) => (
+                                    <tr key={index}>
+                                        <td>{item.orderPurchaseDetailID}</td>
+                                        <td>{item.orderPurchaseDetail.batchID}</td>
+                                        <td>{item.orderPurchaseDetail.batch.product.productName}</td>
+                                        <td>{item.orderPurchaseDetail.batch.unit.unitName}</td>
+                                        <td>{item.orderPurchaseDetail.requestedQuantity}</td>
+                                        <td>{item.missingQuantity}</td>
+                                        <td>{item.orderPurchaseDetail.batchID}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className={cx('qr-code-section')}>
+                        <p>QR Code Mã Phiếu Nhập Thiếu Của Lô Hàng</p>
+                        <img src={data?.qrCode || ''} alt="qr-code-order-purchase-missing" />
+                    </div>
+                </div>
+            </Printer>
+        );
+    };
+
+    const renderPrinterBatchQRCode = (items) => {
+        return (
+            <Printer buttonLabel={'In mã lô'} Icon={<QrCode size={18} />} propsButton={{ outline: true, small: true }}>
+                <div className={cx('layout-multiple-qrCode')}>
+                    {items?.map(
+                        (item, index) =>
+                            item?.orderPurchaseDetail?.batch?.qrCode && (
+                                <div key={index} className={cx('qr-item')}>
+                                    <img src={item?.batch?.qrCode} alt={`QR Code ${item?.batchID}`} />
+                                    <p>
+                                        {item?.orderPurchaseDetail?.batch?.product?.productID}-
+                                        {item?.orderPurchaseDetail?.batch?.product?.productName}
+                                    </p>
+                                    <p>Nhập bổ sung lô: {item?.batchID}</p>
+                                </div>
+                            ),
+                    )}
+                </div>
+            </Printer>
+        );
+    };
 
     return (
         <Modal isOpenInfo={isOpen} onClose={onClose} showButtonClose={false}>
@@ -184,20 +299,26 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
                 </div>
 
                 <div className={cx('suggest-location-view')}>
-                    <p>Chi tiết đơn hàng thiếu</p>
+                    <div className={cx('header-table')}>
+                        <p>Chi tiết đơn hàng thiếu</p>
+                        {renderPrinterBatchQRCode(data?.orderPurchaseMissingDetails)}
+                    </div>
+                    {/** render printer batch list qr */}
                     <MyTable columns={columns} data={data?.orderPurchaseMissingDetails} />
                 </div>
                 <div className={cx('action-modal')}>
+                    {renderPrinter()}
                     {data?.status === 'PENDING' && (
                         <>
                             <Button success onClick={() => setShowPurchaseSupplement(true)}>
                                 <span>Nhập bổ sung</span>
                             </Button>
                             <Button error onClick={() => setShowPopConfirmSaveMissing(true)}>
-                                <span>Đã hủy</span>
+                                <span>Huỷ phiếu</span>
                             </Button>
                         </>
                     )}
+
                     <Button primary onClick={onClose}>
                         <span>Đóng</span>
                     </Button>

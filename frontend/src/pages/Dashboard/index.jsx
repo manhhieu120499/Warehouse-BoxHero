@@ -152,10 +152,27 @@ const Dashboard = () => {
                     }));
                     setStockFluctuation(resultConvert);
                 }
-                const resImportExport = await getStatisticalImportExport('MONTH', currentYear);
-                if (resImportExport?.data?.status === 'OK') {
-                    setImportExportData(resImportExport?.data?.data);
-                }
+                // const resImportExport = await getStatisticalImportExport('MONTH', currentYear);
+                // if (resImportExport?.data?.status === 'OK') {
+                //     setImportExportData(resImportExport?.data?.data);
+                // }
+
+                // 🔹 Dữ liệu giả CỐ ĐỊNH cho Import/Export theo THÁNG (Biến động đa dạng)
+                const fakeDataMonth = [
+                    { date: 1, import: 350, export: 200 },
+                    { date: 2, import: 280, export: 310 },
+                    { date: 3, import: 450, export: 400 },
+                    { date: 4, import: 320, export: 250 },
+                    { date: 5, import: 500, export: 480 },
+                    { date: 6, import: 410, export: 350 },
+                    { date: 7, import: 380, export: 420 },
+                    { date: 8, import: 560, export: 300 },
+                    { date: 9, import: 420, export: 490 },
+                    { date: 10, import: 320, export: 380 },
+                    { date: 11, import: 590, export: 550 },
+                    { date: 12, import: 400, export: 450 },
+                ];
+                setImportExportData(fakeDataMonth);
             } else if (timeInventoryImportExportAndInventory === 'YEAR') {
                 const currentYear = new Date().getFullYear();
                 const res = await getStatisticalInventory('YEAR');
@@ -166,10 +183,20 @@ const Dashboard = () => {
                     }));
                     setStockFluctuation(resultConvert);
                 }
-                const resImportExport = await getStatisticalImportExport('YEAR');
-                if (resImportExport?.data?.status === 'OK') {
-                    setImportExportData(resImportExport?.data?.data);
-                }
+                // const resImportExport = await getStatisticalImportExport('YEAR');
+                // if (resImportExport?.data?.status === 'OK') {
+                //     setImportExportData(resImportExport?.data?.data);
+                // }
+
+                // 🔹 Dữ liệu giả CỐ ĐỊNH cho Import/Export theo NĂM (Biến động đa dạng)
+                const fakeDataYear = [
+                    { date: currentYear - 4, import: 2200, export: 1800 },
+                    { date: currentYear - 3, import: 1500, export: 2100 },
+                    { date: currentYear - 2, import: 3400, export: 2900 },
+                    { date: currentYear - 1, import: 2800, export: 3200 },
+                    { date: currentYear, import: 4100, export: 3500 },
+                ];
+                setImportExportData(fakeDataYear);
             }
         };
         inventoryImportExportAndInventory();
@@ -316,8 +343,8 @@ const Dashboard = () => {
                 const remainKey = 'totalRemain';
                 const usedKey = 'percentUsed';
                 setPercentUseWarehouse([
-                    { ...res[usedKey], value: res[usedKey].percent },
-                    { ...res[remainKey], value: res[remainKey].percent },
+                    { ...res[usedKey], value: Number(res[usedKey].percent.toFixed(2)) },
+                    { ...res[remainKey], value: Number(res[remainKey].percent.toFixed(2)) },
                 ]);
             } catch (err) {
                 console.log(err);

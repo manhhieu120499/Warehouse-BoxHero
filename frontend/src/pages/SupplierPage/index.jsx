@@ -44,6 +44,7 @@ const SupplierPage = () => {
         supplierId: '',
         phoneNumber: '',
         email: '',
+        status: 'ACTIVE',
     });
     const dispatch = useDispatch();
 
@@ -187,13 +188,13 @@ const SupplierPage = () => {
             width: '20%',
             ellipsis: true,
         },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'statusWork',
-            key: 'statusWork',
-            width: '12%',
-            ellipsis: true,
-        },
+        // {
+        //     title: 'Trạng thái',
+        //     dataIndex: 'statusWork',
+        //     key: 'statusWork',
+        //     width: '12%',
+        //     ellipsis: true,
+        // },
         {
             title: 'Thao tác',
             dataIndex: 'transactionHistory',
@@ -253,7 +254,9 @@ const SupplierPage = () => {
     };
     const fetchSuppliers = async (pageReload = page) => {
         try {
-            const res = await get('/api/supplier?page=' + pageReload + '&limit=' + pageSize);
+            const res = await get(
+                '/api/supplier?page=' + pageReload + '&limit=' + pageSize + '&status=' + filters.status,
+            );
             setData(
                 res.suppliers.map((item, idx) => ({
                     supplierId: item.supplierID || '',
@@ -330,6 +333,7 @@ const SupplierPage = () => {
             supplierId: '',
             phoneNumber: '',
             email: '',
+            status: 'ACTIVE',
         });
         console.log('Reset filters to default:', filters);
         columnsFilter.forEach((item) => {
@@ -506,6 +510,25 @@ const SupplierPage = () => {
         },
     ];
 
+    const selectFilter = [
+        {
+            id: 4,
+            label: 'Trạng thái',
+            setValue: (value) => handleFilterChange('status', value),
+            value: filters.status,
+            option: [
+                {
+                    name: 'Đang hoạt động',
+                    value: 'ACTIVE',
+                },
+                {
+                    name: 'Ngừng hoạt động',
+                    value: 'INACTIVE',
+                },
+            ],
+        },
+    ];
+
     // columns product table
     const columnsProduct = [
         {
@@ -613,6 +636,7 @@ const SupplierPage = () => {
                 handleSubmitFilter={handleSearch}
                 handleResetFilters={handleResetFilters}
                 columns={columnsFilter}
+                selectInput={selectFilter}
             >
                 <Button primary onClick={openCreateModal}>
                     <span>Thêm nhà cung cấp</span>
