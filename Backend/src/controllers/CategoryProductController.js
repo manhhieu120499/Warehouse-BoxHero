@@ -42,6 +42,15 @@ class CategoryProductController {
             return res.status(err.statusHttp).json(response);
         }
     }
+    async getAllCategoriesForProduct(req, res) {
+        try {
+            const { statusHttp, ...response } = await CategoryProductService.getAllCategoriesForCreateProduct();
+            return res.status(statusHttp).json(response);
+        } catch (err) {
+            const { statusHttp, ...response } = err;
+            return res.status(err.statusHttp).json(response);
+        }
+    }
 }
 
 module.exports = new CategoryProductController();

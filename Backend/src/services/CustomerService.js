@@ -6,6 +6,7 @@ const OrderReleaseDetail = db.OrderReleaseDetail;
 const Employee = db.Employee;
 const Product = db.Product;
 const Batch = db.Batch;
+const Unit = db.Unit;
 const Warehouse = db.Warehouse;
 const { Op } = require('sequelize');
 dotenv.config();
@@ -103,7 +104,7 @@ class CustomerService {
             try {
                 const { customerID, page = 1 } = data;
                 const { count, rows: history } = await OrderRelease.findAndCountAll({
-                    where: { customerID },
+                    where: { customerID, status: 'COMPLETED' },
                     include: [
                         {
                             model: OrderReleaseDetail,
@@ -112,12 +113,17 @@ class CustomerService {
                                 {
                                     model: Batch,
                                     as: 'batch',
-                                    attributes: ['batchID', 'productID'],
+                                    // attributes: ['batchID', 'productID'],
                                     include: [
                                         {
                                             model: Product,
                                             as: 'product',
                                             attributes: ['productID', 'productName'],
+                                        },
+                                        {
+                                            model: Unit,
+                                            as: 'unit',
+                                            attributes: ['unitID', 'unitName'],
                                         },
                                     ],
                                 },

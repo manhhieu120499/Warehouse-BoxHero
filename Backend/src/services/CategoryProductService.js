@@ -119,6 +119,28 @@ class CategoryProductService {
             }
         });
     }
+    getAllCategoriesForCreateProduct() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const result = await CategoryProduct.findAll({
+                    attributes: ['categoryID', 'categoryName'],
+                });
+                resolve({
+                    status: 'OK',
+                    statusHttp: HTTP_OK,
+                    message: 'Lấy danh mục sản phẩm thành công',
+                    data: result,
+                });
+            } catch (err) {
+                console.log(err);
+                reject({
+                    status: 'ERR',
+                    statusHttp: HTTP_INTERNAL_SERVER_ERROR,
+                    message: err,
+                });
+            }
+        });
+    }
 }
 
 module.exports = new CategoryProductService();
