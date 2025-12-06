@@ -445,6 +445,8 @@ class BatchBoxService {
             try {
                 const { oldLocations, newLocations, boxID, employeeID } = data;
                 const listBatchMoveLog = [];
+
+                // 1. Duyệt từng location cũ để cập nhật (chuyển hàng đi)
                 for (const loc of oldLocations) {
                     let totalQuantityChange = 0;
                     const { batchID, quantity, validQuantity } = loc;
@@ -545,12 +547,16 @@ class BatchBoxService {
 
                     // Cập nhật status box
                     const updatedBox = await Box.findOne({ where: { boxID }, transaction });
-                    if (updatedBox.remainingAcreage > 0 && updatedBox.status === 'FULL') {
+                    // Nếu diện tích còn lại >= diện tích tối đa (tức là không còn hàng) -> AVAILABLE
+                    if (updatedBox.remainingAcreage >= updatedBox.maxAcreage) {
+                        await db.Box.update({ status: 'AVAILABLE' }, { where: { boxID }, transaction });
+                    } else {
+                        // Nếu còn hàng (diện tích còn lại < tối đa) -> OCCUPIED
                         await db.Box.update({ status: 'OCCUPIED' }, { where: { boxID }, transaction });
                     }
                 }
 
-                // 2. Duyệt từng location để kiểm tra và cập nhật
+                // 2. Duyệt từng location mới để thêm hàng vào
                 for (const loc of newLocations) {
                     const { batchID, boxes } = loc;
                     const batch = await Batch.findOne({
@@ -657,9 +663,11 @@ class BatchBoxService {
                             );
 
                             // Cập nhật status
-                            if (boxExist.remainingAcreage === 0) {
+                            // Nếu hết chỗ (diện tích còn lại <= 0) -> FULL
+                            if (boxExist.remainingAcreage <= 0) {
                                 await db.Box.update({ status: 'FULL' }, { where: { boxID }, transaction });
-                            } else if (boxExist.status === 'AVAILABLE') {
+                            } else {
+                                // Còn chỗ -> OCCUPIED
                                 await db.Box.update({ status: 'OCCUPIED' }, { where: { boxID }, transaction });
                             }
                         }

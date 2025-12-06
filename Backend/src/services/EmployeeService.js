@@ -244,6 +244,8 @@ class EmployeeService {
                     const totalPages = Math.ceil(count / LIMIT_PAGE);
                     const formatResultSearch = [];
                     resultSearch.forEach((emp) => {
+                        console.log(emp);
+
                         const { account, ...response } = emp.toJSON();
                         const { roles, ...responseAccount } = account;
                         formatResultSearch.push({

@@ -156,37 +156,39 @@ class SupplierService {
         });
     }
 
-    getProductsBySupplierID(supplierID) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const supplier = await Supplier.findByPk(supplierID, {
-                    include: [
-                        {
-                            model: Product,
-                            as: 'products',
-                            through: { attributes: [] }, // không lấy thông tin batch
-                        },
-                    ],
-                });
-                if (supplier) {
-                    resolve({
-                        statusHttp: 200,
-                        status: 'OK',
-                        message: 'Lấy danh sách sản phẩm thành công',
-                        products: supplier.products,
-                    });
-                } else {
-                    resolve({
-                        statusHttp: 404,
-                        status: 'ERR',
-                        message: 'Không tìm thấy sản phẩm nào',
-                    });
-                }
-            } catch (e) {
-                console.log(e);
-                reject(e);
-            }
-        });
+    async getProductsBySupplierID(supplierID, page = 1) {
+        try {
+            const limit = 5;
+            const offset = (page - 1) * limit;
+            const Batch = db.Batch;
+            const Product = db.Product;
+
+            const { count, rows } = await Product.findAndCountAll({
+                include: [
+                    {
+                        model: Batch,
+                        as: 'batches',
+                        where: { supplierID },
+                        attributes: [],
+                    },
+                ],
+                distinct: true,
+                limit,
+                offset,
+            });
+
+            return {
+                statusHttp: 200,
+                status: 'OK',
+                message: 'Lấy danh sách sản phẩm thành công',
+                products: rows,
+                page,
+                totalPages: Math.ceil(count / limit),
+            };
+        } catch (e) {
+            console.log(e);
+            reject(e);
+        }
     }
 }
 

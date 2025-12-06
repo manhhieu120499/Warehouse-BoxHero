@@ -386,7 +386,7 @@ class ProposalService {
                     warehouseID,
                     status,
                     page = 1,
-                    employeeIDCreate,
+                    employeeName: employeeIDCreate,
                     employeeIDApproval,
                     updatedAt,
                     createdAt,

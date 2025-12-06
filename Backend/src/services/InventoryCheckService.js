@@ -509,6 +509,29 @@ class InventoryCheckService {
                                 { where: { boxID: batchBox.box.boxID }, transaction },
                             );
 
+                            // Update Box Status
+                            const updatedBox = await Box.findOne({
+                                where: { boxID: batchBox.box.boxID },
+                                transaction,
+                            });
+
+                            if (updatedBox.remainingAcreage >= updatedBox.maxAcreage) {
+                                await Box.update(
+                                    { status: 'AVAILABLE' },
+                                    { where: { boxID: batchBox.box.boxID }, transaction },
+                                );
+                            } else if (updatedBox.remainingAcreage <= 0) {
+                                await Box.update(
+                                    { status: 'FULL' },
+                                    { where: { boxID: batchBox.box.boxID }, transaction },
+                                );
+                            } else {
+                                await Box.update(
+                                    { status: 'OCCUPIED' },
+                                    { where: { boxID: batchBox.box.boxID }, transaction },
+                                );
+                            }
+
                             // Create ProductQuantityLog
                             await ProductQuantityLog.create(
                                 {

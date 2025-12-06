@@ -114,7 +114,8 @@ class SupplierController {
     async getProductsBySupplierID(req, res) {
         try {
             const { supplierID } = req.params;
-            const { statusHttp, ...response } = await SupplierService.getProductsBySupplierID(supplierID);
+            const page = parseInt(req.query.page) || 1;
+            const { statusHttp, ...response } = await SupplierService.getProductsBySupplierID(supplierID, page);
             return res.status(statusHttp).json(response);
         } catch (e) {
             console.log(e);

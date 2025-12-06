@@ -78,9 +78,12 @@ class BatchService {
         });
     }
 
-    getBatchesWithoutLocation(warehouseID) {
+    getBatchesWithoutLocation(warehouseID, page = 1) {
         return new Promise(async (resolve, reject) => {
             try {
+                const limit = 5;
+                const offset = (page - 1) * limit;
+
                 // Kiểm tra warehouse có tồn tại không
                 if (warehouseID) {
                     const warehouseExist = await Warehouse.findOne({
@@ -99,8 +102,7 @@ class BatchService {
                 // Lấy danh sách các batch chưa có location (chưa có batch_box)
                 const whereCondition = warehouseID ? { warehouseID } : {};
 
-                const batchesWithoutLocation = await Batch.findAll({
-                    where: whereCondition,
+                const { count, rows: batchesWithoutLocation } = await Batch.findAndCountAll({
                     include: [
                         {
                             model: Product,
@@ -125,13 +127,20 @@ class BatchService {
                             ),
                         },
                     },
+                    limit: limit,
+                    offset: offset,
+                    order: [['createdAt', 'ASC']],
                 });
+
+                const totalPages = Math.ceil(count / limit);
 
                 resolve({
                     status: 'OK',
                     statusHttp: HTTP_OK,
                     message: 'Lấy danh sách các batch chưa có location thành công',
                     data: batchesWithoutLocation,
+                    totalPages,
+                    currentPage: parseInt(page),
                 });
             } catch (err) {
                 console.error(err);

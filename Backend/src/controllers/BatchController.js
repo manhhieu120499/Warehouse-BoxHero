@@ -13,8 +13,8 @@ class BatchController {
 
     async getBatchesWithoutLocation(req, res) {
         try {
-            const { warehouseID } = req.query;
-            const { statusHttp, ...response } = await BatchService.getBatchesWithoutLocation(warehouseID);
+            const { warehouseID, page } = req.query;
+            const { statusHttp, ...response } = await BatchService.getBatchesWithoutLocation(warehouseID, page);
             return res.status(statusHttp).json(response);
         } catch (err) {
             return res.status(err.statusHttp).json(err);
