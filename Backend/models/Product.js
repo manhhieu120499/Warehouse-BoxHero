@@ -36,7 +36,7 @@ module.exports = (sequelize, Sequelize) => {
                 defaultValue: 'AVAILABLE',
             },
             qrCode: {
-                type: Sequelize.STRING,
+                type: Sequelize.TEXT,
                 allowNull: false,
             },
             baseUnitProductID: {

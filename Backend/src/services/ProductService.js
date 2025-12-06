@@ -98,31 +98,33 @@ class ProductService {
                 );
 
                 if (listBatch) {
-                    const formatBatchResponse = listBatch.map((item) => {
-                        const { boxes, ...restBatch } = item.toJSON();
-                        const { unit, remainAmount, ...rest } = restBatch;
-                        const totalProductRemain =
-                            Number.parseInt(unit.conversionQuantity) * Number.parseInt(remainAmount);
-                        const locationBatch = boxes.map((boxItem) => {
-                            console.log(boxItem);
-                            const { boxID, boxName } = boxItem;
-                            const { floorName } = boxItem.floor;
-                            const { shelfName } = boxItem.floor.shelf;
-                            const { zoneName } = boxItem.floor.shelf.zone;
+                    const formatBatchResponse = listBatch
+                        .map((item) => {
+                            const { boxes, ...restBatch } = item.toJSON();
+                            const { unit, remainAmount, ...rest } = restBatch;
+                            const totalProductRemain =
+                                Number.parseInt(unit.conversionQuantity) * Number.parseInt(remainAmount);
+                            const locationBatch = boxes.map((boxItem) => {
+                                console.log(boxItem);
+                                const { boxID, boxName } = boxItem;
+                                const { floorName } = boxItem.floor;
+                                const { shelfName } = boxItem.floor.shelf;
+                                const { zoneName } = boxItem.floor.shelf.zone;
+                                return {
+                                    boxID,
+                                    boxName,
+                                    location: `${boxName} - ${floorName} - ${shelfName} - ${zoneName}`,
+                                };
+                            });
                             return {
-                                boxID,
-                                boxName,
-                                location: `${boxName} - ${floorName} - ${shelfName} - ${zoneName}`,
+                                ...rest,
+                                unitName: unit.unitName,
+                                remainAmount,
+                                totalProductRemain,
+                                locationBatch,
                             };
-                        });
-                        return {
-                            ...rest,
-                            unitName: unit.unitName,
-                            remainAmount,
-                            totalProductRemain,
-                            locationBatch,
-                        };
-                    });
+                        })
+                        .filter((item) => item.remainAmount > 0);
 
                     return resolve({
                         status: 'OK',
@@ -217,6 +219,11 @@ class ProductService {
                             model: Category,
                             attributes: ['categoryID', 'categoryName'],
                             as: 'category',
+                        },
+                        {
+                            model: BaseUnitProduct,
+                            attributes: ['baseUnitProductID', 'baseUnitName'],
+                            as: 'baseUnitProducts',
                         },
                     ],
                     offset: (page - 1) * LIMIT_PAGE,
