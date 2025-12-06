@@ -18,6 +18,7 @@ import Header from '../layouts/Header';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { Filter, Plus, X, ChevronRight, ChevronLeft, Calendar, Scan } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import ModalSelectProposal from '../components/ModalSelectProposal';
 import { fetchOrderPurchase, filterOrderPurchase } from '../service/order.service';
@@ -156,9 +157,18 @@ export default function CreateImport() {
                 </View>
             </View>
             <View style={styles.cardBody}>
-                <Text style={styles.infoText}>Ngày tạo: {formatDate(item.createdAt)}</Text>
-                <Text style={styles.infoText}>Người tạo: {item.employee?.employeeName}</Text>
-                <Text style={styles.infoText}>Loại phiếu: {item.type === 'NORMAL' ? 'Nhập mới' : 'Bổ sung'}</Text>
+                <View style={styles.infoRow}>
+                    <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                    <Text style={styles.infoText}>Ngày tạo: {formatDate(item.createdAt)}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="person-outline" size={16} color="#6b7280" />
+                    <Text style={styles.infoText}>Người tạo: {item.employee?.employeeName}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="document-text-outline" size={16} color="#6b7280" />
+                    <Text style={styles.infoText}>Loại phiếu: {item.type === 'NORMAL' ? 'Nhập mới' : 'Bổ sung'}</Text>
+                </View>
             </View>
             <TouchableOpacity style={styles.detailButton} onPress={() => handleViewDetail(item)}>
                 <Text style={styles.detailButtonText}>Xem chi tiết</Text>
@@ -603,7 +613,12 @@ const styles = StyleSheet.create({
     infoText: {
         fontSize: 14,
         color: '#4b5563',
-        marginBottom: 4,
+        marginLeft: 8,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
     },
     detailButton: {
         alignItems: 'center',

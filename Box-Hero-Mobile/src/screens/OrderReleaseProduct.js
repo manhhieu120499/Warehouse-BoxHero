@@ -16,6 +16,7 @@ import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Filter, Calendar, X, ChevronRight, ChevronLeft, Scan } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { fetchOrderReleaseById, filterOrderRelease } from '../service/order.service';
 import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -150,11 +151,22 @@ export default function OrderReleaseProduct() {
                     </View>
                 </View>
                 <View style={styles.cardBody}>
-                    <Text style={styles.infoText}>
-                        Ngày lập: {item.createdAt ? format(new Date(item.createdAt), 'yyyy-MM-dd') : 'N/A'}
-                    </Text>
-                    <Text style={styles.infoText}>Người tạo: {item.employee?.employeeName || item.employeeID}</Text>
-                    <Text style={styles.infoText}>Người nhận: {item.customers?.customerName || 'N/A'}</Text>
+                    <View style={styles.infoRow}>
+                        <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                        <Text style={styles.infoText}>
+                            Ngày lập: {item.createdAt ? format(new Date(item.createdAt), 'yyyy-MM-dd') : 'N/A'}
+                        </Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Ionicons name="person-outline" size={16} color="#6b7280" />
+                        <Text style={styles.infoText}>
+                            Người tạo: {item.employees?.employeeName || item.employeeID}
+                        </Text>
+                    </View>
+                    <View style={styles.infoRow}>
+                        <Ionicons name="person-circle-outline" size={16} color="#6b7280" />
+                        <Text style={styles.infoText}>Người nhận: {item.customers?.customerName || 'N/A'}</Text>
+                    </View>
                 </View>
                 <TouchableOpacity
                     style={styles.detailButton}
@@ -470,7 +482,12 @@ const styles = StyleSheet.create({
     infoText: {
         fontSize: 14,
         color: '#4b5563',
-        marginBottom: 4,
+        marginLeft: 8,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
     },
     detailButton: {
         alignItems: 'center',

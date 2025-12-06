@@ -15,6 +15,7 @@ import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Filter, Scan, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ModalSelectMissingOrder from '../components/ModalSelectMissingOrder';
@@ -167,9 +168,18 @@ export default function MissingImport() {
                 </View>
             </View>
             <View style={styles.cardBody}>
-                <Text style={styles.infoText}>Ngày tạo: {formatDate(item.createdAt)}</Text>
-                <Text style={styles.infoText}>Người tạo: {item.orderPurchase?.employee?.employeeName}</Text>
-                <Text style={styles.infoText}>Loại phiếu: Nhập bổ sung</Text>
+                <View style={styles.infoRow}>
+                    <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                    <Text style={styles.infoText}>Ngày tạo: {formatDate(item.createdAt)}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="person-outline" size={16} color="#6b7280" />
+                    <Text style={styles.infoText}>Người tạo: {item.orderPurchase?.employee?.employeeName}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="document-text-outline" size={16} color="#6b7280" />
+                    <Text style={styles.infoText}>Loại phiếu: Nhập bổ sung</Text>
+                </View>
             </View>
             <TouchableOpacity style={styles.detailButton} onPress={() => handleViewDetail(item)}>
                 <Text style={styles.detailButtonText}>Xem chi tiết</Text>
@@ -415,6 +425,12 @@ const styles = StyleSheet.create({
     infoText: {
         fontSize: 14,
         color: '#4B5563',
+        marginLeft: 8,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
     },
     detailButton: {
         alignItems: 'center',

@@ -16,6 +16,7 @@ import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Filter, Scan, Calendar, X, ChevronRight, ChevronLeft } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { getAllInventoryCheck, getFilterInventoryCheck } from '../service/inventoryCheck.service';
 import parseToken from '../utilities/parseToken';
 import { format } from 'date-fns';
@@ -168,16 +169,35 @@ export default function CheckPage() {
                 </View>
             </View>
             <View style={styles.cardBody}>
-                <Text style={styles.infoText}>Ngày tạo: {format(new Date(item.createdAt), 'dd/MM/yyyy')}</Text>
-                <Text style={styles.infoText}>Người tạo: {item.employee?.employeeName}</Text>
-                <Text style={styles.infoText}>
-                    Kết quả:{' '}
-                    <Text
-                        style={{ fontWeight: 'bold', color: item.checkStatus === 'BALANCED' ? '#10b981' : '#ef4444' }}
-                    >
-                        {formatStatusOrderPurchaseMissingInventoryCheck[item.checkStatus]}
+                <View style={styles.infoRow}>
+                    <Ionicons name="calendar-outline" size={16} color="#6b7280" />
+                    <Text style={styles.infoText}>Ngày tạo: {format(new Date(item.createdAt), 'dd/MM/yyyy')}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="person-outline" size={16} color="#6b7280" />
+                    <Text style={styles.infoText}>Người tạo: {item.employee?.employeeName}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="clipboard-outline" size={16} color="#6b7280" />
+                    <Text style={styles.infoText}>
+                        Kết quả:{' '}
+                        <Text
+                            style={{
+                                fontWeight: 'bold',
+                                color:
+                                    item.status === 'PENDING_CHECK'
+                                        ? '#3b82f6'
+                                        : item.checkStatus === 'BALANCED'
+                                          ? '#10b981'
+                                          : '#ef4444',
+                            }}
+                        >
+                            {item.status === 'PENDING_CHECK'
+                                ? 'Chưa có kết quả'
+                                : formatStatusOrderPurchaseMissingInventoryCheck[item.checkStatus]}
+                        </Text>
                     </Text>
-                </Text>
+                </View>
             </View>
             <TouchableOpacity
                 style={styles.detailButton}
@@ -522,7 +542,12 @@ const styles = StyleSheet.create({
     infoText: {
         fontSize: 14,
         color: '#4b5563',
-        marginBottom: 4,
+        marginLeft: 8,
+    },
+    infoRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
     },
     detailButton: {
         alignItems: 'center',
