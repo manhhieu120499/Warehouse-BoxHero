@@ -1,4 +1,5 @@
 import { Button, Modal, MyTable } from '../../../components';
+import { Pagination, QRCode } from 'antd';
 import classNames from 'classnames/bind';
 import styles from './BoxDetail.module.scss';
 import { useEffect, useState } from 'react';
@@ -6,7 +7,7 @@ import { getBoxDetails } from '../../../services/box.service';
 import parseToken from '../../../utils/parseToken';
 import { convertDateVN } from '@/common';
 import { getBatchesWithoutLocation } from '../../../services/batch.service';
-import { MapPinPen, MoveIcon } from 'lucide-react';
+import { MapPinPen, MoveIcon, QrCode } from 'lucide-react';
 import Tippy from '@tippyjs/react';
 import { authIsAdmin } from '../../../common';
 import { useSelector } from 'react-redux';
@@ -21,6 +22,9 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
     const [batchesWithoutLocation, setBatchesWithoutLocation] = useState([]);
     const [selectedBatches, setSelectedBatches] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const [selectedBatchQR, setSelectedBatchQR] = useState(null);
     const currentUser = useSelector((state) => state.AuthSlice.user);
 
     const handleSelectAllChange = () => {
@@ -70,16 +74,17 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
             const fetchBatchesWithoutLocation = async () => {
                 const warehouse = parseToken('warehouse');
                 const warehouseID = warehouse.warehouseID;
-                const res = await getBatchesWithoutLocation(warehouseID);
+                const res = await getBatchesWithoutLocation(warehouseID, currentPage);
                 console.log(res.data.data);
                 if (res) {
                     setBatchesWithoutLocation(res.data.data);
                     setBatches(res.data.data);
+                    setTotalPages(res.data.totalPages);
                 }
             };
             fetchBatchesWithoutLocation();
         }
-    }, [isOpen, boxID]);
+    }, [isOpen, boxID, currentPage]);
 
     const handleCLoseModel = () => {
         setBatchID('');
@@ -89,6 +94,7 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
         onClose();
         setSelectedBatches([]);
         setSelectAll(false);
+        setCurrentPage(1);
     };
 
     const handleSearch = () => {
@@ -143,44 +149,62 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
         handleCLoseModel();
     };
 
+    const onChangePage = (page) => {
+        setCurrentPage(page);
+    };
+
+    const handleShowQR = (batch) => {
+        setSelectedBatchQR(batch);
+    };
+
+    const handleCloseQR = () => {
+        setSelectedBatchQR(null);
+    };
+
     return (
         <Modal isOpenInfo={isOpen} onClose={handleCLoseModel} showButtonClose={false}>
             {boxID && (
                 <section className={cx('card')}>
                     <h2 className={cx('cardTitle')}>Thông tin chung</h2>
-                    <div className={cx('grid4')}>
-                        <div className={cx('field')}>
-                            <label>Vị trí</label>
-                            <input
-                                readOnly={true}
-                                value={
-                                    boxDetail?.boxName +
-                                    ' - ' +
-                                    boxDetail?.floor?.floorName +
-                                    ' - ' +
-                                    boxDetail?.floor?.shelf?.shelfName
-                                }
-                            />
+                    <div className={cx('infoWrapper')}>
+                        <div className={cx('grid3', 'infoFields')}>
+                            <div className={cx('field')}>
+                                <label>Vị trí</label>
+                                <input
+                                    readOnly={true}
+                                    value={
+                                        boxDetail?.boxName +
+                                        ' - ' +
+                                        boxDetail?.floor?.floorName +
+                                        ' - ' +
+                                        boxDetail?.floor?.shelf?.shelfName
+                                    }
+                                />
+                            </div>
+                            <div className={cx('field')}>
+                                <label>Chiều rộng</label>
+                                <input type="text" readOnly value={boxDetail?.width} />
+                            </div>
+                            <div className={cx('field')}>
+                                <label>Chiều dài</label>
+                                <input value={boxDetail?.length} readOnly />
+                            </div>
+                            <div className={cx('field')}>
+                                <label>Chiều cao</label>
+                                <input readOnly value={10} />
+                            </div>
+                            <div className={cx('field')}>
+                                <label>Tổng thể tích</label>
+                                <input readOnly value={boxDetail?.maxAcreage} />
+                            </div>
+                            <div className={cx('field')}>
+                                <label>Thể tích còn lại</label>
+                                <input readOnly value={boxDetail?.remainingAcreage} />
+                            </div>
                         </div>
-                        <div className={cx('field')}>
-                            <label>Chiều rộng</label>
-                            <input type="text" readOnly value={boxDetail?.width} />
-                        </div>
-                        <div className={cx('field')}>
-                            <label>Chiều dài</label>
-                            <input value={boxDetail?.length} readOnly />
-                        </div>
-                        <div className={cx('field')}>
-                            <label>Chiều cao</label>
-                            <input readOnly value={10} />
-                        </div>
-                        <div className={cx('field')}>
-                            <label>Tổng thể tích</label>
-                            <input readOnly value={boxDetail?.maxAcreage} />
-                        </div>
-                        <div className={cx('field')}>
-                            <label>Thể tích còn lại</label>
-                            <input readOnly value={boxDetail?.remainingAcreage} />
+                        <div className={cx('qrCodeWrapper')}>
+                            <QRCode value={boxID || 'N/A'} size={150} />
+                            <span className={cx('qrNote')}>{boxID}</span>
                         </div>
                     </div>
                 </section>
@@ -255,6 +279,7 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                                 )}
                                 <th className={cx('note')}>Ngày sản xuất</th>
                                 <th className={cx('note')}>Ngày hết hạn</th>
+                                <th className={cx('action')}>Mã QR</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -293,12 +318,44 @@ const BoxDetail = ({ isOpen, onClose, boxID, setShowUpdateLocation, setShowChang
                                         )}
                                         <td className={cx('note')}>{convertDateVN(batch.manufactureDate)}</td>
                                         <td className={cx('note')}>{convertDateVN(batch.expiryDate)}</td>
+                                        <td className={cx('action')}>
+                                            <button className={cx('iconBtn')} onClick={() => handleShowQR(batch)}>
+                                                <QrCode size={18} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                         </tbody>
                     </table>
                 </div>
+                {!boxID && (
+                    <div className={cx('pagination')}>
+                        <Pagination
+                            current={currentPage}
+                            total={totalPages * 5}
+                            pageSize={5}
+                            onChange={onChangePage}
+                            showSizeChanger={false}
+                        />
+                    </div>
+                )}
             </section>
+            {selectedBatchQR && <QRModal isOpen={!!selectedBatchQR} onClose={handleCloseQR} batch={selectedBatchQR} />}
+        </Modal>
+    );
+};
+
+const QRModal = ({ isOpen, onClose, batch }) => {
+    return (
+        <Modal isOpenInfo={isOpen} onClose={onClose} showButtonClose={false}>
+            <div className={cx('qrCodeWrapper')}>
+                <h3 className={cx('cardTitle')} style={{ marginBottom: 16 }}>
+                    Mã QR Lô hàng
+                </h3>
+                <QRCode value={batch?.batchID || 'N/A'} size={200} />
+                <span className={cx('qrNote')}>{batch?.batchID}</span>
+                <div style={{ marginTop: 8, color: '#666' }}>{batch?.product?.productName}</div>
+            </div>
         </Modal>
     );
 };

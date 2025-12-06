@@ -492,10 +492,8 @@ const AuthPage = () => {
     return (
         <div className={cx('wrapper-auth')}>
             {action.add && (
-                <Modal
+                <ModalEmployee
                     isOpenInfo={true}
-                    showButtonClose={false}
-                    onClose={() => {}}
                     arrButton={[
                         (index) => (
                             <Button key={index} primary onClick={handleAddEmployee}>
@@ -508,22 +506,17 @@ const AuthPage = () => {
                             </Button>
                         ),
                     ]}
-                >
-                    <ModalEmployee
-                        className={cx('wrapper-model-employee')}
-                        data={empData}
-                        isAdmin={true}
-                        onClose={() => handleCloseModal('add', false)}
-                        setData={setEmpData}
-                        action={'add'}
-                    />
-                </Modal>
+                    className={cx('wrapper-model-employee')}
+                    data={empData}
+                    isAdmin={true}
+                    onClose={() => handleCloseModal('add', false)}
+                    setData={setEmpData}
+                    action={'add'}
+                />
             )}
             {action.update && employeeSelected.empStatus != 'Nghỉ việc' ? (
-                <Modal
+                <ModalEmployee
                     isOpenInfo={true}
-                    showButtonClose={false}
-                    onClose={() => {}}
                     arrButton={[
                         (index) => (
                             <Button key={index} primary onClick={handleUpdateEmployee}>
@@ -531,16 +524,13 @@ const AuthPage = () => {
                             </Button>
                         ),
                     ]}
-                >
-                    <ModalEmployee
-                        className={cx('wrapper-model-employee')}
-                        isAdmin={true}
-                        data={empData}
-                        onClose={() => handleCloseModal('update', false)}
-                        setData={setEmpData}
-                        action={'update'}
-                    />
-                </Modal>
+                    className={cx('wrapper-model-employee')}
+                    isAdmin={true}
+                    data={empData}
+                    onClose={() => handleCloseModal('update', false)}
+                    setData={setEmpData}
+                    action={'update'}
+                />
             ) : (
                 <Modal showButtonClose={false} isOpenInfo={action.update} onClose={() => {}}>
                     <ModalReadEmployee

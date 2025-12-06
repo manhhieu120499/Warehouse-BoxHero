@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Trash2 } from 'lucide-react';
 import classNames from 'classnames/bind';
 import styles from './ModalCreateApproveRelease.module.scss';
 import { Modal, Button, MyTable } from '../../../components';
@@ -156,6 +157,16 @@ const ModalCreateApproveRelease = ({
         }
     };
 
+    const handleBlurQuantity = (e, productName) => {
+        const val = Number(e.target.value);
+        if (!Number.isInteger(val) || val <= 0) {
+            toast.error(`Số lượng xuất của sản phẩm ${productName || ''} phải là số nguyên dương`, styleMessage);
+            setTimeout(() => {
+                e.target.focus();
+            }, 0);
+        }
+    };
+
     const handleShowProposalDetail = (items) => {
         if (items) {
             return items.map((it, idx) => {
@@ -200,6 +211,7 @@ const ModalCreateApproveRelease = ({
                             <input
                                 value={it.amountRequiredExport}
                                 onChange={(e) => updateCell(idx, 'amountRequiredExport', e.target.value)}
+                                onBlur={(e) => handleBlurQuantity(e, typeDetail ? it.product?.productName : it.name)}
                                 readOnly={typeDetail}
                                 min={1}
                                 type="number"
@@ -217,7 +229,7 @@ const ModalCreateApproveRelease = ({
                         <td>
                             {!typeDetail && (
                                 <button className={cx('iconBtn')} onClick={() => removeRow(idx)} title="Xóa dòng">
-                                    ✕
+                                    <Trash2 size={16} />
                                 </button>
                             )}
                         </td>
@@ -425,8 +437,8 @@ const ModalCreateApproveRelease = ({
                                     readOnly
                                 />
                             </div>
-                            <div className={cx('container-select')}>
-                                <label className={cx('label-select')}>Chọn khách hàng</label>
+                            <div className={cx('field')}>
+                                <label>Chọn khách hàng</label>
                                 <Select
                                     style={{ width: '100%', height: '35px', borderRadius: '10px' }}
                                     showSearch
@@ -482,18 +494,6 @@ const ModalCreateApproveRelease = ({
                     <section className={cx('card')}>
                         <div className={cx('cardHeader')}>
                             <h2 className={cx('cardTitle')}>Danh sách hàng hóa đề xuất xuất</h2>
-                            <div className={cx('actions')}>
-                                {!typeDetail && (
-                                    <>
-                                        {/* <Button primary small borderRadiusSmall onClick={() => {}}>
-                                            <span>Gợi ý sản phẩm xuất kho</span>
-                                        </Button> */}
-                                        {/* <Button primary small borderRadiusSmall onClick={() => {}}>
-                                            <span>Quét mã</span>
-                                        </Button> */}
-                                    </>
-                                )}
-                            </div>
                         </div>
 
                         <div className={cx('search')}>

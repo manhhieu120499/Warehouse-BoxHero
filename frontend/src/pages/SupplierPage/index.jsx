@@ -49,44 +49,54 @@ const SupplierPage = () => {
     const dispatch = useDispatch();
 
     // product state
-    const productPageSize = 10;
+    const productPageSize = 5;
     const [productPage, setProductPage] = useState(1);
     const [showProductTable, setShowProductTable] = useState(false);
     const [productData, setProductData] = useState([]);
+    const [productTotalPages, setProductTotalPages] = useState(0);
 
-    const onChangeProductTable = (newPage, pageSize) => {
+    const onChangeProductTable = (newPage) => {
         setProductPage(newPage);
+        openProductTableBySupplier(supplierId, newPage);
     };
 
     // fetch product by supplier id
-    const openProductTableBySupplier = async (supplierId) => {
+    const openProductTableBySupplier = async (currentSupplierId, page = 1) => {
         try {
             const tokenUser = parseToken('tokenUser');
             // call api
-            const response = await request.get(`/api/supplier/provided-products/${supplierId}`, {
+            const response = await request.get(`/api/supplier/provided-products/${currentSupplierId}`, {
+                params: {
+                    page: page,
+                },
                 headers: {
                     token: `Beare ${tokenUser.accessToken}`,
                     employeeid: tokenUser.employeeID,
                 },
             });
 
-            const formatProductsData = response.data.products.map((item) => {
-                return {
-                    key: item.productID,
-                    productID: item.productID,
-                    productName: item.productName,
-                    productDes: item.description,
-                    statusProduct: formatStatusProduct[item.status],
-                    categoryID: item.categoryID,
-                    price: new Intl.NumberFormat('vi-VN').format(Number(item.price)),
-                };
-            });
+            if (response.data.status === 'OK') {
+                const formatProductsData = response.data.products.map((item) => {
+                    return {
+                        key: item.productID,
+                        productID: item.productID,
+                        productName: item.productName,
+                        productDes: item.description,
+                        statusProduct: formatStatusProduct[item.status],
+                        categoryID: item.categoryID,
+                        price: new Intl.NumberFormat('vi-VN').format(Number(item.price)),
+                    };
+                });
 
-            setProductData(formatProductsData);
-            setShowProductTable(true);
+                setProductData(formatProductsData);
+                setProductTotalPages(response.data.totalPages);
+                setShowProductTable(true);
+            }
         } catch (err) {
             toast.error(
-                Array.isArray(err.response.data.message) ? err.response.data.message[0] : err.response.data.message,
+                Array.isArray(err.response?.data?.message)
+                    ? err.response.data.message[0]
+                    : err.response?.data?.message || 'Có lỗi xảy ra',
                 styleMessage,
             );
             console.log(err);
@@ -210,7 +220,8 @@ const SupplierPage = () => {
                                 className={cxGlobal('action-table-icon')}
                                 onClick={() => {
                                     setSupplierId(record.supplierId);
-                                    openProductTableBySupplier(record.supplierId);
+                                    setProductPage(1); // Reset page to 1
+                                    openProductTableBySupplier(record.supplierId, 1);
                                 }}
                             >
                                 <CakeSlice size={20} />
@@ -700,6 +711,7 @@ const SupplierPage = () => {
                         onChangePage={onChangeProductTable}
                         pagination
                         currentPage={productPage}
+                        total={productTotalPages * productPageSize}
                     />
                 </div>
             </Modal>

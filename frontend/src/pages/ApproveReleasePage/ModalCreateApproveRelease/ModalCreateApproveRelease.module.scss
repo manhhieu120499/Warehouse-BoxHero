@@ -133,7 +133,7 @@
 
         &:focus {
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            // box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
     }
 
@@ -210,6 +210,7 @@
         border-radius: 8px;
         padding: 6px 8px;
         outline: none;
+        background-color: white;
 
         &:focus {
             border-color: #3b82f6;

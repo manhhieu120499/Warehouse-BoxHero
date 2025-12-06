@@ -7,6 +7,7 @@ import { getAllOrderReleaseProposalCanApply, searchOrderReleaseProposal } from '
 import { convertDateVN } from '../../../common';
 import useDebounce from '../../../hooks/useDebounce';
 import CreateExportProductDialog from '../CreateExportProductDialog';
+import { Pagination } from 'antd';
 
 const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle);
@@ -34,6 +35,7 @@ const ModalChooseProposalToExport = ({ isOpen, onClose, fetchData }) => {
     const [proposalIDFilter, setProposalIDFilter] = useState('');
     const [listData, setListData] = useState([]);
     const [proposalSelected, setProposalSelected] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const debounceProposalIDFilter = useDebounce(proposalIDFilter, 500);
 
@@ -53,7 +55,6 @@ const ModalChooseProposalToExport = ({ isOpen, onClose, fetchData }) => {
         } else {
             const searchDate = async () => {
                 const res = await searchOrderReleaseProposal(debounceProposalIDFilter.trim(), { status: 'COMPLETED' });
-
                 if (res.data.status === 'OK') {
                     setListData(res.data.data || []);
                 }
@@ -62,6 +63,10 @@ const ModalChooseProposalToExport = ({ isOpen, onClose, fetchData }) => {
             searchDate();
         }
     }, [debounceProposalIDFilter]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [listData]);
 
     const handleRefreshData = () => {
         //handleFetchOrderReleaseProposal();
@@ -105,9 +110,9 @@ const ModalChooseProposalToExport = ({ isOpen, onClose, fetchData }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {listData?.map((data, index) => (
+                            {listData?.slice((currentPage - 1) * 5, currentPage * 5).map((data, index) => (
                                 <tr key={index}>
-                                    <td>{index + 1}</td>
+                                    <td>{(currentPage - 1) * 5 + index + 1}</td>
                                     <td>
                                         <p>{data.orderReleaseProposalID}</p>
                                     </td>
@@ -129,6 +134,18 @@ const ModalChooseProposalToExport = ({ isOpen, onClose, fetchData }) => {
                         </tbody>
                     </table>
                 </div>
+                {listData.length > 5 && (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '15px' }}>
+                        <Pagination
+                            defaultCurrent={1}
+                            current={currentPage}
+                            total={listData.length}
+                            pageSize={5}
+                            onChange={(page) => setCurrentPage(page)}
+                            showSizeChanger={false}
+                        />
+                    </div>
+                )}
             </div>
 
             {proposalSelected && (

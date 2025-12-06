@@ -3,7 +3,7 @@ import { styleMessage } from '../constants';
 import request from '../utils/httpRequest';
 import parseToken from '../utils/parseToken';
 
-export const getBatchesWithoutLocation = async (warehouseID) => {
+export const getBatchesWithoutLocation = async (warehouseID, page) => {
     try {
         const token = parseToken('tokenUser');
         console.log(token);
@@ -16,6 +16,7 @@ export const getBatchesWithoutLocation = async (warehouseID) => {
             },
             params: {
                 warehouseID: warehouseID,
+                page: page,
             },
         });
         return res;

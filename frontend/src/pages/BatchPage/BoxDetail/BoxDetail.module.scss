@@ -186,6 +186,12 @@
     gap: 16px;
 }
 
+.grid3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
 .field {
     display: flex;
     flex-direction: column;
@@ -266,4 +272,37 @@
 .form-actions {
     display: flex;
     justify-content: flex-end;
+}
+
+.pagination {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.infoWrapper {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.infoFields {
+    flex: 1;
+}
+
+.qrCodeWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+}
+
+.qrNote {
+    margin-top: 8px;
+    font-weight: 600;
+    font-size: 1.4rem;
+    color: #374151;
 }
