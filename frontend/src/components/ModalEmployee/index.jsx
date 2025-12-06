@@ -50,6 +50,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
     //const [listRoleUser, setListRoleUser] = useState([]);
     const listRoleUser = data.empRole || [];
     const currentUser = useSelector((state) => state.AuthSlice.user);
+    const warehouse = useSelector((state) => state.WareHouseSlice.warehouse);
 
     const imageRef = useRef();
     const handleUploadImage = () => {
@@ -73,7 +74,7 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
 
     const handleCreateEmployeeId = useCallback(() => {
         const salt = md5(Date.now()).slice(-5);
-        setData((prev) => ({ ...prev, empId: `NV${salt}` }));
+        setData((prev) => ({ ...prev, empId: `EP${salt}` }));
         // return empId
     }, []);
 
@@ -89,25 +90,8 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
 
     useEffect(() => {
         //fetch all warehouse
-        const fetchWarehouseList = async () => {
-            const token = JSON.parse(localStorage.getItem('tokenUser'));
-
-            try {
-                const response = await request.get('/api/warehouse/list', {
-                    headers: {
-                        token: `Beare ${token.accessToken}`,
-                        employeeid: currentUser.empId,
-                    },
-                });
-                const formatWarehouseId = response.data.warehouses.map((ware) => ware.warehouseID);
-                setListWarehouseId(formatWarehouseId);
-            } catch (err) {
-                setListWarehouseId([]);
-            }
-        };
-
-        fetchWarehouseList();
-    }, []);
+        setData((prev) => ({ ...prev, warehouseID: warehouse.warehouseID }));
+    }, [warehouse]);
 
     const handleAddNewRole = (e) => {
         const checkRole = listRoleUser.find((item) => item.roleName == mapperRole[e.target.value].roleName);
@@ -279,24 +263,14 @@ const ModalEmployee = ({ isAdmin = false, data, children, onClose, setData, prof
                             readOnly={isAdmin ? false : true}
                         />
 
-                        <div className={cx('form-group')}>
-                            <label htmlFor="warehouseId">Mã kho</label>
-                            <select
-                                id="warehouseId"
-                                defaultValue={data.warehouseId}
-                                onChange={(e) => onChangeInput('warehouseId', e.target.value)}
-                                disabled={!isAdmin}
-                            >
-                                <option value={''} disabled selected={data.warehouseId === ''}>
-                                    -- Chọn kho --
-                                </option>
-                                {listWarehouseId.map((item, index) => (
-                                    <option key={index} value={item} selected={data.warehouseId === item}>
-                                        {item}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        <FormGroup
+                            labelTitle={'Mã kho'}
+                            htmlForLabel={'warehouseID'}
+                            typeInput={'text'}
+                            valueInput={`${warehouse.warehouseID} - ${warehouse.warehouseName}`}
+                            idInput={'warehouseID'}
+                            readOnly
+                        />
                     </div>
                     <div className={cx('row')}>
                         <FormGroup

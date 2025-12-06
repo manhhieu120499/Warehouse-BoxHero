@@ -19,6 +19,12 @@
     th.productName {
         width: 150px;
     }
+    th.productAmount {
+        width: 150px;
+        text-align: right;
+        margin-right: 10px;
+    }
+
     th.unit {
         width: 140px;
     }
@@ -30,6 +36,12 @@
         background: #f1f5f9;
         font-weight: 600;
         color: #475569;
+    }
+
+    .productAmount {
+        width: 150px;
+        text-align: right;
+        margin-right: 10px;
     }
 
     .num {

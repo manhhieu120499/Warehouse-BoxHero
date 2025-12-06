@@ -7,7 +7,8 @@ import { generateCode } from '../../../utils/generate';
 import { getProductById, getProductCanExportById } from '../../../services/product.service';
 import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';
-import { searchCustomer } from '../../../services/customer.service';
+import { getAllCustomer } from '../../../services/customer.service';
+import { Select } from 'antd';
 import { createOrderReleaseProposal, updateStatusOrderReleaseProposal } from '../../../services/proposal.service';
 import globalStyles from '@/components/GlobalStyle/GlobalStyle.module.scss';
 import { authIsAdmin } from '../../../common';
@@ -17,7 +18,7 @@ const cx = classNames.bind(styles);
 const cxGlb = classNames.bind(globalStyles);
 
 const currency = (n) => (isNaN(n) ? '0' : new Intl.NumberFormat('vi-VN').format(Number(n)));
-const emptyItem = () => ({ sku: '', name: '', note: '' });
+const emptyItem = () => ({ sku: '', name: '', qty: 1, note: '', baseUnitName: '' });
 
 const ModalCreateApproveRelease = ({
     isOpen,
@@ -38,9 +39,33 @@ const ModalCreateApproveRelease = ({
 
     const [unitList, setUnitList] = useState([]);
     const totals = useMemo(() => {
-        if (productListExported.length === 0) return { unique: 0, totalQty: 0 };
-        return { unique: 0, totalQty: 0 };
-    }, [productListExported]);
+        if (productListExported.length === 0 && proposalListItem.length === 0) return { unique: 0, totalQty: 0 };
+        if (productListExported.length > 0) {
+            return { unique: productListExported.length, totalQty: productListExported.reduce((a, b) => a + b.qty, 0) };
+        }
+        return {
+            unique: proposalListItem.length,
+            totalQty: proposalListItem.reduce((a, b) => a + b.amountRequiredExport, 0),
+        };
+    }, [productListExported, proposalListItem]);
+
+    const [customerOptions, setCustomerOptions] = useState([]);
+
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            const res = await getAllCustomer();
+            if (Array.isArray(res)) {
+                setCustomerOptions(
+                    res.map((c) => ({
+                        value: c.customerID,
+                        label: `${c.customerID} - ${c.customerName}`,
+                        customerName: c.customerName,
+                    })),
+                );
+            }
+        };
+        fetchCustomers();
+    }, []);
 
     const [form, setForm] = useState({
         receiptCode: '',
@@ -215,6 +240,13 @@ const ModalCreateApproveRelease = ({
         if (productListExported.length === 0) {
             toast.error('Vui lòng thêm sản phẩm vào danh sách đề xuất xuất kho', styleMessage);
             return;
+        } else {
+            productListExported.forEach((it) => {
+                if (!it.qty) {
+                    toast.error(`Vui lòng nhập số lượng xuất của sản phẩm ${it.name}`, styleMessage);
+                    return;
+                }
+            });
         }
 
         // Validate unit
@@ -280,24 +312,6 @@ const ModalCreateApproveRelease = ({
                 refetchData();
             }
         } catch (err) {
-            return;
-        }
-    };
-
-    const handleSearchCustomer = async (customerID) => {
-        if (!customerID) return;
-        try {
-            const res = await searchCustomer(customerID);
-            if (!res) {
-                toast.error('Không tìm thấy khách hàng', styleMessage);
-                return;
-            }
-            setForm((prev) => ({
-                ...prev,
-                customerName: res.customerName,
-            }));
-        } catch (err) {
-            toast.error(err.message, styleMessage);
             return;
         }
     };
@@ -411,18 +425,35 @@ const ModalCreateApproveRelease = ({
                                     readOnly
                                 />
                             </div>
-                            <div className={cx('field')}>
-                                <label>Mã khách hàng</label>
-                                <input
-                                    className={cx(typeDetail ? 'readOnly' : '')}
-                                    value={typeDetail ? initialData?.customer?.customerID || '' : form.customerID || ''}
-                                    readOnly={typeDetail}
-                                    placeholder="Nhập mã khách hàng"
-                                    onChange={(e) => setForm((prev) => ({ ...prev, customerID: e.target.value }))}
-                                    onBlur={() => handleSearchCustomer(form.customerID)}
+                            <div className={cx('container-select')}>
+                                <label className={cx('label-select')}>Chọn khách hàng</label>
+                                <Select
+                                    style={{ width: '100%', height: '35px', borderRadius: '10px' }}
+                                    showSearch
+                                    className={cx(typeDetail ? 'readOnly' : '', 'custom-select')}
+                                    popupClassName={cx('custom-dropdown')}
+                                    value={
+                                        typeDetail
+                                            ? initialData?.customer?.customerID || ''
+                                            : form.customerID || undefined
+                                    }
+                                    disabled={typeDetail}
+                                    placeholder="Nhập hoặc chọn mã khách hàng"
+                                    optionFilterProp="children"
+                                    onChange={(value, option) => {
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            customerID: value,
+                                            customerName: option.customerName,
+                                        }));
+                                    }}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                    options={customerOptions}
                                 />
                             </div>
-                            <div className={cx('field')}>
+                            {/* <div className={cx('field')}>
                                 <label>Tên khách hàng</label>
                                 <input
                                     className={cxGlb('readOnly')}
@@ -432,7 +463,7 @@ const ModalCreateApproveRelease = ({
                                     readOnly={typeDetail}
                                     placeholder="Tên khách hàng"
                                 />
-                            </div>
+                            </div> */}
                         </div>
                         <div className={cx('field', 'colSpan4')}>
                             <label>Ghi chú</label>
@@ -457,9 +488,9 @@ const ModalCreateApproveRelease = ({
                                         {/* <Button primary small borderRadiusSmall onClick={() => {}}>
                                             <span>Gợi ý sản phẩm xuất kho</span>
                                         </Button> */}
-                                        <Button primary small borderRadiusSmall onClick={() => {}}>
+                                        {/* <Button primary small borderRadiusSmall onClick={() => {}}>
                                             <span>Quét mã</span>
-                                        </Button>
+                                        </Button> */}
                                     </>
                                 )}
                             </div>

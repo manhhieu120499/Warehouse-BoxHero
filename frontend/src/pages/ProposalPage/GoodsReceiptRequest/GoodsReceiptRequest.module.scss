@@ -173,10 +173,13 @@
         width: 200px;
     }
     th.num {
-        width: 150px;
+        width: 100px;
     }
     th.note {
         width: 280px;
+    }
+    th.qr {
+        width: 150px;
     }
 
     th {
@@ -245,13 +248,21 @@
     border-top: 1px solid #e5e7eb;
     font-size: 0.95rem;
     color: #6b7280;
+    // font-size: 14px;
+    // text-align: center;
 }
 
 .search {
     height: 40px;
     display: flex;
     align-items: center;
-    column-gap: 5px;
+    justify-content: space-between;
+
+    .searchLeft {
+        display: flex;
+        align-items: center;
+        column-gap: 5px;
+    }
 
     .input {
         width: 250px;
@@ -277,5 +288,78 @@
 
     .icon {
         cursor: pointer;
+    }
+}
+
+.batch-qrCode {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+
+    & > span {
+        font-size: 1.3rem;
+    }
+}
+
+.print-qrcode {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 5px;
+    border: 1px solid #d9d9d9;
+}
+
+.layout-qrCode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 240px;
+    height: 240px;
+    border-radius: 5px;
+    border: 1px solid #d9d9d9;
+    margin: 10px auto;
+
+    & > p {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    & > img {
+        width: 160px;
+        height: 160px;
+    }
+}
+
+.layout-multiple-qrCode {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 20px;
+    width: 100%;
+}
+
+.qr-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 8px;
+
+    img {
+        width: 150px;
+        height: 150px;
+        object-fit: contain;
+    }
+
+    p {
+        margin-top: 5px;
+        font-weight: bold;
+        font-size: 14px;
+        text-align: center;
     }
 }

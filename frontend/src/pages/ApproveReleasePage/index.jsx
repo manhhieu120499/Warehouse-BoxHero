@@ -162,6 +162,7 @@ const ApproveReleasePage = () => {
     const handleOpenDetailOrderReleaseProposal = async (orderReleaseProposalID) => {
         try {
             const res = await getOrderReleaseProposal(orderReleaseProposalID);
+            console.log(res);
             setProposalDetail(res);
         } catch (err) {
             console.log(err);
@@ -204,20 +205,24 @@ const ApproveReleasePage = () => {
             </div>
 
             {/** create approve proposal */}
-            <ModalCreateApproveRelease
-                isOpen={isCreate}
-                onClose={() => setIsCreate(false)}
-                refetchData={() => fetchAllOrderReleaseProposal(page)}
-            />
+            {isCreate && (
+                <ModalCreateApproveRelease
+                    isOpen={isCreate}
+                    onClose={() => setIsCreate(false)}
+                    refetchData={() => fetchAllOrderReleaseProposal(page)}
+                />
+            )}
 
             {/** approve proposal */}
-            <ModalCreateApproveRelease
-                typeDetail={true}
-                isOpen={isProposalSelected}
-                initialData={proposalDetail}
-                onClose={() => setIsProposalSelected(false)}
-                refetchData={() => fetchAllOrderReleaseProposal(page)}
-            />
+            {isProposalSelected && (
+                <ModalCreateApproveRelease
+                    typeDetail={true}
+                    isOpen={isProposalSelected}
+                    initialData={proposalDetail}
+                    onClose={() => setIsProposalSelected(false)}
+                    refetchData={() => fetchAllOrderReleaseProposal(page)}
+                />
+            )}
         </div>
     );
 };

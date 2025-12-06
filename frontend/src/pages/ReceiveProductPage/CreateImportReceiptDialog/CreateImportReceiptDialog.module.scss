@@ -171,10 +171,10 @@
         padding: 6px 8px;
         outline: none;
 
-        &:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
-        }
+        // &:focus {
+        //     border-color: #3b82f6;
+        //     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+        // }
     }
 
     .iconBtn {
@@ -225,7 +225,7 @@
     }
     th.sku_sup,
     td.sku_sup {
-        width: 150px;
+        width: 250px;
     }
 }
 
@@ -352,5 +352,36 @@
         min-width: 120px;
         max-width: 140px;
         left: 120px;
+    }
+}
+
+.custom-select {
+    :global {
+        .ant-select-selector {
+            font-size: 1.2rem !important;
+            display: flex;
+            align-items: center;
+            border-radius: 10px !important;
+        }
+
+        .ant-select-selection-item,
+        .ant-select-selection-placeholder {
+            font-size: 1.2rem !important;
+        }
+    }
+
+    &:global(.ant-select-focused) {
+        :global(.ant-select-selector) {
+            box-shadow: none !important;
+            border-color: #cbd5e1 !important;
+        }
+    }
+}
+
+.custom-dropdown {
+    :global {
+        .ant-select-item-option-content {
+            font-size: 1.2rem !important;
+        }
     }
 }

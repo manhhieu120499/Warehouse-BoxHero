@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { Select } from 'antd';
 import classNames from 'classnames/bind';
 import styles from './CreateImportReceiptDialog.module.scss';
 import { useSelector } from 'react-redux';
 import { Modal, Button } from '../../../components';
 import { generateCode } from '../../../utils/generate';
-import { findSupplier } from '../../../services/supplier.service';
+import { findSupplier, getAllSupllier } from '../../../services/supplier.service';
 import toast from 'react-hot-toast';
 import { styleMessage } from '../../../constants';
 import { saveReceipt, validatePayloadCreateReceipt } from '../../../services/order.service';
@@ -43,26 +44,41 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
         proposalID: proposalItem?.proposalID || '',
         note: proposalItem?.note || '',
     });
+    const [suppliers, setSuppliers] = useState([]);
     const [showPopupConfirmSaveMissing, setShowPopConfirmSaveMissing] = useState(false);
+
+    useEffect(() => {
+        const fetchSuppliers = async () => {
+            try {
+                const res = await getAllSupllier();
+                if (res) {
+                    setSuppliers(res);
+                }
+            } catch (err) {
+                console.log(err);
+            }
+        };
+        fetchSuppliers();
+    }, []);
 
     const updateCellData = (idx, item) => {
         const updateList = productListImport.map((it, index) => (index == idx ? item : it));
         setProductListImport(updateList);
     };
 
-    const handleFindSupplier = async (supplierID, item, idx) => {
-        if (!supplierID) return;
-        try {
-            const res = await findSupplier(supplierID);
-            if (res) updateCellData(idx, { ...item, supplierName: res.supplierName });
-            else {
-                toast.error('Nhà cung cấp không tồn tại', styleMessage);
-                return;
-            }
-        } catch (err) {
-            console.log(err);
-        }
-    };
+    // const handleFindSupplier = async (supplierID, item, idx) => {
+    //     if (!supplierID) return;
+    //     try {
+    //         const res = await findSupplier(supplierID);
+    //         if (res) updateCellData(idx, { ...item, supplierName: res.supplierName });
+    //         else {
+    //             toast.error('Nhà cung cấp không tồn tại', styleMessage);
+    //             return;
+    //         }
+    //     } catch (err) {
+    //         console.log(err);
+    //     }
+    // };
 
     const checkRealAmount = (value, it, idx) => {
         if (value === '') {
@@ -187,6 +203,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
         if (!proposalItem) return;
         const formatProductListImport = proposalItem.proposalDetails.map((it) => {
             const batchProduct = emptyItem();
+            batchProduct.batchID = it.batchID || '';
             batchProduct.productID = it.productID;
             batchProduct.productName = it.product.productName;
             batchProduct.requestAmount = it.quantity;
@@ -196,6 +213,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                 unitID: it.unit.unitID,
                 unitName: it.unit.unitName,
             };
+            batchProduct.batchID = it.batchID || '';
             return batchProduct;
         });
         setProductListImport(formatProductListImport);
@@ -330,8 +348,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                             <th className={cx('lot')}>Mã lô</th>
                                             <th className={cx('date')}>Ngày sản xuất</th>
                                             <th className={cx('date')}>Hạn sử dụng</th>
-                                            <th className={cx('sku_sup')}>Mã nhà cung cấp</th>
-                                            <th className={cx('name_sup')}>Tên nhà cung cấp</th>
+                                            <th className={cx('sku_sup')}>Nhà cung cấp</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -392,15 +409,7 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                                         />
                                                     </td>
                                                     <td className={cx('lot')}>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã lô"
-                                                            value={it.batchID ?? ''}
-                                                            onChange={(e) => {
-                                                                it.batchID = e.target.value;
-                                                                updateCellData(idx, it);
-                                                            }}
-                                                        />
+                                                        <p>{it.batchID ?? ''}</p>
                                                     </td>
                                                     <td className={cx('date')}>
                                                         <input
@@ -427,19 +436,36 @@ const CreateImportReceiptDialog = ({ proposalItem, isOpen, onClose, handleFetchP
                                                         />
                                                     </td>
                                                     <td className={cx('sku_sup')}>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nhập mã nhà cung cấp"
-                                                            value={it.supplierID ?? ''}
-                                                            onChange={(e) => {
-                                                                it.supplierID = e.target.value;
+                                                        <Select
+                                                            showSearch
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '35px',
+                                                                borderRadius: '10px',
+                                                            }}
+                                                            placeholder="Chọn nhà cung cấp"
+                                                            optionFilterProp="label"
+                                                            filterSort={(optionA, optionB) =>
+                                                                (optionA?.label ?? '')
+                                                                    .toLowerCase()
+                                                                    .localeCompare((optionB?.label ?? '').toLowerCase())
+                                                            }
+                                                            value={it.supplierID || null}
+                                                            onChange={(value) => {
+                                                                const selected = suppliers.find(
+                                                                    (s) => s.supplierID === value,
+                                                                );
+                                                                it.supplierID = value;
+                                                                it.supplierName = selected ? selected.supplierName : '';
                                                                 updateCellData(idx, it);
                                                             }}
-                                                            onBlur={() => handleFindSupplier(it.supplierID, it, idx)}
+                                                            options={suppliers.map((s) => ({
+                                                                value: s.supplierID,
+                                                                label: `${s.supplierName} - ${s.supplierID}`,
+                                                            }))}
+                                                            className={cx('custom-select')}
+                                                            popupClassName={cx('custom-dropdown')}
                                                         />
-                                                    </td>
-                                                    <td className={cx('name_sup')}>
-                                                        <span>{it.supplierName ?? ''}</span>
                                                     </td>
                                                 </tr>
                                             ))}

@@ -41,9 +41,9 @@ const ProductHistory = ({ data, onClose }) => {
                         <tr>
                             <th className={cx('stt')}>STT</th>
                             <th className={cx('productName')}>Loại giao dịch</th>
-                            <th className={cx('productName')}>Số lượng trước</th>
-                            <th className={cx('productName')}>Số lượng sau</th>
-                            <th className={cx('productName')}>Số lượng thay đổi</th>
+                            <th className={cx('productAmount')}>Số lượng trước</th>
+                            <th className={cx('productAmount')}>Số lượng sau</th>
+                            <th className={cx('productAmount')}>Số lượng thay đổi</th>
                             <th className={cx('unit')}>Mã giao dịch</th>
                             <th className={cx('unit')}>Ngày giao dịch</th>
                             <th className={cx('unit')}>Người tạo giao dịch</th>
@@ -55,9 +55,9 @@ const ProductHistory = ({ data, onClose }) => {
                             <tr key={index}>
                                 <td>{index + 1}</td>
                                 <td className={cx('stt')}>{typeTransaction[item.actionType]}</td>
-                                <td className={cx('productName')}>{item.previousAmount}</td>
-                                <td className={cx('productName')}>{item.newAmount}</td>
-                                <td className={cx('productName')}>{item.quantityChange}</td>
+                                <td className={cx('productAmount')}>{item.previousAmount}</td>
+                                <td className={cx('productAmount')}>{item.newAmount}</td>
+                                <td className={cx('productAmount')}>{item.quantityChange}</td>
                                 <td className={cx('unit')}>{item.referenceID}</td>
                                 <td className={cx('unit')}>{convertDateVN(item.createdAt)}</td>
                                 <td className={cx('unit')}>{item.employeeName}</td>
