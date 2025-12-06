@@ -38,6 +38,13 @@ export default function Product() {
     const [productCode, setProductCode] = useState('');
     const [productName, setProductName] = useState('');
     const [minStock, setMinStock] = useState('');
+    const [activeTab, setActiveTab] = useState('AVAILABLE');
+
+    const tabs = [
+        { key: 'AVAILABLE', title: 'Đang kinh doanh' },
+        { key: 'OUT_OF_STOCK', title: 'Hết hàng' },
+        { key: 'DISCONTINUED', title: 'Ngừng kinh doanh' },
+    ];
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
@@ -62,14 +69,14 @@ export default function Product() {
 
     // Mock data - thay bằng API call thực tế
     useEffect(() => {
-        fetchProducts(currentPage);
-    }, [currentPage]);
+        fetchProducts(currentPage, activeTab);
+    }, [currentPage, activeTab]);
 
-    const fetchProducts = async () => {
+    const fetchProducts = async (page = 1, status = activeTab) => {
         //setLoading(true);
         // TODO: Replace with actual API call
         try {
-            const res = await fetchProduct(currentPage);
+            const res = await fetchProduct(page, { status });
             setProducts(res?.products || []);
             setTotalPages(res?.pagination?.totalPages || 1);
             //setLoading(false);
@@ -221,6 +228,23 @@ export default function Product() {
                     </TouchableOpacity>
                 }
             />
+            <View style={styles.tabContainer}>
+                {tabs.map((tab) => (
+                    <TouchableOpacity
+                        key={tab.key}
+                        style={[styles.tabItem, activeTab === tab.key && styles.activeTabItem]}
+                        onPress={() => {
+                            setActiveTab(tab.key);
+                            setCurrentPage(1);
+                            // fetchProducts is called by useEffect when activeTab changes
+                        }}
+                    >
+                        <Text style={[styles.tabTitle, activeTab === tab.key && styles.activeTabTitle]}>
+                            {tab.title}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
             <View style={styles.container}>
                 <ScrollView
                     style={styles.content}
@@ -736,6 +760,35 @@ const styles = StyleSheet.create({
     },
     applyButtonText: {
         color: 'white',
+        fontWeight: '600',
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+        gap: 8,
+    },
+    tabItem: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#f3f4f6',
+    },
+    activeTabItem: {
+        backgroundColor: '#2563eb',
+    },
+    tabTitle: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: '#4b5563',
+        textAlign: 'center',
+    },
+    activeTabTitle: {
+        color: '#fff',
         fontWeight: '600',
     },
 });

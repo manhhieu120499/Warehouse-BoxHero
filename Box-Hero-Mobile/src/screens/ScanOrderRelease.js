@@ -112,7 +112,6 @@ export default function ScanOrderRelease() {
                     setBoxes(newBoxes);
                     setIsBoxVerified(true);
                     setShowScanner(false);
-                    Alert.alert('Thành công', `Đã xác thực ô ${code}`);
                 }
             } else {
                 Alert.alert('Lỗi', `Mã quét được (${code}) không khớp với hộp đang chọn (${selectedBoxId})`);

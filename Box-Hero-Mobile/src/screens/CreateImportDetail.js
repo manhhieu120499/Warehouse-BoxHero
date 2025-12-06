@@ -23,6 +23,9 @@ import { formatDate } from '../utilities/formatDate';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Calendar } from 'lucide-react-native';
 import parseToken from '../utilities/parseToken';
+import { Dropdown } from 'react-native-element-dropdown';
+import { filterSupplier } from '../service/supplier.service';
+import QRScanner from '../components/QRScanner';
 
 export default function CreateImportDetail() {
     const navigation = useNavigation();
@@ -30,6 +33,9 @@ export default function CreateImportDetail() {
     const { proposal } = route.params || {};
     const currentUser = useSelector((state) => state.AuthSlice.user);
     const [warehouse, setWarehouse] = useState(null);
+
+    //log
+    console.log('proposal', proposal);
 
     const [orderInfo, setOrderInfo] = useState({
         code: '',
@@ -41,6 +47,9 @@ export default function CreateImportDetail() {
     const [datePickerMode, setDatePickerMode] = useState('manufacture'); // 'manufacture' or 'expiry'
     const [currentProductIndex, setCurrentProductIndex] = useState(null);
     const [tempDate, setTempDate] = useState(new Date());
+    const [suppliers, setSuppliers] = useState([]);
+    const [isScannerVisible, setIsScannerVisible] = useState(false);
+    const [scanningIndex, setScanningIndex] = useState(null);
 
     useEffect(() => {
         const loadWarehouse = async () => {
@@ -48,6 +57,23 @@ export default function CreateImportDetail() {
             setWarehouse(wh);
         };
         loadWarehouse();
+
+        const fetchSuppliers = async () => {
+            try {
+                const res = await filterSupplier({ limit: 1000 });
+                if (res && res.suppliers) {
+                    const formattedSuppliers = res.suppliers.map((s) => ({
+                        label: `${s.supplierName} (${s.supplierID})`,
+                        value: s.supplierID,
+                        ...s,
+                    }));
+                    setSuppliers(formattedSuppliers);
+                }
+            } catch (error) {
+                console.log('Error fetching suppliers', error);
+            }
+        };
+        fetchSuppliers();
     }, []);
 
     useEffect(() => {
@@ -64,13 +90,15 @@ export default function CreateImportDetail() {
                 unitID: detail.unit.unitID,
                 unitName: detail.unit.unitName,
                 requestAmount: detail.quantity,
-                realAmount: detail.quantity.toString(),
+                realAmount: 0,
                 errorAmount: 0,
-                batchID: '',
-                manufactureDate: new Date(new Date().setDate(new Date().getDate() - 1)),
-                expiryDate: new Date(new Date().setDate(new Date().getDate() + 2)),
+                batchID: detail?.batchID || '',
+                manufactureDate: new Date(),
+                expiryDate: new Date(new Date().setDate(new Date().getDate() + 1)),
                 supplierID: '',
                 reasonError: '',
+                enableScan: false,
+                isScanned: false,
             }));
             setProductList(products);
         }
@@ -93,6 +121,10 @@ export default function CreateImportDetail() {
                 updatedList[index].errorAmount = 0;
             } else {
                 updatedList[index].errorAmount = req - real;
+            }
+
+            if (parseInt(updatedList[index].realAmount) >= req) {
+                updatedList[index].enableScan = false;
             }
         }
 
@@ -149,8 +181,60 @@ export default function CreateImportDetail() {
         }
     };
 
-    const handleSave = async () => {
-        const hasError = productList.some((p) => p.errorAmount > 0);
+    const toggleScanMode = (index) => {
+        const updatedList = productList.map((item, i) => ({
+            ...item,
+            enableScan: i === index ? !item.enableScan : false, // Only allow one active scan at a time
+        }));
+        setProductList(updatedList);
+    };
+
+    const handleOpenScanner = (index) => {
+        setScanningIndex(index);
+        setIsScannerVisible(true);
+    };
+
+    const handleScan = (data) => {
+        if (scanningIndex === null) return;
+
+        console.log('scanning', data);
+
+        const updatedList = [...productList];
+        const item = updatedList[scanningIndex];
+
+        if (item.enableScan) {
+            // tăng số lượng
+            const currentReal = parseInt(item.realAmount) || 0;
+            const req = Number(item.requestAmount);
+
+            const newReal = currentReal + 1;
+
+            updatedList[scanningIndex].realAmount = newReal.toString();
+            updatedList[scanningIndex].errorAmount = req - newReal;
+            updatedList[scanningIndex].isScanned = true; // đánh dấu đã scanned
+
+            if (newReal === req) {
+                updatedList[scanningIndex].enableScan = false;
+                Alert.alert('Thông báo', 'Đã quét đủ số lượng đề xuất của lô hàng');
+                setTimeout(() => setIsScannerVisible(false), 100);
+            }
+
+            setProductList(updatedList);
+
+            return;
+        }
+    };
+
+    const saveOrderPurchase = async () => {
+        // update product list valid
+        const productListValid = productList.map((p) => {
+            const newErrorAmount = Number(p.requestAmount) - Number(p.realAmount);
+            return {
+                ...p,
+                errorAmount: newErrorAmount,
+            };
+        });
+        const hasError = productListValid.some((p) => p.errorAmount > 0);
 
         const payload = {
             orderPurchaseID: orderInfo.code,
@@ -191,18 +275,37 @@ export default function CreateImportDetail() {
                 }
             } catch (error) {
                 console.log(error);
-                Toast.show({ type: 'error', text1: 'Lỗi', text2: 'Có lỗi xảy ra khi lưu phiếu' });
+                Alert.alert('Lỗi', 'Có lỗi xảy ra khi lưu phiếu');
             }
         };
 
         if (hasError) {
             Alert.alert('Thông báo', 'Phiếu nhập bị thiếu sản phẩm. Bạn có muốn tạo phiếu nhập thiếu không?', [
-                { text: 'Không', onPress: submit },
+                { text: 'Không', onPress: () => {} },
                 { text: 'Có', onPress: submit },
             ]);
         } else {
             submit();
         }
+    };
+
+    const handleSave = async () => {
+        // check other batch no scanned
+        const hasScanned = productList.filter((batch) => !batch.isScanned);
+        if (hasScanned.length > 0) {
+            Alert.alert(
+                'Cảnh báo',
+                'Có lô hàng chưa được quét. Cụ thể: ' +
+                    hasScanned.map((batch) => batch.batchID).join(', ') +
+                    '. Để bỏ qua những lô này, vui lòng chọn bỏ qua và chọn tiếp Lưu phiếu nhập để hoàn tất',
+                [
+                    { text: 'Huỷ', onPress: () => {} },
+                    { text: 'Bỏ qua', onPress: () => saveOrderPurchase() },
+                ],
+            );
+            return;
+        }
+        saveOrderPurchase();
     };
 
     return (
@@ -266,6 +369,16 @@ export default function CreateImportDetail() {
                                 />
                             </View>
                         </View>
+                        <View style={styles.row}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.label}>Mã phiếu đề xuất nhập</Text>
+                                <TextInput
+                                    style={[styles.input, styles.readOnly]}
+                                    value={proposal?.proposalID}
+                                    editable={false}
+                                />
+                            </View>
+                        </View>
                         <Text style={styles.label}>Ghi chú</Text>
                         <TextInput
                             style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
@@ -278,96 +391,186 @@ export default function CreateImportDetail() {
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Danh sách sản phẩm ({productList.length})</Text>
-                        {productList.map((item, index) => (
-                            <View key={index} style={styles.productCard}>
-                                <View style={styles.productHeader}>
-                                    <Text style={styles.productName}>{item.productName}</Text>
-                                    <Text style={styles.productSku}>#{item.productID}</Text>
-                                </View>
-                                <Text style={styles.unitText}>Đơn vị: {item.unitName}</Text>
+                        {productList.map((item, index) => {
+                            const isAnyScanning = productList.some((p) => p.enableScan);
+                            const isThisScanning = item.enableScan;
+                            const isDisabled = isAnyScanning && !isThisScanning;
+                            const realAmount = parseInt(item.realAmount) || 0;
+                            const isEnough = realAmount >= item.requestAmount;
+                            const isMissing = realAmount < item.requestAmount;
 
-                                <View style={styles.gridRow}>
-                                    <View style={styles.gridCol}>
-                                        <Text style={styles.labelSmall}>Yêu cầu</Text>
-                                        <TextInput
-                                            style={[styles.inputSmall, styles.readOnly]}
-                                            value={item.requestAmount.toString()}
-                                            editable={false}
-                                        />
-                                    </View>
-                                    <View style={styles.gridCol}>
-                                        <Text style={styles.labelSmall}>Thực tế</Text>
-                                        <TextInput
-                                            style={styles.inputSmall}
-                                            value={item.realAmount}
-                                            keyboardType="numeric"
-                                            onChangeText={(text) => updateProduct(index, 'realAmount', text)}
-                                        />
-                                    </View>
-                                    <View style={styles.gridCol}>
-                                        <Text style={styles.labelSmall}>Thiếu</Text>
-                                        <TextInput
-                                            style={[
-                                                styles.inputSmall,
-                                                styles.readOnly,
-                                                item.errorAmount > 0 && {
-                                                    color: '#EF4444',
-                                                    fontWeight: 'bold',
-                                                },
-                                            ]}
-                                            value={item.errorAmount.toString()}
-                                            editable={false}
-                                        />
-                                    </View>
-                                </View>
-
-                                <View style={styles.divider} />
-
-                                <View style={styles.row}>
-                                    <View style={{ flex: 1, marginRight: 10 }}>
-                                        <Text style={styles.labelSmall}>Mã lô</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            value={item.batchID}
-                                            onChangeText={(text) => updateProduct(index, 'batchID', text)}
-                                            placeholder="Mã lô"
-                                        />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.labelSmall}>Mã NCC</Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            value={item.supplierID}
-                                            onChangeText={(text) => updateProduct(index, 'supplierID', text)}
-                                            placeholder="Mã NCC"
-                                        />
-                                    </View>
-                                </View>
-
-                                <View style={styles.row}>
-                                    <View style={{ flex: 1, marginRight: 10 }}>
-                                        <Text style={styles.labelSmall}>NSX</Text>
-                                        <TouchableOpacity
-                                            onPress={() => openDatePicker(index, 'manufacture')}
-                                            style={styles.dateInput}
+                            return (
+                                <View
+                                    key={index}
+                                    style={[
+                                        styles.productCard,
+                                        isMissing && item.isScanned && styles.warningProductCard,
+                                        isEnough && styles.completedProductCard,
+                                        isThisScanning && styles.activeProductCard,
+                                        isDisabled && styles.disabledProductCard,
+                                    ]}
+                                    pointerEvents={isDisabled ? 'none' : 'auto'}
+                                >
+                                    <View style={styles.productHeader}>
+                                        <View
+                                            style={{
+                                                flex: 1,
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                flexWrap: 'wrap',
+                                            }}
                                         >
-                                            <Text style={styles.dateInputText}>{formatDate(item.manufactureDate)}</Text>
-                                            <Calendar size={16} color="#6B7280" />
-                                        </TouchableOpacity>
+                                            <Text style={styles.productName}>{item.productName}</Text>
+                                            <View
+                                                style={[
+                                                    styles.statusBadge,
+                                                    isEnough ? styles.statusSuccess : styles.statusWarning,
+                                                ]}
+                                            >
+                                                <Text style={styles.statusBadgeText}>
+                                                    {isEnough ? 'Đủ hàng' : 'Chưa đủ hàng'}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <Text style={styles.productSku}>#{item.productID}</Text>
                                     </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.labelSmall}>HSD</Text>
-                                        <TouchableOpacity
-                                            onPress={() => openDatePicker(index, 'expiry')}
-                                            style={styles.dateInput}
-                                        >
-                                            <Text style={styles.dateInputText}>{formatDate(item.expiryDate)}</Text>
-                                            <Calendar size={16} color="#6B7280" />
-                                        </TouchableOpacity>
+                                    <Text style={styles.unitText}>Đơn vị: {item.unitName}</Text>
+
+                                    <View style={styles.gridRow}>
+                                        <View style={styles.gridCol}>
+                                            <Text style={styles.labelSmall}>Yêu cầu</Text>
+                                            <TextInput
+                                                style={[styles.inputSmall, styles.readOnly]}
+                                                value={item.requestAmount.toString()}
+                                                editable={false}
+                                            />
+                                        </View>
+                                        <View style={styles.gridCol}>
+                                            <Text style={styles.labelSmall}>Thực tế</Text>
+                                            <TextInput
+                                                style={[styles.inputSmall, styles.readOnly]}
+                                                value={item.realAmount.toString()}
+                                                keyboardType="numeric"
+                                                onChangeText={(text) => updateProduct(index, 'realAmount', text)}
+                                                editable={false}
+                                            />
+                                        </View>
+                                        <View style={styles.gridCol}>
+                                            <Text style={styles.labelSmall}>Thiếu</Text>
+                                            <TextInput
+                                                style={[
+                                                    styles.inputSmall,
+                                                    styles.readOnly,
+                                                    item.errorAmount > 0 && {
+                                                        color: '#EF4444',
+                                                        fontWeight: 'bold',
+                                                    },
+                                                ]}
+                                                value={item.errorAmount.toString()}
+                                                editable={false}
+                                            />
+                                        </View>
                                     </View>
+
+                                    <View style={styles.divider} />
+
+                                    <View style={styles.row}>
+                                        <View style={{ flex: 1, marginRight: 10 }}>
+                                            <Text style={styles.labelSmall}>Mã lô</Text>
+                                            <TextInput
+                                                style={styles.input}
+                                                value={item.batchID}
+                                                onChangeText={(text) => updateProduct(index, 'batchID', text)}
+                                                placeholder="Mã lô"
+                                            />
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={styles.labelSmall}>Mã NCC</Text>
+                                            <Dropdown
+                                                style={styles.dropdown}
+                                                placeholderStyle={styles.placeholderStyle}
+                                                selectedTextStyle={styles.selectedTextStyle}
+                                                inputSearchStyle={styles.inputSearchStyle}
+                                                iconStyle={styles.iconStyle}
+                                                data={suppliers}
+                                                search
+                                                maxHeight={300}
+                                                labelField="label"
+                                                valueField="value"
+                                                placeholder="Chọn NCC"
+                                                searchPlaceholder="Tìm kiếm..."
+                                                value={item.supplierID}
+                                                onChange={(itemVal) => {
+                                                    updateProduct(index, 'supplierID', itemVal.value);
+                                                }}
+                                            />
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.row}>
+                                        <View style={{ flex: 1, marginRight: 10 }}>
+                                            <Text style={styles.labelSmall}>NSX</Text>
+                                            <TouchableOpacity
+                                                onPress={() => openDatePicker(index, 'manufacture')}
+                                                style={styles.dateInput}
+                                            >
+                                                <Text style={styles.dateInputText}>
+                                                    {formatDate(item.manufactureDate)}
+                                                </Text>
+                                                <Calendar size={16} color="#6B7280" />
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={styles.labelSmall}>HSD</Text>
+                                            <TouchableOpacity
+                                                onPress={() => openDatePicker(index, 'expiry')}
+                                                style={styles.dateInput}
+                                            >
+                                                <Text style={styles.dateInputText}>{formatDate(item.expiryDate)}</Text>
+                                                <Calendar size={16} color="#6B7280" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+
+                                    {!isEnough && (
+                                        <View style={styles.row}>
+                                            <TouchableOpacity
+                                                style={styles.checkboxContainer}
+                                                onPress={() => toggleScanMode(index)}
+                                            >
+                                                <Icon
+                                                    name={
+                                                        item.enableScan ? 'checkbox-marked' : 'checkbox-blank-outline'
+                                                    }
+                                                    size={24}
+                                                    color={item.enableScan ? '#2563EB' : '#6B7280'}
+                                                />
+                                                <Text style={styles.checkboxLabel}>Scan</Text>
+                                            </TouchableOpacity>
+
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.scanButton,
+                                                    !item.enableScan && { backgroundColor: '#9CA3AF' },
+                                                ]}
+                                                onPress={() => handleOpenScanner(index)}
+                                                disabled={!item.enableScan}
+                                            >
+                                                <Icon name="qrcode-scan" size={20} color="#fff" />
+                                                <Text style={styles.scanButtonText}>Quét mã</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                    <QRScanner
+                                        visible={isScannerVisible && scanningIndex === index}
+                                        onScanned={handleScan}
+                                        onClose={() => setIsScannerVisible(false)}
+                                        qrCheck={productList[index].batchID}
+                                        descriptionText={`Đã quét ${productList[index].realAmount}/${productList[index].requestAmount} lô hàng`}
+                                    />
                                 </View>
-                            </View>
-                        ))}
+                            );
+                        })}
                     </View>
 
                     <View style={styles.createFooter}>
@@ -595,5 +798,95 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: '600',
+    },
+    dropdown: {
+        height: 44,
+        borderColor: '#E5E7EB',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        backgroundColor: '#fff',
+    },
+    placeholderStyle: {
+        fontSize: 14,
+        color: '#9CA3AF',
+    },
+    selectedTextStyle: {
+        fontSize: 14,
+        color: '#1F2937',
+    },
+    iconStyle: {
+        width: 20,
+        height: 20,
+    },
+    inputSearchStyle: {
+        height: 40,
+        fontSize: 14,
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 12,
+        paddingVertical: 8,
+    },
+    checkboxLabel: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: '#374151',
+        fontWeight: '500',
+    },
+    scanButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#2563EB',
+        paddingVertical: 10,
+        borderRadius: 8,
+        gap: 8,
+    },
+    scanButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    activeProductCard: {
+        borderColor: '#2563EB',
+        borderWidth: 2,
+        backgroundColor: '#EFF6FF',
+    },
+    disabledProductCard: {
+        opacity: 0.5,
+        backgroundColor: '#F3F4F6',
+    },
+    statusBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 12,
+        marginLeft: 8,
+        marginRight: 8,
+    },
+    statusSuccess: {
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+    },
+    statusWarning: {
+        backgroundColor: '#FEF3C7',
+        borderWidth: 1,
+        borderColor: '#F59E0B',
+    },
+    statusBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#000000',
+    },
+    completedProductCard: {
+        backgroundColor: '#D1FAE5',
+        borderColor: '#10B981',
+    },
+    warningProductCard: {
+        backgroundColor: '#FEF3C7',
+        borderColor: '#F59E0B',
     },
 });

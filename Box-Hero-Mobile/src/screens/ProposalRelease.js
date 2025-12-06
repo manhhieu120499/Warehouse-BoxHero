@@ -19,9 +19,10 @@ import { Dropdown } from 'react-native-element-dropdown';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { getAllOrderReleaseProposal, updateStatusOrderReleaseProposal } from '../service/proposal.service';
-import { formatStatusProposal } from '../constants';
+import { formatStatusProposalRelease } from '../constants';
 import { authIsAdmin } from '../common';
 import { useSelector } from 'react-redux';
+import { Filter } from 'lucide-react-native';
 
 export default function ProposalRelease() {
     const navigation = useNavigation();
@@ -36,28 +37,31 @@ export default function ProposalRelease() {
     const [filterCreator, setFilterCreator] = useState(null);
     const [filterDate, setFilterDate] = useState(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [filterStatus, setFilterStatus] = useState('PENDING');
+    const [tempDate, setTempDate] = useState(new Date());
+    const [activeTab, setActiveTab] = useState('PENDING');
+
+    const tabs = [
+        { key: 'PENDING', title: 'Chờ phê duyệt' },
+        { key: 'COMPLETED', title: 'Đã phê duyệt' },
+        { key: 'REFUSE', title: 'Từ chối' },
+    ];
 
     const currentUser = useSelector((state) => state.AuthSlice.user);
     console.log(currentUser);
 
-    const statusData = [
-        { label: 'Tất cả', value: null },
-        { label: 'Chờ phê duyệt', value: 'PENDING' },
-        { label: 'Đã phê duyệt', value: 'COMPLETED' },
-        { label: 'Từ chối', value: 'REFUSE' },
-    ];
-
     const fetchProposals = useCallback(
-        async (page) => {
+        async (page, filters = {}) => {
             try {
-                const filters = {};
-                if (filterCode) filters.orderReleaseProposalID = filterCode;
-                if (filterCreator) filters.employeeIDCreate = filterCreator;
-                if (filterDate) filters.createdAt = filterDate.toISOString().split('T')[0];
-                if (filterStatus) filters.status = filterStatus;
+                const status = filters.hasOwnProperty('status') ? filters.status : activeTab;
+                const queryFilters = {
+                    status: status === 'ALL' ? '' : status,
+                };
 
-                const res = await getAllOrderReleaseProposal(page, filters);
+                if (filterCode) queryFilters.orderReleaseProposalID = filterCode;
+                if (filterCreator) queryFilters.employeeIDCreate = filterCreator;
+                if (filterDate) queryFilters.createdAt = filterDate.toISOString().split('T')[0];
+
+                const res = await getAllOrderReleaseProposal(page, queryFilters);
                 if (res && res.data) {
                     setProposals(res.data);
                     setTotalPages(res.pagination?.totalPages || 1);
@@ -67,7 +71,7 @@ export default function ProposalRelease() {
                 console.error('Error fetching proposals:', error);
             }
         },
-        [filterCode, filterCreator, filterDate, filterStatus],
+        [filterCode, filterCreator, filterDate, activeTab],
     );
 
     useFocusEffect(
@@ -85,9 +89,17 @@ export default function ProposalRelease() {
         setFilterCode(null);
         setFilterCreator(null);
         setFilterDate(null);
-        setFilterStatus(null);
+        setTempDate(new Date());
         fetchProposals(1);
         setShowFilter(false);
+    };
+
+    const onDateChange = (event, selectedDate) => {
+        setShowDatePicker(false);
+        if (selectedDate) {
+            setFilterDate(selectedDate);
+            setTempDate(selectedDate);
+        }
     };
 
     const handleApproveProposal = async (proposalID, status) => {
@@ -140,7 +152,7 @@ export default function ProposalRelease() {
                                   : styles.textPending,
                         ]}
                     >
-                        {formatStatusProposal[item.status] || item.status}
+                        {formatStatusProposalRelease[item.status] || item.status}
                     </Text>
                 </View>
             </View>
@@ -148,15 +160,33 @@ export default function ProposalRelease() {
             <View style={styles.cardBody}>
                 <View style={styles.infoRow}>
                     <Ionicons name="calendar-outline" size={16} color="#6b7280" />
-                    <Text style={styles.infoText}>{new Date(item.createdAt).toLocaleDateString('vi-VN')}</Text>
+                    <Text style={styles.infoText}>
+                        Ngày tạo: {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                    </Text>
                 </View>
+                {item.status === 'COMPLETED' && (
+                    <View style={styles.infoRow}>
+                        <Ionicons name="checkmark-circle-outline" size={16} color="#10b981" />
+                        <Text style={styles.infoText}>
+                            Ngày phê duyệt: {new Date(item.updatedAt).toLocaleDateString('vi-VN')}{' '}
+                            {new Date(item.updatedAt).toLocaleTimeString('vi-VN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                            })}
+                        </Text>
+                    </View>
+                )}
                 <View style={styles.infoRow}>
                     <Ionicons name="person-outline" size={16} color="#6b7280" />
-                    <Text style={styles.infoText}>Người tạo: {item.employeeIDCreate}</Text>
+                    <Text style={styles.infoText}>
+                        Người tạo: {item.creator.employeeID} - {item.creator.employeeName}
+                    </Text>
                 </View>
                 <View style={styles.infoRow}>
                     <Ionicons name="business-outline" size={16} color="#6b7280" />
-                    <Text style={styles.infoText}>Kho: {item.warehouseID}</Text>
+                    <Text style={styles.infoText}>
+                        Kho: {item.warehouse.warehouseID} - {item.warehouse.warehouseName}
+                    </Text>
                 </View>
             </View>
 
@@ -179,26 +209,32 @@ export default function ProposalRelease() {
                 title="Phiếu đề xuất xuất"
                 leftIcon="arrow-back"
                 handleOnPressLeftIcon={() => navigation.goBack()}
+                RightComponent={
+                    <TouchableOpacity onPress={() => setShowFilter(true)}>
+                        <Filter size={24} color="white" />
+                    </TouchableOpacity>
+                }
             />
+
+            <View style={styles.tabContainer}>
+                {tabs.map((tab) => (
+                    <TouchableOpacity
+                        key={tab.key}
+                        style={[styles.tabItem, activeTab === tab.key && styles.activeTabItem]}
+                        onPress={() => {
+                            setActiveTab(tab.key);
+                            fetchProposals(1, { status: tab.key });
+                        }}
+                    >
+                        <Text style={[styles.tabTitle, activeTab === tab.key && styles.activeTabTitle]}>
+                            {tab.title}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
 
             <View style={styles.container}>
                 {/* Search & Filter Bar */}
-                <View style={styles.filterBar}>
-                    <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilter(true)}>
-                        <Ionicons name="filter" size={20} color="#fff" />
-                        <Text style={styles.filterButtonText}>Bộ lọc</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.createButton}
-                        onPress={() => {
-                            navigation.navigate('CreateExportRequest');
-                        }}
-                    >
-                        <Ionicons name="add" size={20} color="#fff" />
-                        <Text style={styles.createButtonText}>Tạo phiếu</Text>
-                    </TouchableOpacity>
-                </View>
 
                 {/* List */}
                 {loading ? (
@@ -217,8 +253,18 @@ export default function ProposalRelease() {
                                 <Text style={styles.emptyText}>Không có dữ liệu</Text>
                             </View>
                         }
+                        showsVerticalScrollIndicator={false}
                     />
                 )}
+
+                <TouchableOpacity
+                    style={styles.fab}
+                    onPress={() => {
+                        navigation.navigate('CreateExportRequest');
+                    }}
+                >
+                    <Ionicons name="add" size={30} color="#fff" />
+                </TouchableOpacity>
 
                 {/* Pagination */}
                 {!loading && proposals.length > 0 && (
@@ -279,25 +325,16 @@ export default function ProposalRelease() {
                                 <Text style={styles.label}>Ngày tạo</Text>
                                 <TouchableOpacity
                                     style={styles.dateInput}
-                                    onPress={() => setShowDatePicker((prev) => !prev)}
+                                    onPress={() => {
+                                        setTempDate(filterDate || new Date());
+                                        setShowDatePicker(true);
+                                    }}
                                 >
                                     <Text style={filterDate ? styles.dateText : styles.placeholderText}>
                                         {filterDate ? filterDate.toLocaleDateString('vi-VN') : 'dd/mm/yyyy'}
                                     </Text>
                                     <Ionicons name="calendar-outline" size={20} color="#6b7280" />
                                 </TouchableOpacity>
-                                {showDatePicker && (
-                                    <DateTimePicker
-                                        value={filterDate || new Date()}
-                                        mode="date"
-                                        display="default"
-                                        onChange={(event, selectedDate) => {
-                                            setShowDatePicker(false);
-                                            if (selectedDate) setFilterDate(selectedDate);
-                                        }}
-                                        style={{ marginTop: 10 }}
-                                    />
-                                )}
                             </View>
 
                             <View style={styles.inputGroup}>
@@ -307,22 +344,6 @@ export default function ProposalRelease() {
                                     placeholder="Nhập mã người tạo"
                                     value={filterCreator}
                                     onChangeText={setFilterCreator}
-                                />
-                            </View>
-
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Trạng thái</Text>
-                                <Dropdown
-                                    style={styles.dropdown}
-                                    placeholderStyle={styles.placeholderStyle}
-                                    selectedTextStyle={styles.selectedTextStyle}
-                                    data={statusData}
-                                    maxHeight={300}
-                                    labelField="label"
-                                    valueField="value"
-                                    placeholder="Chọn trạng thái"
-                                    value={filterStatus}
-                                    onChange={(item) => setFilterStatus(item.value)}
                                 />
                             </View>
                         </ScrollView>
@@ -336,6 +357,40 @@ export default function ProposalRelease() {
                             </TouchableOpacity>
                         </View>
                     </View>
+
+                    {Platform.OS === 'android' && showDatePicker && (
+                        <DateTimePicker value={tempDate} mode="date" display="default" onChange={onDateChange} />
+                    )}
+
+                    {Platform.OS === 'ios' && showDatePicker && (
+                        <View
+                            style={[
+                                styles.iosModalContainer,
+                                { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10 },
+                            ]}
+                        >
+                            <View style={styles.iosModalContent}>
+                                <DateTimePicker
+                                    value={tempDate}
+                                    mode="date"
+                                    display="inline"
+                                    onChange={(event, selectedDate) => {
+                                        if (selectedDate) setTempDate(selectedDate);
+                                    }}
+                                    style={{ height: 300, width: '100%' }}
+                                />
+                                <TouchableOpacity
+                                    style={styles.iosConfirmButton}
+                                    onPress={() => {
+                                        setFilterDate(tempDate);
+                                        setShowDatePicker(false);
+                                    }}
+                                >
+                                    <Text style={styles.iosConfirmText}>Xong</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
                 </View>
             </Modal>
         </DefaultLayout>
@@ -348,36 +403,22 @@ const styles = StyleSheet.create({
         backgroundColor: '#f3f4f6',
         padding: 16,
     },
-    filterBar: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
-    filterButton: {
-        flexDirection: 'row',
+    fab: {
+        position: 'absolute',
+        bottom: 80,
+        right: 20,
+        backgroundColor: '#2563eb',
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#3b82f6',
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-    },
-    filterButtonText: {
-        color: '#fff',
-        fontWeight: '600',
-        marginLeft: 8,
-    },
-    createButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#10b981',
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-    },
-    createButtonText: {
-        color: '#fff',
-        fontWeight: '600',
-        marginLeft: 8,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        zIndex: 100,
     },
     listContent: {
         paddingBottom: 80,
@@ -608,5 +649,58 @@ const styles = StyleSheet.create({
         color: '#2563eb',
         fontWeight: '600',
         fontSize: 14,
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+        gap: 8,
+    },
+    tabItem: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#f3f4f6',
+    },
+    activeTabItem: {
+        backgroundColor: '#2563eb',
+    },
+    tabTitle: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#4b5563',
+    },
+    activeTabTitle: {
+        color: '#fff',
+        fontWeight: '600',
+    },
+    iosModalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    iosModalContent: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 20,
+        width: '90%',
+        alignItems: 'center',
+    },
+    iosConfirmButton: {
+        marginTop: 20,
+        backgroundColor: '#2563eb',
+        paddingVertical: 10,
+        paddingHorizontal: 30,
+        borderRadius: 10,
+    },
+    iosConfirmText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });

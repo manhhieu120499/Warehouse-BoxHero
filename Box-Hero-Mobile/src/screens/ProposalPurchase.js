@@ -14,8 +14,8 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-
-import { Filter, Plus, ChevronLeft, ChevronRight, Calendar } from 'lucide-react-native';
+import { Dropdown } from 'react-native-element-dropdown';
+import { Filter, ChevronLeft, ChevronRight, Calendar } from 'lucide-react-native';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { fetchFilterProposal } from '../service/proposal.service';
@@ -33,18 +33,19 @@ export default function ProposalPurchase() {
     const [filterCreator, setFilterCreator] = useState('');
     const [filterDate, setFilterDate] = useState(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [filterStatus, setFilterStatus] = useState('PENDING');
+    const [activeTab, setActiveTab] = useState('PENDING');
 
-    const statusTabs = [
-        { label: 'Chờ phê duyệt', value: 'PENDING' },
-        { label: 'Đã phê duyệt', value: 'COMPLETED' },
-        { label: 'Từ chối', value: 'REFUSE' },
+    const tabs = [
+        { key: 'PENDING', title: 'Chờ phê duyệt' },
+        { key: 'APPROVED', title: 'Đã phê duyệt' },
+        { key: 'REFUSE', title: 'Từ chối' },
+        { key: 'COMPLETED', title: 'Đã hoàn thành' },
     ];
 
     const fetchProposals = useCallback(
         async (page, filters = {}) => {
             try {
-                const status = filters.hasOwnProperty('status') ? filters.status : filterStatus;
+                const status = filters.hasOwnProperty('status') ? filters.status : activeTab;
                 const queryFilters = {
                     page,
                     status: status === 'ALL' ? '' : status,
@@ -78,7 +79,7 @@ export default function ProposalPurchase() {
                 console.error('Error fetching proposals:', error);
             }
         },
-        [filterCode, filterCreator, filterDate, filterStatus],
+        [filterCode, filterCreator, filterDate, activeTab],
     );
 
     const fetchProposalsRef = useRef(fetchProposals);
@@ -102,7 +103,7 @@ export default function ProposalPurchase() {
         setFilterCode('');
         setFilterCreator('');
         setFilterDate(null);
-        setFilterStatus('PENDING');
+        setActiveTab('PENDING');
         setShowFilter(false);
         fetchProposals(1, {
             proposalID: '',
@@ -186,22 +187,23 @@ export default function ProposalPurchase() {
                 }
             />
 
-            {/* Status Tabs */}
             <View style={styles.tabContainer}>
-                {statusTabs.map((tab) => (
-                    <TouchableOpacity
-                        key={tab.value}
-                        style={[styles.tabItem, filterStatus === tab.value && styles.activeTabItem]}
-                        onPress={() => {
-                            setFilterStatus(tab.value);
-                            fetchProposals(1, { status: tab.value });
-                        }}
-                    >
-                        <Text style={[styles.tabText, filterStatus === tab.value && styles.activeTabText]}>
-                            {tab.label}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {tabs.map((tab) => (
+                        <TouchableOpacity
+                            key={tab.key}
+                            style={[styles.tabItem, activeTab === tab.key && styles.activeTabItem]}
+                            onPress={() => {
+                                setActiveTab(tab.key);
+                                fetchProposals(1, { status: tab.key });
+                            }}
+                        >
+                            <Text style={[styles.tabTitle, activeTab === tab.key && styles.activeTabTitle]}>
+                                {tab.title}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
             </View>
 
             <View style={styles.container}>
@@ -218,16 +220,6 @@ export default function ProposalPurchase() {
                         </View>
                     }
                 />
-
-                {/* Floating Action Button */}
-                <TouchableOpacity
-                    style={styles.fab}
-                    onPress={() => {
-                        navigation.navigate('CreateImportRequest');
-                    }}
-                >
-                    <Plus size={24} color="white" />
-                </TouchableOpacity>
 
                 {/* Pagination */}
                 <View style={styles.paginationContainer}>
@@ -346,7 +338,7 @@ export default function ProposalPurchase() {
                                 <Text style={styles.resetButtonText}>Đặt lại</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                                <Text style={styles.searchButtonText}>Tìm kiếm</Text>
+                                <Text style={styles.searchButtonText}>Áp dụng</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -361,22 +353,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f3f4f6',
     },
-    fab: {
-        position: 'absolute',
-        bottom: 80,
-        right: 20,
-        backgroundColor: '#2563eb',
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-    },
+
     listContent: {
         padding: 16,
         paddingBottom: 80,
@@ -610,29 +587,29 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     tabContainer: {
-        flexDirection: 'row',
         backgroundColor: '#fff',
-        paddingHorizontal: 16,
         paddingVertical: 12,
+        paddingHorizontal: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#e5e7eb',
     },
     tabItem: {
-        marginRight: 16,
+        marginRight: 8,
         paddingVertical: 8,
-        paddingHorizontal: 12,
+        paddingHorizontal: 16,
         borderRadius: 20,
         backgroundColor: '#f3f4f6',
     },
     activeTabItem: {
         backgroundColor: '#2563eb',
     },
-    tabText: {
+    tabTitle: {
         fontSize: 14,
         fontWeight: '500',
         color: '#4b5563',
     },
-    activeTabText: {
+    activeTabTitle: {
         color: '#fff',
+        fontWeight: '600',
     },
 });

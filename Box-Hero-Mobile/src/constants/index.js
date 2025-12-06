@@ -37,6 +37,13 @@ export const formatStatusProduct = {
 
 export const formatStatusProposal = {
     PENDING: 'Chờ phê duyệt',
+    COMPLETED: 'Đã hoàn thành',
+    REFUSE: 'Từ chối',
+    APPROVED: 'Đã phê duyệt',
+};
+
+export const formatStatusProposalRelease = {
+    PENDING: 'Chờ phê duyệt',
     COMPLETED: 'Đã phê duyệt',
     REFUSE: 'Từ chối',
 };

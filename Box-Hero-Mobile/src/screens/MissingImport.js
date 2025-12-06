@@ -9,16 +9,18 @@ import {
     TextInput,
     Platform,
     ScrollView,
+    Alert,
 } from 'react-native';
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { Filter, Plus, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Filter, Scan, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { format } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ModalSelectMissingOrder from '../components/ModalSelectMissingOrder';
 import ModalReceiveProductMissingDetail from '../components/ModalReceiveProductMissingDetail';
-import { fetchOrderPurchase, filterOrderMissing } from '../service/order.service';
+import { fetchOrderPurchase, filterOrderMissing, fetchOrderMissingById } from '../service/order.service';
+import QRScanner from '../components/QRScanner';
 import { formatDate } from '../utilities/formatDate';
 import parseToken from '../utilities/parseToken';
 
@@ -31,8 +33,7 @@ const formatStatusOrderPurchase = {
 const statusColors = {
     PENDING: '#FBBF24',
     RESOLVED: '#10B981',
-    CANCELED: '#3B82F6',
-    REFUSE: '#EF4444',
+    CANCELED: '#EF4444',
 };
 
 const statusTabs = [
@@ -48,6 +49,14 @@ export default function MissingImport() {
     const [totalPages, setTotalPages] = useState(0);
     const [showFilter, setShowFilter] = useState(false);
     const [showSelectMissingOrderModal, setShowSelectMissingOrderModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('PENDING');
+    const [showScanner, setShowScanner] = useState(false);
+
+    const tabs = [
+        { id: 'PENDING', title: 'Đang xử lý' },
+        { id: 'RESOLVED', title: 'Đã giải quyết' },
+        { id: 'CANCELED', title: 'Đã hủy' },
+    ];
 
     // Filter State
     const [filterOrder, setFilterOrder] = useState({
@@ -55,21 +64,19 @@ export default function MissingImport() {
         createdAt: null,
         employeeName: '',
         type: 'SUPPLEMENT',
-        status: 'PENDING',
     });
     const [appliedFilter, setAppliedFilter] = useState({
         code: '',
         createdAt: null,
         employeeName: '',
         type: 'SUPPLEMENT',
-        status: 'PENDING',
     });
     const [showDatePickerFilter, setShowDatePickerFilter] = useState(false);
 
     useFocusEffect(
         React.useCallback(() => {
             fetchData(page);
-        }, [page, appliedFilter]),
+        }, [page, appliedFilter, activeTab]),
     );
 
     const fetchData = async (currentPage = 1) => {
@@ -78,8 +85,12 @@ export default function MissingImport() {
             const filterParam = {};
             if (appliedFilter.code) filterParam.orderPurchaseMissingID = appliedFilter.code;
             if (appliedFilter.createdAt) filterParam.createdAt = format(appliedFilter.createdAt, 'yyyy-MM-dd');
-            if (appliedFilter.status) filterParam.status = appliedFilter.status;
             if (appliedFilter.employeeName) filterParam.employeeName = appliedFilter.employeeName;
+
+            // Use activeTab for status
+            filterParam.status = activeTab;
+
+            console.log(filterParam);
 
             const res = await filterOrderMissing({
                 page: currentPage,
@@ -108,7 +119,6 @@ export default function MissingImport() {
             createdAt: null,
             employeeName: '',
             type: 'SUPPLEMENT',
-            status: 'PENDING',
         };
         setFilterOrder(resetState);
         setAppliedFilter(resetState);
@@ -120,7 +130,23 @@ export default function MissingImport() {
     const [selectedOrder, setSelectedOrder] = useState(null);
 
     const handleOpenCreate = () => {
-        setShowSelectMissingOrderModal(true);
+        setShowScanner(true);
+    };
+
+    const handleScan = async (code) => {
+        setShowScanner(false);
+        try {
+            const res = await fetchOrderMissingById(code);
+            console.log('data missing', res);
+            if (res?.data?.status === 'OK' && res?.data?.data) {
+                handleSelectMissingOrder(res.data.data);
+            } else {
+                Alert.alert('Lỗi', 'Không tìm thấy phiếu nhập thiếu với mã này');
+            }
+        } catch (error) {
+            console.error('Scan error:', error);
+            Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tìm kiếm phiếu nhập thiếu');
+        }
     };
 
     const handleSelectMissingOrder = (order) => {
@@ -169,14 +195,13 @@ export default function MissingImport() {
                 {statusTabs.map((tab) => (
                     <TouchableOpacity
                         key={tab.value}
-                        style={[styles.tabItem, appliedFilter.status === tab.value && styles.activeTabItem]}
+                        style={[styles.tabItem, activeTab === tab.value && styles.activeTabItem]}
                         onPress={() => {
-                            setFilterOrder((prev) => ({ ...prev, status: tab.value }));
-                            setAppliedFilter((prev) => ({ ...prev, status: tab.value }));
+                            setActiveTab(tab.value);
                             setPage(1);
                         }}
                     >
-                        <Text style={[styles.tabText, appliedFilter.status === tab.value && styles.activeTabText]}>
+                        <Text style={[styles.tabText, activeTab === tab.value && styles.activeTabText]}>
                             {tab.label}
                         </Text>
                     </TouchableOpacity>
@@ -197,7 +222,7 @@ export default function MissingImport() {
                 />
 
                 <TouchableOpacity style={styles.fab} onPress={handleOpenCreate}>
-                    <Plus size={24} color="#fff" />
+                    <Scan size={24} color="#fff" />
                 </TouchableOpacity>
 
                 <View style={styles.footer}>
@@ -331,6 +356,13 @@ export default function MissingImport() {
                 isOpen={showDetailModal}
                 onClose={() => setShowDetailModal(false)}
                 reset={fetchData}
+            />
+
+            <QRScanner
+                visible={showScanner}
+                onClose={() => setShowScanner(false)}
+                onScanned={handleScan}
+                descriptionText="Quét mã QR phiếu nhập thiếu"
             />
         </DefaultLayout>
     );
@@ -562,11 +594,12 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderBottomWidth: 1,
         borderBottomColor: '#e5e7eb',
+        gap: 8,
     },
     tabItem: {
-        marginRight: 16,
+        flex: 1,
+        alignItems: 'center',
         paddingVertical: 8,
-        paddingHorizontal: 12,
         borderRadius: 20,
         backgroundColor: '#f3f4f6',
     },
@@ -580,5 +613,6 @@ const styles = StyleSheet.create({
     },
     activeTabText: {
         color: '#fff',
+        fontWeight: '600',
     },
 });

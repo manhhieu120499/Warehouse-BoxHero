@@ -41,10 +41,10 @@ export const validatePayloadCreateReceipt = (payload) => {
             Alert.alert('Lỗi', 'Vui lòng nhập ngày hết hạn tại phần thêm chi tiết');
             return false;
         }
-        if (!item.actualQuantity) {
-            Alert.alert('Lỗi', 'Vui lòng nhập số lượng sản phẩm thực tế');
-            return false;
-        }
+        // if (!item.actualQuantity) {
+        //     Alert.alert('Lỗi', 'Vui lòng nhập số lượng sản phẩm thực tế');
+        //     return false;
+        // }
         if (item.positions.length == 0) {
             Alert.alert('Lỗi', 'Vui lòng chọn vị trí lưu trữ tại phần thêm chi tiết');
             return false;
