@@ -48,11 +48,11 @@ export default function MyTable({
                                 color: '#fff',
                                 textAlign: 'center',
                                 ...props.style,
-                                padding: '8px',
+                                padding: '12px 10px',
                                 border: `1px solid rgba(0,0,0,.05)`,
                                 borderRightColor: 'transparent',
                                 borderLeftColor: 'transparent',
-                                padding: '10px',
+                                //padding: '10px',
                             }}
                         >
                             {props.children}
@@ -64,9 +64,9 @@ export default function MyTable({
                         <td
                             {...props}
                             style={{
-                                padding: '10px',
                                 fontSize: '1.4rem',
-                                paddingLeft: '12px',
+                                padding: '12px 10px',
+                                minHeight: '80px',
                                 ...props.style,
                             }}
                         >

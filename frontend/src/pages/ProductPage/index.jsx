@@ -364,7 +364,7 @@ const ProductPage = () => {
                 </ModelFilter>
                 <h1>Danh sách sản phẩm</h1>
                 <MyTable
-                    className={cx('my-table')}
+                    //className={cx('my-table')}
                     columns={tableColumns}
                     data={productList}
                     pageSize={5}

@@ -9,7 +9,7 @@ const ProposalStatus = ({ index, record }) => {
     return (
         <div className={cx('status-proposal')}>
             <div className={cx('status-indicator', record.status)}></div>
-            <p>{formatStatusProposal[index]}</p>
+            <p className={cx('text')}>{formatStatusProposal[index]}</p>
         </div>
     );
 };

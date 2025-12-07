@@ -9,8 +9,9 @@ import { formatStatusProposal } from '../../constants';
 import Tippy from '@tippyjs/react';
 import { Eye, Plus } from 'lucide-react';
 import ModelProposalDetail from './ModelProposalDetail';
-import { convertDateVN } from '../../common';
+import { authIsAdmin, convertDateVN } from '../../common';
 import ProposalStatus from '../../components/ProposalStatus';
+import { useSelector } from 'react-redux';
 
 const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle);
@@ -29,6 +30,7 @@ const ApprovePage = () => {
         employeeName: '',
     });
     const [totalPage, setTotalPage] = useState(0);
+    const employee = useSelector((state) => state.AuthSlice.user);
 
     const columnsFilter = [
         {
@@ -94,20 +96,20 @@ const ApprovePage = () => {
             dataIndex: 'createdAt',
             key: 'createAt',
             render: (text) => {
-                return <p>{convertDateVN(text)}</p>;
+                return <p className={cx('text')}>{convertDateVN(text)}</p>;
             },
         },
         {
             title: 'Tên người tạo',
             dataIndex: 'employeeName',
             key: 'employeeName',
-            render: (_, record) => <p>{record?.employeeCreate?.employeeName}</p>,
+            render: (_, record) => <p className={cx('text')}>{record?.employeeCreate?.employeeName}</p>,
         },
         {
             title: 'Tên kho',
             dataIndex: 'warehouseName',
             key: 'warehouseName',
-            render: (_, record) => <p>{record?.warehouse?.warehouseName}</p>,
+            render: (_, record) => <p className={cx('text')}>{record?.warehouse?.warehouseName}</p>,
         },
         {
             title: 'Trạng thái',
@@ -233,16 +235,20 @@ const ApprovePage = () => {
                 selectInput={selectFilter}
                 handleSubmitFilter={handleSearch}
             >
-                <Button
-                    primary
-                    onClick={() => {
-                        setTypeDetail(false);
-                        setShowModalDetail(true);
-                    }}
-                    leftIcon={<Plus size={16} />}
-                >
-                    <span>Tạo phiếu đề xuất</span>
-                </Button>
+                {authIsAdmin(employee) ? (
+                    <Button
+                        primary
+                        onClick={() => {
+                            setTypeDetail(false);
+                            setShowModalDetail(true);
+                        }}
+                        leftIcon={<Plus size={16} />}
+                    >
+                        <span>Tạo phiếu đề xuất</span>
+                    </Button>
+                ) : (
+                    <></>
+                )}
             </ModelFilter>
             <div className={cx('table-container-header')}>
                 <h1 className={cx('title-approve')}>{`Danh sách phiếu đề xuất ${formatStatusProposal[
@@ -251,7 +257,7 @@ const ApprovePage = () => {
             </div>
             <div className={cx('table-container')}>
                 <MyTable
-                    className={cx('my-table')}
+                    //className={cx('my-table')}
                     columns={columnsTable}
                     data={proposalPurchaseList}
                     pagination

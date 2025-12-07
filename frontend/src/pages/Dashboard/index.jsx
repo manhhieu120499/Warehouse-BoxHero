@@ -397,7 +397,7 @@ const Dashboard = () => {
                 </div>
                 <div className={cx('table-container')}>
                     <MyTable
-                        className={cx('my-table')}
+                        //className={cx('my-table')}
                         columns={tableColumns}
                         data={productList}
                         pageSize={5}

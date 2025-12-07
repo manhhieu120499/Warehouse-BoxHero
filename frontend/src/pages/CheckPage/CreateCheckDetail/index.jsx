@@ -35,7 +35,7 @@ const InventoryCheckContent = ({
     isPrint = false,
 }) => {
     return (
-        <div className={cx('wrapper-check')}>
+        <div className={cx('wrapper-check', { print: isPrint })}>
             <div className={cx('info-check', 'container-check')}>
                 <div className={cx('header-check')}>
                     <h4>Thông tin phiếu kiểm kê</h4>
@@ -178,100 +178,117 @@ const InventoryCheckContent = ({
                     <h4>Danh sách hàng hóa kiểm kê</h4>
                 </div>
                 <div className={cx('tableWrap')}>
-                    <table className={cx('table')}>
-                        <thead>
-                            <tr>
-                                <th className={cx('location')}>Vị trí</th>
-                                <th className={cx('batchID')}>Mã lô</th>
-                                <th className={cx('productName')}>Tên sản phẩm</th>
-                                <th className={cx('unit')}>Đơn vị tính</th>
-                                {type === 'detail' && inventoryCheckDetail?.status !== 'PENDING_CHECK' && (
-                                    <th className={cx('status')}>Trạng thái</th>
-                                )}
-                                <th className={cx('num')}>Tồn hệ thống</th>
-                                {type !== 'create' && inventoryCheckDetail?.status !== 'PENDING_CHECK' && (
-                                    <>
-                                        <th className={cx('num')}>Tồn thực tế</th>
-                                        <th className={cx('num')}>Chênh lệch</th>
-                                    </>
-                                )}
-                                <th className={cx('note')}>Ghi chú</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {type === 'create' &&
-                                listBatchBox?.map((batchBoxCheck, index) => (
-                                    <tr key={index}>
-                                        <td className={cx('location')}>{batchBoxCheck.location}</td>
-                                        <td className={cx('batchID')}>{batchBoxCheck.batchID}</td>
-                                        <td className={cx('productName')}>{batchBoxCheck.product.productName}</td>
-                                        <td className={cx('unit')}>{batchBoxCheck.unit.unitName}</td>
-                                        <td className={cx('num')}>{batchBoxCheck.systemQuantity}</td>
-                                        <td className={cx('note')}>
-                                            {type === 'create' ? (
-                                                <input
-                                                    type="text"
-                                                    value={batchBoxCheck.reason}
-                                                    onChange={(e) => {
-                                                        const reason = e.target.value;
-                                                        setListBatchBox((prevList) =>
-                                                            prevList.map((item, idx) =>
-                                                                idx === index ? { ...item, reason } : item,
-                                                            ),
-                                                        );
-                                                    }}
-                                                    placeholder="Nhập ghi chú"
-                                                />
-                                            ) : (
-                                                batchBoxCheck.reason
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            {type === 'detail' &&
-                                inventoryCheckDetail?.details.map((detail, index) => {
-                                    console.log(detail);
-
-                                    const location = `${detail.batchBoxByBatch.box.floor.shelf.shelfName} - ${detail.batchBoxByBatch.box.floor.floorName} - ${detail.batchBoxByBatch.box.boxName}`;
-                                    return (
-                                        <tr key={index}>
-                                            <td className={cx('location')}>{location}</td>
-
-                                            <td className={cx('batchID')}>{detail.batchBoxByBatch.batch.batchID}</td>
-                                            <td className={cx('productName')}>
-                                                {detail.batchBoxByBatch.batch.product.productName}
-                                            </td>
-                                            <td className={cx('unit')}>{detail.batchBoxByBatch.batch.unit.unitName}</td>
-                                            {inventoryCheckDetail?.status !== 'PENDING_CHECK' && (
-                                                <td
-                                                    className={cx([
-                                                        'status',
-                                                        Math.abs(detail.discrepancyQuantity) !== 0 && 'highlight',
-                                                    ])}
-                                                >
-                                                    {formatStatusInventoryCheckDetail[detail.status]}
-                                                </td>
-                                            )}
-                                            <td className={cx('num')}>{detail.systemQuantity}</td>
-                                            {inventoryCheckDetail?.status !== 'PENDING_CHECK' && (
-                                                <>
-                                                    <td className={cx('num')}>{detail.actualQuantity}</td>
-                                                    <td
-                                                        className={cx([
-                                                            'num',
-                                                            Math.abs(detail.discrepancyQuantity) !== 0 && 'highlight',
-                                                        ])}
-                                                    >
-                                                        {Math.abs(detail.discrepancyQuantity)}
-                                                    </td>
-                                                </>
-                                            )}
-                                            <td className={cx('note')}>{detail.reason || 'Không có ghi chú'}</td>
-                                        </tr>
-                                    );
-                                })}
-                        </tbody>
-                    </table>
+                    <MyTable
+                        columns={[
+                            {
+                                title: 'Vị trí',
+                                key: 'location',
+                                render: (_, record) => {
+                                    if (type === 'create') return record.location;
+                                    return `${record.batchBoxByBatch?.box?.floor?.shelf?.shelfName} - ${record.batchBoxByBatch?.box?.floor?.floorName} - ${record.batchBoxByBatch?.box?.boxName}`;
+                                },
+                            },
+                            {
+                                title: 'Mã lô',
+                                key: 'batchID',
+                                render: (_, record) =>
+                                    type === 'create' ? record.batchID : record.batchBoxByBatch?.batch?.batchID,
+                            },
+                            {
+                                title: 'Tên sản phẩm',
+                                key: 'productName',
+                                render: (_, record) =>
+                                    type === 'create'
+                                        ? record.product?.productName
+                                        : record.batchBoxByBatch?.batch?.product?.productName,
+                            },
+                            {
+                                title: 'Đơn vị tính',
+                                key: 'unit',
+                                render: (_, record) =>
+                                    type === 'create'
+                                        ? record.unit?.unitName
+                                        : record.batchBoxByBatch?.batch?.unit?.unitName,
+                            },
+                            ...(type === 'detail' && inventoryCheckDetail?.status !== 'PENDING_CHECK'
+                                ? [
+                                      {
+                                          title: 'Trạng thái',
+                                          key: 'status',
+                                          render: (_, record) => (
+                                              <span
+                                                  className={
+                                                      Math.abs(record.discrepancyQuantity) !== 0 ? cx('highlight') : ''
+                                                  }
+                                              >
+                                                  {formatStatusInventoryCheckDetail[record.status]}
+                                              </span>
+                                          ),
+                                      },
+                                  ]
+                                : []),
+                            {
+                                title: 'Tồn hệ thống',
+                                dataIndex: 'systemQuantity',
+                                key: 'systemQuantity',
+                            },
+                            ...(type !== 'create' && inventoryCheckDetail?.status !== 'PENDING_CHECK'
+                                ? [
+                                      {
+                                          title: 'Tồn thực tế',
+                                          dataIndex: 'actualQuantity',
+                                          key: 'actualQuantity',
+                                      },
+                                      {
+                                          title: 'Chênh lệch',
+                                          key: 'discrepancyQuantity',
+                                          render: (_, record) => (
+                                              <span
+                                                  className={
+                                                      Math.abs(record.discrepancyQuantity) !== 0 ? cx('highlight') : ''
+                                                  }
+                                              >
+                                                  {Math.abs(record.discrepancyQuantity)}
+                                              </span>
+                                          ),
+                                      },
+                                  ]
+                                : []),
+                            {
+                                title: 'Ghi chú',
+                                key: 'note',
+                                render: (_, record, index) => {
+                                    if (type === 'create') {
+                                        return (
+                                            <input
+                                                type="text"
+                                                value={record.reason}
+                                                onChange={(e) => {
+                                                    const reason = e.target.value;
+                                                    setListBatchBox((prevList) =>
+                                                        prevList.map((item, idx) =>
+                                                            idx === index ? { ...item, reason } : item,
+                                                        ),
+                                                    );
+                                                }}
+                                                placeholder="Nhập ghi chú"
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '8px',
+                                                    border: '1px solid #ccc',
+                                                    borderRadius: '4px',
+                                                }}
+                                            />
+                                        );
+                                    }
+                                    return record.reason || 'Không có ghi chú';
+                                },
+                            },
+                        ]}
+                        data={type === 'create' ? listBatchBox : inventoryCheckDetail?.details || []}
+                        pagination={false}
+                        rowKey={(record, index) => index}
+                    />
                 </div>
             </div>
 

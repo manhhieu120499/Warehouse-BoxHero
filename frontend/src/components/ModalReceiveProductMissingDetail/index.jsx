@@ -5,7 +5,7 @@ import Modal from '../Modal';
 import toast from 'react-hot-toast';
 import Button from '../Button';
 import MyTable from '../MyTable';
-import { convertDateVN } from '../../common';
+import { authIsAdmin, convertDateVN } from '../../common';
 import { formatStatusOrderPurchaseMissing, styleMessage } from '../../constants';
 import parseToken from '../../utils/parseToken';
 import request from '../../utils/httpRequest';
@@ -14,12 +14,14 @@ import CreateImportReceiptMissingDialog from '../../pages/ReceiveProductPage/Cre
 import Printer from '../Printer';
 import { Printer as PrinterIcon, QrCode } from 'lucide-react';
 import { QRCode } from 'antd';
+import { useSelector } from 'react-redux';
 
 const cx = classNames.bind(styles);
 
 const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
     const [showPopConfirmSaveMissing, setShowPopConfirmSaveMissing] = useState(false);
     const [showPurchaseSupplement, setShowPurchaseSupplement] = useState(false);
+    const employee = useSelector((state) => state.AuthSlice.user);
 
     const handleUpdateStatus = async (status) => {
         try {
@@ -308,7 +310,7 @@ const ModalReceiveProductMissingDetail = ({ data, isOpen, onClose, reset }) => {
                 </div>
                 <div className={cx('action-modal')}>
                     {renderPrinter()}
-                    {data?.status === 'PENDING' && (
+                    {authIsAdmin(employee) && data?.status === 'PENDING' && (
                         <>
                             <Button success onClick={() => setShowPurchaseSupplement(true)}>
                                 <span>Nhập bổ sung</span>

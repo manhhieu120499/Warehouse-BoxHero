@@ -23,19 +23,19 @@ const ModalHistoryOrderCustomer = ({ isOpen, onClose, customerID }) => {
             title: 'Ngày giao dịch',
             dataIndex: 'createdAt',
             key: 'createdAt',
-            render: (text) => <p>{formatDate(text)}</p>,
+            render: (text) => <p className={cx('text')}>{formatDate(text)}</p>,
         },
         {
             title: 'Người tạo',
             dataIndex: 'employeeName',
             key: 'employeeName',
-            render: (_, record) => <p>{record?.employees?.employeeName || ''}</p>,
+            render: (_, record) => <p className={cx('text')}>{record?.employees?.employeeName || ''}</p>,
         },
         {
             title: 'Tên khách hàng',
             dataIndex: 'customerName',
             key: 'customerName',
-            render: (_, record) => <p>{record?.customers?.customerName || ''}</p>,
+            render: (_, record) => <p className={cx('text')}>{record?.customers?.customerName || ''}</p>,
         },
         {
             title: 'Xem chi tiết',
@@ -87,6 +87,7 @@ const ModalHistoryOrderCustomer = ({ isOpen, onClose, customerID }) => {
                         currentPage={page}
                         total={totalPages * 5}
                         onChangePage={onChangePage}
+                        className={'success'}
                     />
                 </div>
             </Modal>

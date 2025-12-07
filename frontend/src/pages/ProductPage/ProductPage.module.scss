@@ -36,6 +36,12 @@
     margin: 0;
 }
 
+.unit-name-product,
+.product-name {
+    margin: 0;
+    padding: 0;
+}
+
 .modal-product-detail {
     width: 85vw;
 }
@@ -52,4 +58,9 @@
     max-width: 300px;
     white-space: normal;
     word-break: break-word;
+}
+
+.status-product {
+    padding: 0;
+    margin: 0;
 }

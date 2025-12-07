@@ -83,25 +83,25 @@ const ReceiveProductMissingPage = () => {
             title: 'Ngày lập',
             dataIndex: 'createdAt',
             key: 'createAt',
-            render: (text) => <p>{text.slice(0, 10)}</p>,
+            render: (text) => <p className={cx('text')}>{text.slice(0, 10)}</p>,
         },
         {
             title: 'Tên người tạo',
             dataIndex: 'employeeName',
             key: 'employeeName',
-            render: (_, record) => <p>{record.orderPurchase.employee.employeeName}</p>,
+            render: (_, record) => <p className={cx('text')}>{record.orderPurchase.employee.employeeName}</p>,
         },
         {
             title: 'Mã kho',
             dataIndex: 'warehouseID',
             key: 'warehouseID',
-            render: (_, record) => <p>{record.orderPurchase.warehouseID}</p>,
+            render: (_, record) => <p className={cx('text')}>{record.orderPurchase.warehouseID}</p>,
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            render: (text) => <p>{formatStatusOrderPurchaseMissing[text]}</p>,
+            render: (text) => <p className={cx('text')}>{formatStatusOrderPurchaseMissing[text]}</p>,
         },
         {
             title: 'Chi tiết',
@@ -191,7 +191,7 @@ const ReceiveProductMissingPage = () => {
             <div className={cx('table-container')}>
                 <MyTable
                     currentPage={page}
-                    className={cx('my-table')}
+                    //className={cx('my-table')}
                     columns={columnsTable}
                     data={receiverPurchaseList}
                     pageSize={pageSize}

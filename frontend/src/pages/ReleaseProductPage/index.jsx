@@ -103,20 +103,20 @@ const ReleaseProductPage = () => {
             title: 'Ngày lập',
             dataIndex: 'createdAt',
             key: 'createdAt',
-            render: (text) => <p>{text.split('T')[0]}</p>,
+            render: (text) => <p className={cx('text')}>{text.split('T')[0]}</p>,
             width: '15%',
         },
         {
             title: 'Người tạo',
             dataIndex: 'employeeName',
             key: 'employeeName',
-            render: (_, record) => <p>{record.employees.employeeName}</p>,
+            render: (_, record) => <p className={cx('text')}>{record.employees.employeeName}</p>,
         },
         {
             title: 'Người nhận',
             dataIndex: 'customerName',
             key: 'customerName',
-            render: (_, record) => <p>{record.customers.customerName}</p>,
+            render: (_, record) => <p className={cx('text')}>{record.customers.customerName}</p>,
             width: '25%',
         },
         {
@@ -125,7 +125,7 @@ const ReleaseProductPage = () => {
             key: 'status',
             render: (index, record) => (
                 <div className={cx('status-proposal')}>
-                    <p>{formatStatusOrderRelease[record.status]}</p>
+                    <p className={cx('text')}>{formatStatusOrderRelease[record.status]}</p>
                 </div>
             ),
             width: '20%',

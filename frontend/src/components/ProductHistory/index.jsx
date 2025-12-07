@@ -2,13 +2,10 @@ import React, { useEffect, useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ProductHistory.module.scss';
 import Modal from '../Modal';
-import Button from '../Button';
-import toast from 'react-hot-toast';
-import { ModalUpdate } from '@/components';
+import { MyTable } from '@/components';
 import { getLogByProductID } from '../../services/productquantitylog.service';
 import { typeTransaction } from '../../constants';
 import { convertDateVN } from '../../common';
-import { Pagination } from 'antd';
 
 const cx = classNames.bind(styles);
 
@@ -16,13 +13,12 @@ const ProductHistory = ({ data, onClose }) => {
     const [logs, setLogs] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
+
     useEffect(() => {
         const fecthData = async () => {
             const res = await getLogByProductID({ productID: data, page: currentPage });
 
             if (res.data?.status === 'OK') {
-                console.log(res.data);
-
                 setLogs(res.data.data);
                 setTotalPages(res.data.pagination.totalPages);
             }
@@ -30,54 +26,78 @@ const ProductHistory = ({ data, onClose }) => {
         fecthData();
     }, [currentPage]);
 
+    const columns = [
+        {
+            title: 'STT',
+            key: 'index',
+            render: (_, __, index) => index + 1,
+            width: 60,
+            align: 'center',
+        },
+        {
+            title: 'Loại giao dịch',
+            dataIndex: 'actionType',
+            key: 'actionType',
+            render: (text) => typeTransaction[text],
+        },
+        {
+            title: 'Số lượng trước',
+            dataIndex: 'previousAmount',
+            key: 'previousAmount',
+            align: 'right',
+        },
+        {
+            title: 'Số lượng sau',
+            dataIndex: 'newAmount',
+            key: 'newAmount',
+            align: 'right',
+        },
+        {
+            title: 'Số lượng thay đổi',
+            dataIndex: 'quantityChange',
+            key: 'quantityChange',
+            align: 'right',
+        },
+        {
+            title: 'Mã giao dịch',
+            dataIndex: 'referenceID',
+            key: 'referenceID',
+        },
+        {
+            title: 'Ngày giao dịch',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            render: (text) => convertDateVN(text),
+        },
+        {
+            title: 'Người tạo giao dịch',
+            dataIndex: 'employeeName',
+            key: 'employeeName',
+        },
+        {
+            title: 'Ghi chú',
+            dataIndex: 'note',
+            key: 'note',
+        },
+    ];
+
     return (
         <Modal showButtonClose={false} isOpenInfo={true} onClose={onClose}>
             <div className={cx('wrapper')}>
                 <div className={cx('header')}>
                     <h2>Lịch sử thay đổi số lượng sản phẩm</h2>
                 </div>
-                <table className={cx('table')}>
-                    <thead>
-                        <tr>
-                            <th className={cx('stt')}>STT</th>
-                            <th className={cx('productName')}>Loại giao dịch</th>
-                            <th className={cx('productAmount')}>Số lượng trước</th>
-                            <th className={cx('productAmount')}>Số lượng sau</th>
-                            <th className={cx('productAmount')}>Số lượng thay đổi</th>
-                            <th className={cx('unit')}>Mã giao dịch</th>
-                            <th className={cx('unit')}>Ngày giao dịch</th>
-                            <th className={cx('unit')}>Người tạo giao dịch</th>
-                            <th className={cx('note')}>Ghi chú</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {logs.map((item, index) => (
-                            <tr key={index}>
-                                <td>{index + 1}</td>
-                                <td className={cx('stt')}>{typeTransaction[item.actionType]}</td>
-                                <td className={cx('productAmount')}>{item.previousAmount}</td>
-                                <td className={cx('productAmount')}>{item.newAmount}</td>
-                                <td className={cx('productAmount')}>{item.quantityChange}</td>
-                                <td className={cx('unit')}>{item.referenceID}</td>
-                                <td className={cx('unit')}>{convertDateVN(item.createdAt)}</td>
-                                <td className={cx('unit')}>{item.employeeName}</td>
-                                <td className={cx('note')}>{item.note}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {/* Pagination riêng của Ant Design */}
-                <div className={cx('pagination-wrapper')}>
-                    <Pagination
-                        className={cx('pagination')}
-                        current={currentPage}
-                        pageSize={5}
-                        total={totalPages * 5}
-                        onChange={(page) => {
-                            setCurrentPage(page);
-                        }}
-                    />
-                </div>
+                <MyTable
+                    columns={columns}
+                    data={logs}
+                    pagination
+                    pageSize={5}
+                    currentPage={currentPage}
+                    onChangePage={(page) => setCurrentPage(page)}
+                    total={totalPages * 5}
+                    rowKey={(record, index) => index}
+                    className={'success'}
+                />
             </div>
         </Modal>
     );

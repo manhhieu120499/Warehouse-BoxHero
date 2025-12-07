@@ -41,14 +41,14 @@ const ImportProduct = () => {
             title: 'Ngày tạo',
             dataIndex: 'createdAt',
             key: 'createdAt',
-            render: (_, record) => <p>{record?.createdAt?.slice(0, 10)}</p>,
+            render: (_, record) => <p className={cx('text')}>{record?.createdAt?.slice(0, 10)}</p>,
         },
         {
             title: 'Nhân viên lập phiếu',
             dataIndex: 'employeeIDCreate',
             key: 'employeeIDCreate',
             render: (_, record) => {
-                return <p>{record?.employee?.employeeName}</p>;
+                return <p className={cx('text')}>{record?.employee?.employeeName}</p>;
             },
         },
         {
@@ -58,7 +58,7 @@ const ImportProduct = () => {
             render: (index, record) => {
                 return (
                     <div className={cx('status-proposal')}>
-                        <p>{formatStatusOrderPurchase[record.status]}</p>
+                        <p className={cx('text')}>{formatStatusOrderPurchase[record.status]}</p>
                     </div>
                 );
             },
@@ -68,7 +68,7 @@ const ImportProduct = () => {
             dataIndex: 'type',
             key: 'type',
             render: (index, record) => {
-                return <p>{formatTypeOrderPurchase[record.type]}</p>;
+                return <p className={cx('text')}>{formatTypeOrderPurchase[record.type]}</p>;
             },
         },
         {

@@ -5,7 +5,7 @@ import { Image, Button, ModalCreateAccount, ModalEmployee, ModelFilter, Modal } 
 import { MyTable } from '@/components';
 import globalStyle from '../../components/GlobalStyle/GlobalStyle.module.scss';
 import Tippy from '@tippyjs/react';
-import { Eye } from 'lucide-react';
+import { Eye, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatRole, styleMessage } from '../../constants';
 import request, { post } from '../../utils/httpRequest';
@@ -13,83 +13,10 @@ import { uploadImage } from '../../utils/uploadImage';
 import { validateEmployeeData } from '../../utils/validate';
 import EmployeeDTO from '../../dtos/EmployeeDTO';
 import { ModalReadEmployee } from '../../components';
+import { useSelector } from 'react-redux';
 
 const cx = classNames.bind(styles);
 const cxGlobal = classNames.bind(globalStyle);
-const tableColumns = [
-    {
-        title: 'Mã nhân viên',
-        dataIndex: 'empId',
-        key: 'empId',
-    },
-    {
-        title: 'Tên nhân viên',
-        dataIndex: 'empName',
-        key: 'empName',
-    },
-    // {
-    //     title: 'CCCD',
-    //     dataIndex: 'empCCCD',
-    //     key: 'empCCCD',
-    // },
-    {
-        title: 'Ngày sinh',
-        dataIndex: 'empDob',
-        key: 'empDob',
-    },
-    {
-        title: 'Giới tính',
-        dataIndex: 'gender',
-        key: 'gender',
-    },
-    {
-        title: 'Số điện thoại',
-        dataIndex: 'empPhone',
-        key: 'empPhone',
-    },
-    // {
-    //     title: 'Địa chỉ',
-    //     dataIndex: 'empAddress',
-    //     key: 'empAddress',
-    // },
-    {
-        title: 'Ngày vào làm',
-        dataIndex: 'empStartDate',
-        key: 'empStartDate',
-    },
-    {
-        title: 'Mã kho',
-        dataIndex: 'warehouseId',
-        key: 'warehouseId',
-    },
-    // {
-    //     title: 'Chức vụ',
-    //     dataIndex: 'empRole',
-    //     key: 'empRole',
-    //     render: (_, record) => <p>{record.empRole.map((item) => formatRole[item.roleName]).join(',')}</p>,
-    // },
-    {
-        title: 'Trạng thái',
-        dataIndex: 'empStatus',
-        key: 'empStatus',
-    },
-    // {
-    //     title: 'Thao tác',
-    //     dataIndex: 'action',
-    //     key: 'action',
-    //     render: (_, record) => {
-    //         return (
-    //             <div className={cxGlobal('action-table')}>
-    //                 <Tippy content={'Xem lịch sử hoạt động'} placement="bottom-end">
-    //                     <button className={cxGlobal('action-table-icon')} onClick={() => console.log(record.empId)}>
-    //                         <Eye size={20} />
-    //                     </button>
-    //                 </Tippy>
-    //             </div>
-    //         );
-    //     },
-    // },
-];
 
 const dataSource = [
     {
@@ -196,12 +123,13 @@ const resetData = {
 };
 
 const AuthPage = () => {
-    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState(null);
     const [action, setAction] = useState({
         add: false,
         update: false,
         createAccount: false,
     });
+    const warehouse = useSelector((state) => state.WareHouseSlice.warehouse);
 
     const [empData, setEmpData] = useState(resetData);
     const [showModalAccount, setShowModalAccount] = useState(false);
@@ -238,6 +166,88 @@ const AuthPage = () => {
         // },
     ];
 
+    //table columns
+    const tableColumns = [
+        {
+            title: 'Mã nhân viên',
+            dataIndex: 'empId',
+            key: 'empId',
+        },
+        {
+            title: 'Tên nhân viên',
+            dataIndex: 'empName',
+            key: 'empName',
+        },
+        // {
+        //     title: 'CCCD',
+        //     dataIndex: 'empCCCD',
+        //     key: 'empCCCD',
+        // },
+        {
+            title: 'Ngày sinh',
+            dataIndex: 'empDob',
+            key: 'empDob',
+        },
+        {
+            title: 'Giới tính',
+            dataIndex: 'gender',
+            key: 'gender',
+        },
+        {
+            title: 'Số điện thoại',
+            dataIndex: 'empPhone',
+            key: 'empPhone',
+        },
+        // {
+        //     title: 'Địa chỉ',
+        //     dataIndex: 'empAddress',
+        //     key: 'empAddress',
+        // },
+        {
+            title: 'Ngày vào làm',
+            dataIndex: 'empStartDate',
+            key: 'empStartDate',
+        },
+        {
+            title: 'Mã kho',
+            dataIndex: 'warehouseId',
+            key: 'warehouseId',
+        },
+        // {
+        //     title: 'Chức vụ',
+        //     dataIndex: 'empRole',
+        //     key: 'empRole',
+        //     render: (_, record) => <p>{record.empRole.map((item) => formatRole[item.roleName]).join(',')}</p>,
+        // },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'empStatus',
+            key: 'empStatus',
+        },
+        {
+            title: 'Thao tác',
+            dataIndex: 'action',
+            key: 'action',
+            render: (_, record) => {
+                return (
+                    <div className={cxGlobal('action-table')}>
+                        <Tippy content={'Chỉnh sữa'} placement="bottom-end">
+                            <button
+                                className={cxGlobal('action-table-icon')}
+                                onClick={() => {
+                                    setSelectedRowKeys(record.empId);
+                                    console.log(record.empId);
+                                }}
+                            >
+                                <Pencil size={20} />
+                            </button>
+                        </Tippy>
+                    </div>
+                );
+            },
+        },
+    ];
+
     // select box for model filter search
     const selectBoxFilter = [
         {
@@ -271,19 +281,19 @@ const AuthPage = () => {
         }
     }, [selectedRowKeys]);
 
-    const rowSelection = {
-        type: 'radio',
-        selectedRowKeys,
-        onChange: (newSelectedRowKeys) => {
-            setSelectedRowKeys(newSelectedRowKeys);
-            setAction((prev) => ({
-                add: false,
-                update: true,
-                createAccount: false,
-            }));
-            window.scrollTo(top);
-        },
-    };
+    // const rowSelection = {
+    //     type: 'radio',
+    //     selectedRowKeys,
+    //     onChange: (newSelectedRowKeys) => {
+    //         setSelectedRowKeys(newSelectedRowKeys);
+    //         setAction((prev) => ({
+    //             add: false,
+    //             update: true,
+    //             createAccount: false,
+    //         }));
+    //         window.scrollTo(top);
+    //     },
+    // };
 
     const handleAddEmployee = async () => {
         if (!statusCreateAccount) {
@@ -313,14 +323,15 @@ const AuthPage = () => {
                 startDate: empData.empStartDate,
                 endDate: null,
                 roles: empData.empRole,
-                warehouseID: empData.warehouseId,
+                warehouseID: warehouse.warehouseID,
             };
+            console.log('warehouse', empData);
             //call api thêm nhân viên
             const response = await request.post('/api/account/sign-up', requestData, {
                 headers: {
                     token: `Beare ${token.accessToken}`,
                     employeeid: token.employeeID,
-                    warehouseid: requestData.warehouseID,
+                    warehouseid: warehouse.warehouseID,
                 },
             });
             toast.success('Thêm nhân viên mới thành công', styleMessage);
@@ -346,7 +357,7 @@ const AuthPage = () => {
 
     const handleCloseModal = (key, value) => {
         if (key === 'update') {
-            setSelectedRowKeys((prev) => []);
+            setSelectedRowKeys(null);
         }
         setAction((prev) => ({ ...prev, [key]: value }));
         setTimeout(() => {
@@ -355,10 +366,14 @@ const AuthPage = () => {
     };
 
     useEffect(() => {
-        if (selectedRowKeys.length > 0) {
-            console.log(selectedRowKeys);
-            setEmpData(employeeList.find((item) => item.empId == selectedRowKeys));
-        }
+        if (!selectedRowKeys) return;
+
+        setEmpData(employeeList.find((item) => item.empId == selectedRowKeys));
+        setAction((prev) => ({
+            add: false,
+            update: true,
+            createAccount: false,
+        }));
     }, [selectedRowKeys]);
 
     const handleUpdateEmployee = async () => {
@@ -390,14 +405,14 @@ const AuthPage = () => {
                 startDate: empData.empStartDate,
                 endDate: empData.empStatus == 'Nghỉ việc' ? empData.empEndDate : null,
                 roles: empData.empRole,
-                warehouseID: empData.warehouseId,
+                warehouseID: warehouse.warehouseID,
             };
             //call api thêm nhân viên
             const response = await request.put('/api/employee/update', requestData, {
                 headers: {
                     token: `Beare ${token.accessToken}`,
                     employeeid: token.employeeID,
-                    warehouseid: requestData.warehouseID,
+                    warehouseid: warehouse.warehouseID,
                 },
             });
             toast.success('Cập nhật nhân viên thành công', styleMessage);
@@ -514,7 +529,7 @@ const AuthPage = () => {
                     action={'add'}
                 />
             )}
-            {action.update && employeeSelected.empStatus != 'Nghỉ việc' ? (
+            {action.update && employeeSelected?.empStatus != 'Nghỉ việc' ? (
                 <ModalEmployee
                     isOpenInfo={true}
                     arrButton={[
@@ -555,12 +570,12 @@ const AuthPage = () => {
 
             <h1>Danh sách nhân viên</h1>
             <MyTable
-                rowSelection={rowSelection}
+                //rowSelection={rowSelection}
                 data={employeeList}
                 columns={tableColumns}
                 pageSize={4}
                 pagination
-                className={cx('my-table-employee')}
+                //className={cx('my-table-employee')}
                 currentPage={currentPageEmployee}
                 onChangePage={onChangeEmployeeTable}
             ></MyTable>

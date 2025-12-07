@@ -64,7 +64,7 @@ const CustomerPage = () => {
             key: 'transactionHistory',
             width: '10%',
             ellipsis: true,
-            className: cx('transaction-history'),
+            //className: cx('transaction-history'),
             render: (_, record) => {
                 return (
                     <div className={cxGlobal('action-table')}>

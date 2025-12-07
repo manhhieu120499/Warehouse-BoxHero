@@ -189,7 +189,7 @@ const ProductDetail = ({ data, classname, onClose }) => {
                         <MyTable
                             columns={tableColumns}
                             data={data.listBatch.length > 0 ? data.listBatch : []}
-                            className={cx('my-table')}
+                            //className={cx('my-table')}
                             pagination
                             pageSize={3}
                             onChangePage={handleOnChange}

@@ -1,5 +1,28 @@
 .wrapper-check {
-    width: 100%;
+    width: 85vw;
+
+    &.print {
+        width: 100%;
+        padding: 0 20px;
+
+        .tableWrap {
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        .container-check {
+            overflow: visible !important;
+        }
+
+        :global {
+            .ant-table-thead > tr > th::before {
+                display: none !important;
+            }
+            .ant-table-cell {
+                border: none !important;
+            }
+        }
+    }
 }
 
 .container-check {

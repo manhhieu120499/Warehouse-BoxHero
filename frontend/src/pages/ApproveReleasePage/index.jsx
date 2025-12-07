@@ -5,9 +5,10 @@ import { Button, ModelFilter, MyTable, PaginationUI } from '../../components';
 import { Eye, PlusIcon } from 'lucide-react';
 import ModalCreateApproveRelease from './ModalCreateApproveRelease';
 import { getAllOrderReleaseProposal, getOrderReleaseProposal } from '../../services/proposal.service';
-import { convertDateVN } from '../../common';
+import { authIsAdmin, convertDateVN } from '../../common';
 import ProposalStatus from '../../components/ProposalStatus';
 import Tippy from '@tippyjs/react';
+import { useSelector } from 'react-redux';
 
 const cx = classNames.bind(styles);
 
@@ -24,6 +25,8 @@ const ApproveReleasePage = () => {
         status: 'PENDING',
     });
     const [totalPage, setTotalPage] = useState(0);
+    const employee = useSelector((state) => state.AuthSlice.user);
+
     const columnsFilter = [
         {
             label: 'Mã phiếu đề xuất',
@@ -76,21 +79,21 @@ const ApproveReleasePage = () => {
             dataIndex: 'createdAt',
             key: 'createdAt',
             width: '20%',
-            render: (text) => <p>{convertDateVN(text)}</p>,
+            render: (text) => <p className={cx('text')}>{convertDateVN(text)}</p>,
         },
         {
             title: 'Người tạo',
             dataIndex: 'employeeName',
             key: 'employeeName',
             width: '20%',
-            render: (_, record) => <p>{record?.creator?.employeeName}</p>,
+            render: (_, record) => <p className={cx('text')}>{record?.creator?.employeeName}</p>,
         },
         {
             title: 'Tên kho',
             dataIndex: 'warehouseName',
             key: 'warehouseName',
             width: '17%',
-            render: (_, record) => <p>{record?.warehouse?.warehouseName}</p>,
+            render: (_, record) => <p className={cx('text')}>{record?.warehouse?.warehouseName}</p>,
         },
         {
             title: 'Trạng thái',
@@ -185,9 +188,13 @@ const ApproveReleasePage = () => {
                 handleSubmitFilter={handleSubmitFilter}
                 selectInput={selectFilter}
             >
-                <Button primary medium onClick={() => setIsCreate(true)} leftIcon={<PlusIcon size={20} />}>
-                    <span>Tạo phiếu đề xuất xuất</span>
-                </Button>
+                {authIsAdmin(employee) ? (
+                    <Button primary medium onClick={() => setIsCreate(true)} leftIcon={<PlusIcon size={20} />}>
+                        <span>Tạo phiếu đề xuất xuất</span>
+                    </Button>
+                ) : (
+                    <></>
+                )}
             </ModelFilter>
 
             <div className={cx('content')}>

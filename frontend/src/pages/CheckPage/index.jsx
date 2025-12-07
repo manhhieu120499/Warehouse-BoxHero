@@ -66,14 +66,14 @@ const ImportProduct = () => {
             title: 'Ngày tạo',
             dataIndex: 'createdAt',
             key: 'createdAt',
-            render: (_, record) => <p>{record?.createdAt?.slice(0, 10)}</p>,
+            render: (_, record) => <p className={cx('text')}>{record?.createdAt?.slice(0, 10)}</p>,
         },
         {
             title: 'Nhân viên lập phiếu',
             dataIndex: 'employeeIDCreate',
             key: 'employeeIDCreate',
             render: (_, record) => {
-                return <p>{record?.employee?.employeeName}</p>;
+                return <p className={cx('text')}>{record?.employee?.employeeName}</p>;
             },
         },
         {
@@ -84,7 +84,7 @@ const ImportProduct = () => {
                 return (
                     <div className={cx('status-proposal')}>
                         <div className={cx('status-indicator', record.status)}></div>
-                        <p>{formatStatusInventoryCheck[record.status]}</p>
+                        <p className={cx('text')}>{formatStatusInventoryCheck[record.status]}</p>
                     </div>
                 );
             },
@@ -97,7 +97,9 @@ const ImportProduct = () => {
                 return (
                     <div className={cx('status-proposal')}>
                         <div className={cx('status-indicator', record.checkStatus)}></div>
-                        <p>{formatStatusOrderPurchaseMissingInventoryCheck[record.checkStatus] || 'Chưa có'}</p>
+                        <p className={cx('text')}>
+                            {formatStatusOrderPurchaseMissingInventoryCheck[record.checkStatus] || 'Chưa có'}
+                        </p>
                     </div>
                 );
             },

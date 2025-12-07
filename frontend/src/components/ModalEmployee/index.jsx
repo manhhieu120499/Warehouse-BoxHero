@@ -59,7 +59,7 @@ const ModalEmployee = ({
     const [listWarehouseId, setListWarehouseId] = useState(['K01', 'K02', 'K03']);
     const [viewDetailRole, setViewDetailRole] = useState(false);
     //const [listRoleUser, setListRoleUser] = useState([]);
-    const listRoleUser = data.empRole || [];
+    const listRoleUser = data?.empRole || [];
     const currentUser = useSelector((state) => state.AuthSlice.user);
     const warehouse = useSelector((state) => state.WareHouseSlice.warehouse);
 

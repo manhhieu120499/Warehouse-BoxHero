@@ -704,7 +704,7 @@ const SupplierPage = () => {
                 <div className={cx('wrapper-product-supplier')}>
                     <h1 className={cx('title')}>Danh sách sản phẩm thuộc về nhà cung cấp</h1>
                     <MyTable
-                        className={cx('product-supplier-table')}
+                        //className={cx('product-supplier-table')}
                         columns={columnsProduct}
                         data={productData}
                         pageSize={productPageSize}
