@@ -408,14 +408,14 @@ class OrderPurchaseService {
                         orderPurchaseDetail.requestedQuantity > orderPurchaseDetail.actualQuantity
                     ) {
                         // create new batch suggest for order purchase missing detail
-                        const batchMaxLength = await Batch.findAll({
+                        const batchMax = await Batch.findOne({
                             attributes: ['batchID'],
-                            order: [['batchID', 'DESC']],
+                            order: [[Sequelize.literal('CAST(SUBSTRING(batchID, 2) AS UNSIGNED)'), 'DESC']],
                             limit: 1,
                             transaction,
                         });
 
-                        let maxNumber = parseInt(batchMaxLength[0].batchID ? batchMaxLength[0].batchID.slice(1) : 0);
+                        let maxNumber = parseInt(batchMax.batchID ? batchMax.batchID.slice(1) : 0);
                         const batchID = generateBatchID('B', maxNumber + 1);
 
                         const qrCode = await generateQRURL(batchID);

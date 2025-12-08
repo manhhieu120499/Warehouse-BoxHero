@@ -1,6 +1,6 @@
 const dotenv = require('dotenv');
 const db = require('../../models');
-const { Op, fn, col, where, literal } = require('sequelize');
+const { Op, fn, col, where, literal, Sequelize } = require('sequelize');
 const { generateBatchID, generateQRURL } = require('../common');
 const Proposal = db.Proposal;
 const Employee = db.Employee;
@@ -83,14 +83,14 @@ class ProposalService {
                 let message = '';
                 if (data.status === 'APPROVED') {
                     message = 'Đề xuất đã được phê duyệt';
-                    const batchMaxLength = await Batch.findAll({
+                    const batchMax = await Batch.findOne({
                         attributes: ['batchID'],
-                        order: [['batchID', 'DESC']],
+                        order: [[Sequelize.literal('CAST(SUBSTRING(batchID, 2) AS UNSIGNED)'), 'DESC']],
                         limit: 1,
                         transaction,
                     });
 
-                    let maxNumber = parseInt(batchMaxLength[0].batchID ? batchMaxLength[0].batchID.slice(1) : 0);
+                    let maxNumber = parseInt(batchMax.batchID ? batchMax.batchID.slice(1) : 0);
 
                     // update batchID for proposal detail
                     for (let index = 0; index < proposalDetails.length; index++) {
