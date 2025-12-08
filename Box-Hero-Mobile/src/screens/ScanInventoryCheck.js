@@ -47,7 +47,7 @@ export default function ScanInventoryCheck() {
                     existingBatch.systemQty += detail.systemQuantity;
                 } else {
                     boxMap[boxId].batches.push({
-                        detailId: detail._id, // Keep track of detail ID if needed
+                        detailId: detail.inventoryCheckDetailID, // Keep track of detail ID if needed
                         batchId: batch?.batchID,
                         productName: batch?.product?.productName,
                         unit: batch?.unit?.unitName,
@@ -129,7 +129,7 @@ export default function ScanInventoryCheck() {
                         // Update ref
                         if (inventoryCheckDetailRef.current?.details) {
                             const detailIndex = inventoryCheckDetailRef.current.details.findIndex(
-                                (d) => d._id === batch.detailId,
+                                (d) => d.inventoryCheckDetailID === batch.detailId,
                             );
                             if (detailIndex !== -1) {
                                 inventoryCheckDetailRef.current.details[detailIndex].actualQuantity = batch.actualQty;
@@ -176,7 +176,7 @@ export default function ScanInventoryCheck() {
                             // Update ref
                             if (inventoryCheckDetailRef.current?.details) {
                                 const detailIndex = inventoryCheckDetailRef.current.details.findIndex(
-                                    (d) => d._id === batch.detailId,
+                                    (d) => d.inventoryCheckDetailID === batch.detailId,
                                 );
                                 if (detailIndex !== -1) {
                                     inventoryCheckDetailRef.current.details[detailIndex].actualQuantity = 0;

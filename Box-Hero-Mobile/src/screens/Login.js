@@ -138,7 +138,7 @@ export default function Login() {
     const dispatch = useDispatch();
 
     const [user, setUser] = useState({
-        userName: '123@gmail.com',
+        userName: 'employee@gmail.com',
         password: '123456',
     });
 
@@ -175,54 +175,56 @@ export default function Login() {
     };
 
     return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+        <View style={styles.container}>
             <View style={styles.headerBackground} />
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                <View style={styles.logoContainer}>
-                    <Image source={require('../../assets/logo_v2.jpg')} style={styles.logo} />
-                    <Text style={styles.welcomeText}>Welcome Back!</Text>
-                    <Text style={styles.subText}>Đăng nhập để tiếp tục</Text>
-                </View>
-
-                <View style={styles.formContainer}>
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Email</Text>
-                        <View style={styles.inputWrapper}>
-                            <Feather name="user" size={20} color="#9ca3af" style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Nhập email"
-                                placeholderTextColor="#9ca3af"
-                                value={user.userName}
-                                onChangeText={(text) => handleOnChange('userName', text)}
-                                autoCapitalize="none"
-                            />
-                        </View>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    <View style={styles.logoContainer}>
+                        <Image source={require('../../assets/logo_v2.jpg')} style={styles.logo} />
+                        <Text style={styles.welcomeText}>Welcome Back!</Text>
+                        <Text style={styles.subText}>Đăng nhập để tiếp tục</Text>
                     </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Mật khẩu</Text>
-                        <View style={styles.inputWrapper}>
-                            <Feather name="lock" size={20} color="#9ca3af" style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Nhập mật khẩu"
-                                placeholderTextColor="#9ca3af"
-                                secureTextEntry={!showPassword}
-                                value={user.password}
-                                onChangeText={(text) => handleOnChange('password', text)}
-                            />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.iconEye}>
-                                <Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color="#9ca3af" />
-                            </TouchableOpacity>
+                    <View style={styles.formContainer}>
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Email</Text>
+                            <View style={styles.inputWrapper}>
+                                <Feather name="user" size={20} color="#9ca3af" style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Nhập email"
+                                    placeholderTextColor="#9ca3af"
+                                    value={user.userName}
+                                    onChangeText={(text) => handleOnChange('userName', text)}
+                                    autoCapitalize="none"
+                                />
+                            </View>
                         </View>
-                    </View>
 
-                    <TouchableOpacity style={styles.loginButton} onPress={() => handleLogin(user)}>
-                        <Text style={styles.loginButtonText}>Đăng nhập</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Mật khẩu</Text>
+                            <View style={styles.inputWrapper}>
+                                <Feather name="lock" size={20} color="#9ca3af" style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Nhập mật khẩu"
+                                    placeholderTextColor="#9ca3af"
+                                    secureTextEntry={!showPassword}
+                                    value={user.password}
+                                    onChangeText={(text) => handleOnChange('password', text)}
+                                />
+                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.iconEye}>
+                                    <Feather name={showPassword ? 'eye-off' : 'eye'} size={20} color="#9ca3af" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <TouchableOpacity style={styles.loginButton} onPress={() => handleLogin(user)}>
+                            <Text style={styles.loginButtonText}>Đăng nhập</Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </View>
     );
 }
