@@ -18,6 +18,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { DefaultLayout } from '../layouts';
 import Header from '../layouts/Header';
+import { useNavigation } from '@react-navigation/native';
 
 const ChatAssistant = () => {
     const [messages, setMessages] = useState([]);
@@ -39,6 +40,24 @@ const ChatAssistant = () => {
 
         initUser();
     }, []);
+
+    const navigation = useNavigation();
+
+    const handleAction = (payload) => {
+        const { tag, ...restPayload } = payload;
+        switch (tag) {
+            case 'VIEW_DETAIL_PRODUCT':
+                const { product_code } = restPayload;
+                navigation.navigate('Product', { productID: product_code });
+                break;
+            case 'VIEW_NEWLY_PROPOSAL':
+                const { proposalID } = restPayload;
+                navigation.navigate('CreateImportRequest', { proposalData: { proposalID } });
+                break;
+            default:
+                break;
+        }
+    };
 
     const handleSubmitInput = async (value) => {
         const textToSend = value || inputText;
@@ -74,6 +93,20 @@ const ChatAssistant = () => {
                                 key={index}
                                 style={styles.optionButton}
                                 onPress={() => handleSubmitInput(btn.value)}
+                            >
+                                <Text style={styles.optionButtonText}>{btn.label}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                )}
+
+                {item.type === 'actions' && (
+                    <View style={styles.buttonGroup}>
+                        {item.actions.map((btn, index) => (
+                            <TouchableOpacity
+                                key={index}
+                                style={styles.optionButton}
+                                onPress={() => handleAction(btn.payload)}
                             >
                                 <Text style={styles.optionButtonText}>{btn.label}</Text>
                             </TouchableOpacity>

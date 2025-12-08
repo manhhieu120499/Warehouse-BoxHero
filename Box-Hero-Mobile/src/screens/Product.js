@@ -10,7 +10,7 @@ import {
     Modal,
     ScrollView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { formatStatusProduct } from '../constants';
 import { DefaultLayout } from '../layouts';
@@ -66,6 +66,16 @@ export default function Product() {
     const [showFilter, setShowFilter] = useState(false);
 
     const navigation = useNavigation();
+    const route = useRoute();
+
+    // Handle navigation from other screens (e.g. Chat)
+    useEffect(() => {
+        if (route.params?.productID) {
+            setOpenModalDetail(route.params.productID);
+            // Optional: reset params so it doesn't reopen if we navigate back/forth without intent
+            // navigation.setParams({ productID: null });
+        }
+    }, [route.params?.productID]);
 
     // Mock data - thay bằng API call thực tế
     useEffect(() => {
