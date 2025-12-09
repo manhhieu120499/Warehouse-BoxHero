@@ -257,15 +257,6 @@ export default function ProposalRelease() {
                     />
                 )}
 
-                <TouchableOpacity
-                    style={styles.fab}
-                    onPress={() => {
-                        navigation.navigate('CreateExportRequest');
-                    }}
-                >
-                    <Ionicons name="add" size={30} color="#fff" />
-                </TouchableOpacity>
-
                 {/* Pagination */}
                 {!loading && proposals.length > 0 && (
                     <View style={styles.paginationContainer}>
@@ -403,23 +394,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f3f4f6',
         padding: 16,
     },
-    fab: {
-        position: 'absolute',
-        bottom: 80,
-        right: 20,
-        backgroundColor: '#2563eb',
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        zIndex: 100,
-    },
+
     listContent: {
         paddingBottom: 80,
     },

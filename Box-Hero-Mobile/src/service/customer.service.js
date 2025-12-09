@@ -63,3 +63,13 @@ export const fetchListHistoryOrderCustomer = async (customerID, page = 1) => {
         return err;
     }
 };
+
+export const getCustomerNotPagination = async () => {
+    try {
+        const res = await request.get(`/customer/list-not-pagination`);
+        return res?.data || [];
+    } catch (err) {
+        console.log(err);
+        return err;
+    }
+};

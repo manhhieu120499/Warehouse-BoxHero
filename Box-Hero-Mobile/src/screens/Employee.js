@@ -32,7 +32,12 @@ export default function Employee() {
     const [refreshing, setRefreshing] = useState(false);
     const [searchId, setSearchId] = useState('');
     const [searchPhone, setSearchPhone] = useState('');
-    const [statusFilter, setStatusFilter] = useState('ACTIVE');
+    const [activeTab, setActiveTab] = useState('ACTIVE');
+
+    const tabs = [
+        { key: 'ACTIVE', title: 'Đang làm việc' },
+        { key: 'INACTIVE', title: 'Nghỉ việc' },
+    ];
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -45,11 +50,6 @@ export default function Employee() {
     const [showFilter, setShowFilter] = useState(false);
 
     const [selectedEmployee, setSelectedEmployee] = useState(null);
-    // Dropdown data
-    const statusData = [
-        { label: 'Đang làm', value: 'ACTIVE' },
-        { label: 'Đã nghỉ', value: 'INACTIVE' },
-    ];
 
     // Mock data - Replace with actual API call
     // const mockEmployees = [
@@ -98,12 +98,13 @@ export default function Employee() {
         setRefreshing(false);
     };
 
-    const handleSearch = async (page = 1) => {
+    const handleSearch = async (page = 1, statusOverride = null) => {
         try {
+            const status = statusOverride !== null ? statusOverride : activeTab;
             const res = await searchEmployee({
                 employeeID: searchId,
                 phoneNumber: searchPhone,
-                status: statusFilter,
+                status: status,
                 page,
             });
             setShowFilter(false);
@@ -134,7 +135,7 @@ export default function Employee() {
     const handleReset = async () => {
         setSearchId('');
         setSearchPhone('');
-        setStatusFilter('ACTIVE');
+        setActiveTab('ACTIVE');
 
         // Reset search immediately with default values
         try {
@@ -144,9 +145,6 @@ export default function Employee() {
                 status: 'ACTIVE',
                 page: 1,
             });
-            // ... (rest of the logic is similar to handleSearch but we can just call handleSearch with new values if we updated state, but state update is async)
-            // Better to just call the API directly here or use a useEffect dependency if we want to trigger it.
-            // For simplicity, let's just update state and call handleSearch with explicit values
             const formatDataFilter = res.employeeFilter.map((it) => ({
                 id: it.employeeID,
                 name: it.employeeName,
@@ -254,6 +252,23 @@ export default function Employee() {
                     </TouchableOpacity>
                 }
             />
+            <View style={styles.tabContainer}>
+                {tabs.map((tab) => (
+                    <TouchableOpacity
+                        key={tab.key}
+                        style={[styles.tabItem, activeTab === tab.key && styles.activeTabItem]}
+                        onPress={() => {
+                            setActiveTab(tab.key);
+                            setCurrentPage(1);
+                            handleSearch(1, tab.key);
+                        }}
+                    >
+                        <Text style={[styles.tabTitle, activeTab === tab.key && styles.activeTabTitle]}>
+                            {tab.title}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
             <View style={styles.container}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -419,31 +434,6 @@ export default function Employee() {
                                         value={searchPhone}
                                         onChangeText={setSearchPhone}
                                         keyboardType="phone-pad"
-                                    />
-                                </View>
-
-                                <View style={styles.inputGroup}>
-                                    <Text style={styles.inputLabel}>Trạng thái làm việc</Text>
-                                    <Dropdown
-                                        style={styles.dropdown}
-                                        placeholderStyle={styles.dropdownPlaceholder}
-                                        selectedTextStyle={styles.dropdownSelectedText}
-                                        iconStyle={styles.dropdownIcon}
-                                        data={statusData}
-                                        maxHeight={300}
-                                        labelField="label"
-                                        valueField="value"
-                                        placeholder="Chọn trạng thái"
-                                        value={statusFilter}
-                                        onChange={(item) => setStatusFilter(item.value)}
-                                        renderLeftIcon={() => (
-                                            <Ionicons
-                                                name="briefcase-outline"
-                                                size={18}
-                                                color="#6b7280"
-                                                style={{ marginRight: 8 }}
-                                            />
-                                        )}
                                     />
                                 </View>
                             </View>
@@ -836,6 +826,34 @@ const styles = StyleSheet.create({
     },
     applyButtonText: {
         color: 'white',
+        fontWeight: '600',
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+        gap: 8,
+    },
+    tabItem: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#f3f4f6',
+    },
+    activeTabItem: {
+        backgroundColor: '#2563eb',
+    },
+    tabTitle: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#4b5563',
+    },
+    activeTabTitle: {
+        color: '#fff',
         fontWeight: '600',
     },
 });

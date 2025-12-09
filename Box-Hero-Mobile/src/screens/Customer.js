@@ -19,6 +19,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ChevronLeft, Filter, X, ChevronRight } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { filterCustomer, getAllCustomer } from '../service/customer.service';
+import CustomerHistoryTransaction from '../components/partials/CustomerComponents/CustomerHistoryTransaction';
 
 export default function Customer() {
     const navigation = useNavigation();
@@ -27,6 +28,8 @@ export default function Customer() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [showFilter, setShowFilter] = useState(false);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
 
     // Search filters
     const [filters, setFilters] = useState({
@@ -93,7 +96,9 @@ export default function Customer() {
     };
 
     const handleViewHistory = (customer) => {
-        console.log('View history for:', customer.customerID);
+        console.log('customer', customer);
+        setSelectedCustomer(customer);
+        setShowHistoryModal(true);
     };
 
     const renderCustomerCard = ({ item }) => (
@@ -252,6 +257,15 @@ export default function Customer() {
                     </View>
                 </View>
             </Modal>
+
+            {/* History Modal */}
+            {showHistoryModal && (
+                <CustomerHistoryTransaction
+                    visible={showHistoryModal}
+                    onClose={() => setShowHistoryModal(false)}
+                    customer={selectedCustomer}
+                />
+            )}
         </DefaultLayout>
     );
 }

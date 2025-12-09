@@ -20,7 +20,7 @@ import { getProductById, getProductCanExportById } from '../service/product.serv
 import parseToken from '../utilities/parseToken';
 import { useSelector } from 'react-redux';
 import { Dropdown } from 'react-native-element-dropdown';
-import { getAllCustomer } from '../service/customer.service';
+import { getAllCustomer, getCustomerNotPagination } from '../service/customer.service';
 import { createOrderReleaseProposal, updateStatusOrderReleaseProposal } from '../service/proposal.service';
 import { authIsAdmin } from '../common';
 
@@ -52,7 +52,7 @@ export default function CreateProposalRelease({ route }) {
     useEffect(() => {
         const fetchCustomers = async () => {
             try {
-                const res = await getAllCustomer(1); // Fetch first page or all if API supports
+                const res = await getCustomerNotPagination(); // Fetch first page or all if API supports
                 if (res && res.data) {
                     setCustomerList(res.data);
                 }
