@@ -591,11 +591,6 @@ const AuthPage = () => {
                     isOpen={showModalAccount}
                     onClose={() => {
                         setShowModalAccount((prev) => !prev);
-                        setAccount({
-                            email: '',
-                            password: '',
-                            statusWork: 'Đang làm',
-                        });
                     }}
                     setAccount={setAccount}
                     setStatusCreateAccount={setStatusCreateAccount}
