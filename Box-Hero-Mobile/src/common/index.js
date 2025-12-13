@@ -23,4 +23,34 @@ const authIsAdmin = (user) => {
     return user?.empRole?.some((role) => role.roleName === 'SYSTEM_ADMIN' || role.roleName === 'WARE_MANAGER');
 };
 
-export { convertDateVN, handleCopy, authIsAdmin };
+const authIsAdminOrAccountant = (user) => {
+    return user?.empRole?.some(
+        (role) =>
+            role.roleName === 'SYSTEM_ADMIN' || role.roleName === 'WARE_MANAGER' || role.roleName === 'ACCOUNTANT',
+    );
+};
+
+const authIsAdminOrReceiver = (user) => {
+    return user?.empRole?.some(
+        (role) =>
+            role.roleName === 'SYSTEM_ADMIN' || role.roleName === 'WARE_MANAGER' || role.roleName === 'STOCK_RECEIVER',
+    );
+};
+
+const authIsAdminOrDispatcher = (user) => {
+    return user?.empRole?.some(
+        (role) =>
+            role.roleName === 'SYSTEM_ADMIN' ||
+            role.roleName === 'WARE_MANAGER' ||
+            role.roleName === 'STOCK_DISPATCHER',
+    );
+};
+
+export {
+    convertDateVN,
+    handleCopy,
+    authIsAdmin,
+    authIsAdminOrAccountant,
+    authIsAdminOrReceiver,
+    authIsAdminOrDispatcher,
+};

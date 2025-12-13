@@ -15,11 +15,14 @@ import {
     FileWarning,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { authIsAdmin, authIsAdminOrAccountant, authIsAdminOrDispatcher, authIsAdminOrReceiver } from '../common';
+import { useSelector } from 'react-redux';
 
 export default function Panel() {
     const navigation = useNavigation();
+    const currentUser = useSelector((state) => state.AuthSlice.user);
 
-    const menu = [
+    const menuAdmin = [
         {
             label: 'Sản phẩm',
             icon: (size, color) => <Milk size={size} color={color} />,
@@ -44,23 +47,14 @@ export default function Panel() {
             color: '#10b981', // Emerald - Staff
             path: 'Staff',
         },
+    ];
+
+    const menuReceiver = [
         {
             label: 'Phiếu đề xuất nhập',
             icon: (size, color) => <CircleArrowRight size={size} color={color} />,
             color: '#06b6d4', // Cyan - Import Request
             path: 'ImportRequest',
-        },
-        {
-            label: 'Phiếu đề xuất xuất',
-            icon: (size, color) => <CircleArrowLeft size={size} color={color} />,
-            color: '#ec4899', // Pink - Export Request
-            path: 'ExportRequest',
-        },
-        {
-            label: 'Phiếu xuất hàng',
-            icon: (size, color) => <ClipboardMinus size={size} color={color} />,
-            color: '#ef4444', // Red - Create Export
-            path: 'CreateExport',
         },
         {
             label: 'Phiếu nhập hàng',
@@ -74,6 +68,24 @@ export default function Panel() {
             color: '#f97316', // Orange - Missing Import
             path: 'MissingImport',
         },
+    ];
+
+    const menuDispatcher = [
+        {
+            label: 'Phiếu đề xuất xuất',
+            icon: (size, color) => <CircleArrowLeft size={size} color={color} />,
+            color: '#ec4899', // Pink - Export Request
+            path: 'ExportRequest',
+        },
+        {
+            label: 'Phiếu xuất hàng',
+            icon: (size, color) => <ClipboardMinus size={size} color={color} />,
+            color: '#ef4444', // Red - Create Export
+            path: 'CreateExport',
+        },
+    ];
+
+    const menuAccountant = [
         {
             label: 'Kiểm kê kho',
             icon: (size, color) => <CalendarCheck size={size} color={color} />,
@@ -94,21 +106,42 @@ export default function Panel() {
         },
     ];
 
+    const renderMenu = () => {
+        console.log('currentUser', currentUser);
+
+        const menu = [];
+        if (authIsAdmin(currentUser)) {
+            menu.push(...menuAdmin);
+        }
+        if (authIsAdminOrAccountant(currentUser)) {
+            menu.push(...menuAccountant);
+        }
+        if (authIsAdminOrReceiver(currentUser)) {
+            menu.push(...menuReceiver);
+        }
+        if (authIsAdminOrDispatcher(currentUser)) {
+            menu.push(...menuDispatcher);
+        }
+        return menu;
+    };
+
     return (
         <View style={styles.container}>
             <View style={styles.content}>
-                {Array.from({ length: Math.ceil(menu.length / 3) }).map((_, rowIdx) => (
+                {Array.from({ length: Math.ceil(renderMenu().length / 3) }).map((_, rowIdx) => (
                     <View style={styles.row} key={rowIdx}>
-                        {menu.slice(rowIdx * 3, rowIdx * 3 + 3).map((item, idx) => (
-                            <TouchableOpacity
-                                style={styles.rowItem}
-                                key={item.path}
-                                onPress={() => navigation.navigate(item.path)}
-                            >
-                                {item.icon(24, item.color)}
-                                <Text style={styles.label}>{item.label}</Text>
-                            </TouchableOpacity>
-                        ))}
+                        {renderMenu()
+                            .slice(rowIdx * 3, rowIdx * 3 + 3)
+                            .map((item, idx) => (
+                                <TouchableOpacity
+                                    style={styles.rowItem}
+                                    key={item.path}
+                                    onPress={() => navigation.navigate(item.path)}
+                                >
+                                    {item.icon(24, item.color)}
+                                    <Text style={styles.label}>{item.label}</Text>
+                                </TouchableOpacity>
+                            ))}
                     </View>
                 ))}
             </View>
